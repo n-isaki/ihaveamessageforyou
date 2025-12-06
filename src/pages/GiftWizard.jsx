@@ -19,6 +19,7 @@ export default function GiftWizard() {
         customerName: '',
         customerEmail: '',
         orderId: '',
+        openingAnimation: 'none',
         messages: []
     });
 
@@ -34,6 +35,7 @@ export default function GiftWizard() {
                             customerName: data.customerName || '',
                             customerEmail: data.customerEmail || '',
                             orderId: data.orderId || '',
+                            openingAnimation: data.openingAnimation || 'none',
                             messages: data.messages || []
                         });
                     } else {
@@ -181,6 +183,20 @@ export default function GiftWizard() {
                                     />
                                 </div>
                                 <div>
+                                    <label className="block text-sm font-medium text-stone-700">Öffnungs-Animation</label>
+                                    <select
+                                        name="openingAnimation"
+                                        value={formData.openingAnimation}
+                                        onChange={handleInputChange}
+                                        className="mt-1 block w-full border border-stone-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-rose-500 focus:border-rose-500 sm:text-sm"
+                                    >
+                                        <option value="none">Keine</option>
+                                        <option value="hearts">Herzen fliegen ❤️</option>
+                                        <option value="confetti">Konfetti 🎉</option>
+                                        <option value="stars">Sterne ✨</option>
+                                    </select>
+                                </div>
+                                <div>
                                     <label className="block text-sm font-medium text-stone-700">Kunden Name</label>
                                     <input
                                         type="text"
@@ -321,6 +337,15 @@ export default function GiftWizard() {
                                     <div>
                                         <dt className="text-sm font-medium text-stone-500">Bestellnummer</dt>
                                         <dd className="mt-1 text-sm text-stone-900">{formData.orderId || '-'}</dd>
+                                    </div>
+                                    <div>
+                                        <dt className="text-sm font-medium text-stone-500">Animation</dt>
+                                        <dd className="mt-1 text-sm text-stone-900">
+                                            {formData.openingAnimation === 'hearts' && 'Herzen ❤️'}
+                                            {formData.openingAnimation === 'confetti' && 'Konfetti 🎉'}
+                                            {formData.openingAnimation === 'stars' && 'Sterne ✨'}
+                                            {formData.openingAnimation === 'none' && 'Keine'}
+                                        </dd>
                                     </div>
                                     <div>
                                         <dt className="text-sm font-medium text-stone-500">Kunde</dt>
