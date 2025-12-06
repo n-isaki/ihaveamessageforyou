@@ -12,6 +12,7 @@ export default function GiftReveal() {
     const [pin, setPin] = useState('');
     const [error, setError] = useState('');
     const [unlocked, setUnlocked] = useState(false);
+    const [confirmationSent, setConfirmationSent] = useState(false);
 
     useEffect(() => {
         const fetchGift = async () => {
@@ -40,16 +41,30 @@ export default function GiftReveal() {
         e.preventDefault();
         if (gift && pin === gift.accessCode) {
             setUnlocked(true);
-            if (!gift.viewed) {
-                // Mark as viewed in DB
-                await markGiftAsViewed(id);
-
-                // Send notification email
-                console.log("Sending notification email...");
-                await sendNotificationEmail(gift);
-            }
+            // We don't mark as viewed automatically anymore
         } else {
             setError("Falscher PIN Code. Bitte versuche es erneut.");
+        }
+    };
+
+    const handleSendConfirmation = async () => {
+        if (!gift || confirmationSent) return;
+
+        try {
+            setConfirmationSent(true);
+
+            // Mark as viewed in DB
+            if (!gift.viewed) {
+                await markGiftAsViewed(id);
+            }
+
+            // Send notification email
+            console.log("Sending notification email...");
+            await sendNotificationEmail(gift);
+
+        } catch (error) {
+            console.error("Error sending confirmation:", error);
+            // Optionally handle error state here, but we keep the button as "sent" to not confuse user
         }
     };
 
@@ -72,145 +87,150 @@ export default function GiftReveal() {
         );
     }
 
+    if (!unlocked) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-stone-50 p-4">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center"
+                >
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-rose-100 mb-6">
+                        <Lock className="h-10 w-10 text-rose-600" />
+                    </div>
+                    <h1 className="text-3xl font-bold text-stone-900 mb-2">Ein Geschenk für dich</h1>
+                    <p className="text-stone-500 mb-8">Gib deinen persönlichen PIN Code ein, um deine Nachricht zu sehen.</p>
+
+                    <form onSubmit={handleUnlock} className="space-y-4">
+                        <input
+                            type="text"
+                            value={pin}
+                            onChange={(e) => {
+                                setPin(e.target.value);
+                                setError('');
+                            }}
+                            className="block w-full text-center text-2xl tracking-widest border border-stone-300 rounded-lg py-3 focus:ring-rose-500 focus:border-rose-500 outline-none"
+                            placeholder="1234"
+                            maxLength={4}
+                        />
+                        {error && (
+                            <div className="text-red-500 text-sm">{error}</div>
+                        )}
+                        <button
+                            type="submit"
+                            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500 transition-colors"
+                        >
+                            Geschenk öffnen
+                        </button>
+                    </form>
+                </motion.div>
+            </div>
+        );
+    }
+
     return (
-        <div className="min-h-screen bg-stone-50 overflow-hidden">
-            <AnimatePresence>
-                {!unlocked ? (
+        <div className="min-h-screen bg-stone-50">
+            {/* Hero Section */}
+            <div className="bg-rose-600 text-white py-12 px-4 text-center relative overflow-hidden">
+                <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 260, damping: 20 }}
+                    className="relative z-10"
+                >
+                    <Heart className="h-16 w-16 mx-auto mb-4 text-rose-200 fill-current" />
+                    <h1 className="text-4xl font-bold mb-2">Für {gift.recipientName}</h1>
+                    <p className="text-rose-100">Eine Nachricht von {gift.customerName}</p>
+                </motion.div>
+
+                {/* Decorative circles */}
+                <div className="absolute top-0 left-0 -ml-20 -mt-20 w-64 h-64 rounded-full bg-rose-500 opacity-50 blur-3xl"></div>
+                <div className="absolute bottom-0 right-0 -mr-20 -mb-20 w-64 h-64 rounded-full bg-rose-700 opacity-50 blur-3xl"></div>
+            </div>
+
+            {/* Content Timeline */}
+            <div className="max-w-3xl mx-auto px-4 py-12 space-y-12">
+                {gift.messages?.map((msg, index) => (
                     <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0, y: -50 }}
-                        className="min-h-screen flex flex-col items-center justify-center p-4"
+                        key={index}
+                        initial={{ opacity: 0, x: index % 2 === 0 ? -50 : 50 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.3 }}
+                        className={`flex ${index % 2 === 0 ? 'justify-start' : 'justify-end'}`}
                     >
-                        <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-2xl shadow-xl">
-                            <div className="text-center">
-                                <div className="mx-auto h-16 w-16 bg-rose-100 rounded-full flex items-center justify-center">
-                                    <Lock className="h-8 w-8 text-rose-600" />
-                                </div>
-                                <h2 className="mt-6 text-3xl font-serif font-bold text-stone-900">
-                                    Für {gift.recipientName}
-                                </h2>
-                                <p className="mt-2 text-stone-600">
-                                    Ein persönliches Geschenk wartet auf dich.
-                                    <br />
-                                    Bitte gib deinen PIN ein.
-                                </p>
-                            </div>
-
-                            <form onSubmit={handleUnlock} className="mt-8 space-y-6">
-                                <div>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={pin}
-                                        onChange={(e) => {
-                                            setPin(e.target.value);
-                                            setError('');
-                                        }}
-                                        className="appearance-none block w-full px-3 py-4 border border-stone-300 rounded-lg shadow-sm placeholder-stone-400 focus:outline-none focus:ring-rose-500 focus:border-rose-500 text-center text-2xl tracking-widest"
-                                        placeholder="PIN"
-                                    />
-                                </div>
-
-                                {error && (
-                                    <div className="text-red-500 text-sm text-center">{error}</div>
-                                )}
-
-                                <button
-                                    type="submit"
-                                    className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500"
-                                >
-                                    Geschenk öffnen
-                                </button>
-                            </form>
-                        </div>
-                    </motion.div>
-                ) : (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="min-h-screen bg-stone-50"
-                    >
-                        {/* Hero Section */}
-                        <div className="bg-rose-600 text-white py-20 px-4 text-center relative overflow-hidden">
-                            <motion.div
-                                initial={{ scale: 0.8, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                transition={{ delay: 0.3, duration: 0.8 }}
-                                className="relative z-10"
-                            >
-                                <Heart className="h-16 w-16 mx-auto mb-4 text-rose-200 animate-pulse" />
-                                <h1 className="text-4xl md:text-6xl font-serif font-bold mb-4">
-                                    Alles Liebe, {gift.recipientName}!
-                                </h1>
-                                <p className="text-xl text-rose-100">
-                                    Eine Nachricht von {gift.customerName}
-                                </p>
-                            </motion.div>
-
-                            {/* Decorative circles */}
-                            <div className="absolute top-0 left-0 -ml-20 -mt-20 w-64 h-64 rounded-full bg-rose-500 opacity-50 blur-3xl"></div>
-                            <div className="absolute bottom-0 right-0 -mr-20 -mb-20 w-64 h-64 rounded-full bg-rose-700 opacity-50 blur-3xl"></div>
-                        </div>
-
-                        {/* Timeline */}
-                        <div className="max-w-3xl mx-auto px-4 py-12 space-y-12">
-                            {gift.messages.map((msg, index) => (
-                                <motion.div
-                                    key={msg.id}
-                                    initial={{ opacity: 0, y: 50 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.5 + index * 0.2 }}
-                                    className={`flex ${index % 2 === 0 ? 'justify-start' : 'justify-end'}`}
-                                >
-                                    <div className={`max-w-lg w-full ${index % 2 === 0 ? 'mr-auto' : 'ml-auto'}`}>
-                                        <div className={`bg-white p-6 rounded-2xl shadow-lg border-b-4 border-rose-100 relative ${index % 2 === 0 ? 'rounded-tl-none' : 'rounded-tr-none'
-                                            }`}>
-                                            <p className="text-xs font-bold text-rose-500 uppercase tracking-wider mb-2">
-                                                {msg.author} sagt:
-                                            </p>
-
-                                            {msg.type === 'text' ? (
-                                                <p className="text-lg text-stone-800 leading-relaxed whitespace-pre-wrap">
-                                                    {msg.content}
-                                                </p>
-                                            ) : (
-                                                <div className="aspect-w-16 aspect-h-9 rounded-lg overflow-hidden bg-black">
-                                                    {/* Simple embed detection - in production use a proper library */}
-                                                    {msg.content.includes('youtube') || msg.content.includes('youtu.be') ? (
-                                                        <iframe
-                                                            src={msg.content.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
-                                                            title="Video message"
-                                                            className="w-full h-full min-h-[200px]"
-                                                            frameBorder="0"
-                                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                            allowFullScreen
-                                                        ></iframe>
-                                                    ) : (
-                                                        <a
-                                                            href={msg.content}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="flex items-center justify-center h-full min-h-[200px] bg-stone-900 text-white hover:bg-stone-800 transition-colors"
-                                                        >
-                                                            <Play className="h-12 w-12 opacity-80" />
-                                                            <span className="ml-2">Video ansehen</span>
-                                                        </a>
-                                                    )}
-                                                </div>
-                                            )}
-                                        </div>
+                        <div className={`max-w-lg w-full bg-white rounded-2xl shadow-lg overflow-hidden ${index % 2 === 0 ? 'rounded-tl-none' : 'rounded-tr-none'
+                            }`}>
+                            <div className="p-6">
+                                <div className="flex items-center mb-4">
+                                    <div className={`h-8 w-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${index % 2 === 0 ? 'bg-emerald-500' : 'bg-rose-500'
+                                        }`}>
+                                        {msg.author.charAt(0)}
                                     </div>
-                                </motion.div>
-                            ))}
-                        </div>
+                                    <span className="ml-3 font-medium text-stone-900">{msg.author}</span>
+                                </div>
 
-                        <div className="text-center pb-12 text-stone-400 text-sm">
-                            <p>Mit ❤️ erstellt</p>
+                                {msg.type === 'text' ? (
+                                    <p className="text-stone-600 text-lg leading-relaxed whitespace-pre-wrap">
+                                        {msg.content}
+                                    </p>
+                                ) : (
+                                    <div className="aspect-w-16 aspect-h-9 bg-black rounded-lg overflow-hidden">
+                                        {msg.content.includes('youtube') || msg.content.includes('youtu.be') ? (
+                                            <iframe
+                                                src={msg.content.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
+                                                title="Video Message"
+                                                className="w-full h-full min-h-[300px]"
+                                                allowFullScreen
+                                            ></iframe>
+                                        ) : (
+                                            <div className="flex items-center justify-center h-48 bg-stone-100">
+                                                <a
+                                                    href={msg.content}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center text-rose-600 hover:text-rose-700"
+                                                >
+                                                    <Play className="h-12 w-12 mr-2" />
+                                                    Video ansehen
+                                                </a>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </motion.div>
-                )}
-            </AnimatePresence>
+                ))}
+
+                {/* Confirmation Button Section */}
+                <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: (gift.messages?.length || 0) * 0.3 + 0.5 }}
+                    className="flex justify-center pt-8 pb-12"
+                >
+                    {!confirmationSent && !gift.viewed ? (
+                        <button
+                            onClick={handleSendConfirmation}
+                            className="group relative inline-flex items-center justify-center px-8 py-4 text-lg font-medium text-white transition-all duration-200 bg-emerald-500 rounded-full shadow-lg hover:bg-emerald-600 hover:shadow-xl hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
+                        >
+                            <span className="mr-2">💌</span>
+                            Nachricht gelesen & Freude teilen
+                            <div className="absolute inset-0 rounded-full ring-4 ring-white/30 group-hover:ring-white/50 transition-all"></div>
+                        </button>
+                    ) : (
+                        <div className="text-center animate-fade-in">
+                            <div className="inline-flex items-center justify-center px-8 py-3 bg-stone-100 rounded-full text-emerald-600 font-medium shadow-inner">
+                                <span className="mr-2">✨</span>
+                                Danke! Die Bestätigung wurde gesendet.
+                            </div>
+                            <p className="mt-2 text-sm text-stone-400">
+                                {gift.customerName} freut sich, dass du die Nachricht gesehen hast.
+                            </p>
+                        </div>
+                    )}
+                </motion.div>
+            </div>
         </div>
     );
 }
