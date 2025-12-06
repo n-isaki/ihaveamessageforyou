@@ -15,6 +15,7 @@ export default function GiftWizard() {
 
     const [formData, setFormData] = useState({
         recipientName: '',
+        senderName: '', // New field for display
         accessCode: '',
         customerName: '',
         customerEmail: '',
@@ -31,6 +32,7 @@ export default function GiftWizard() {
                     if (data) {
                         setFormData({
                             recipientName: data.recipientName || '',
+                            senderName: data.senderName || '', // Load it
                             accessCode: data.accessCode || '',
                             customerName: data.customerName || '',
                             customerEmail: data.customerEmail || '',
@@ -61,7 +63,7 @@ export default function GiftWizard() {
         const newMessage = {
             id: Date.now(),
             type,
-            author: formData.customerName, // Default author
+            author: formData.senderName || formData.customerName, // Use senderName as default if available
             content: ''
         };
         setFormData(prev => ({
@@ -159,6 +161,18 @@ export default function GiftWizard() {
                                         className="mt-1 block w-full border border-stone-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-rose-500 focus:border-rose-500 sm:text-sm"
                                         placeholder="z.B. Opa Hans"
                                     />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-stone-700">Angezeigter Absender</label>
+                                    <input
+                                        type="text"
+                                        name="senderName"
+                                        value={formData.senderName}
+                                        onChange={handleInputChange}
+                                        className="mt-1 block w-full border border-stone-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-rose-500 focus:border-rose-500 sm:text-sm"
+                                        placeholder="z.B. Deine Enkelkinder"
+                                    />
+                                    <p className="mt-1 text-xs text-stone-500">Erscheint als "Nachricht von..."</p>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-stone-700">Zugangs-PIN</label>
@@ -329,6 +343,10 @@ export default function GiftWizard() {
                                     <div>
                                         <dt className="text-sm font-medium text-stone-500">Empfänger</dt>
                                         <dd className="mt-1 text-sm text-stone-900">{formData.recipientName}</dd>
+                                    </div>
+                                    <div>
+                                        <dt className="text-sm font-medium text-stone-500">Absender (Anzeige)</dt>
+                                        <dd className="mt-1 text-sm text-stone-900">{formData.senderName || '-'}</dd>
                                     </div>
                                     <div>
                                         <dt className="text-sm font-medium text-stone-500">PIN Code</dt>

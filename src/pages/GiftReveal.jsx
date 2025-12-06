@@ -230,7 +230,7 @@ export default function GiftReveal() {
                                     Von Herzen für dich
                                 </h2>
                                 <p className="text-lg text-stone-500 font-light">
-                                    Eine persönliche Nachricht von <span className="font-medium text-rose-500">{gift.customerName}</span>
+                                    Eine persönliche Nachricht von <span className="font-medium text-rose-500">{gift.senderName || gift.customerName}</span>
                                 </p>
                                 <div className="pt-8 flex justify-center">
                                     <div className="h-px w-24 bg-gradient-to-r from-transparent via-stone-300 to-transparent"></div>
