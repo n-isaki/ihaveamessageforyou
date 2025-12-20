@@ -8,10 +8,13 @@ import LandingPage from './pages/LandingPage';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import PrintGift from './pages/PrintGift';
+import Simulator from './pages/Simulator';
 
 // Anima Modules
-import GiftReveal from './modules/anima/experiences/multimedia-gift/pages/Viewer';
+// Anima Modules
 import GiftWizard from './modules/anima/experiences/multimedia-gift/pages/Wizard';
+import UniversalViewer from './modules/anima/core/UniversalViewer';
+import RitualChat from './modules/anima/experiences/engraving-ritual/pages/RitualChat';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -39,7 +42,16 @@ function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />
-        <Route path="/gift/:id" element={<GiftReveal />} />
+
+        {/* The Smart Viewer (QR Target) */}
+        <Route path="/v/:id" element={<UniversalViewer />} />
+
+        {/* Experiences */}
+        <Route path="/ritual/:id" element={<RitualChat />} />
+
+        {/* Legacy / Alias */}
+        <Route path="/gift/:id" element={<UniversalViewer />} />
+
         <Route path="/admin/login" element={<AdminLogin />} />
 
         {/* Admin Routes */}
@@ -61,6 +73,11 @@ function App() {
         <Route path="/admin/print/:id" element={
           <ProtectedRoute>
             <PrintGift />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/simulate" element={
+          <ProtectedRoute>
+            <Simulator />
           </ProtectedRoute>
         } />
       </Routes>
