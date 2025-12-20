@@ -5,11 +5,13 @@ import { auth } from './firebase';
 
 // Pages
 import LandingPage from './pages/LandingPage';
-import GiftReveal from './pages/GiftReveal';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
-import GiftWizard from './pages/GiftWizard';
 import PrintGift from './pages/PrintGift';
+
+// Anima Modules
+import GiftReveal from './modules/anima/experiences/multimedia-gift/pages/Viewer';
+import GiftWizard from './modules/anima/experiences/multimedia-gift/pages/Wizard';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {

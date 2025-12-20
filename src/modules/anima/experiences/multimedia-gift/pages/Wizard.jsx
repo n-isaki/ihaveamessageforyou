@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { createGift, getGiftById, updateGift } from '../services/gifts';
+import { createGift, getGiftById, updateGift } from '@/services/gifts';
 import { Plus, Trash2, Video, MessageSquare, ArrowRight, ArrowLeft, Save, Loader } from 'lucide-react';
 
 export default function GiftWizard() {

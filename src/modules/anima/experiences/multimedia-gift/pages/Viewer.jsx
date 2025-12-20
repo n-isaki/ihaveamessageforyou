@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { getGiftById, markGiftAsViewed } from '../services/gifts';
-import { sendNotificationEmail } from '../services/email';
+import { getGiftById, markGiftAsViewed } from '@/services/gifts';
+import { sendNotificationEmail } from '@/services/email';
 import { Lock, Play, Loader, Heart, Check, Sparkles, Type } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
