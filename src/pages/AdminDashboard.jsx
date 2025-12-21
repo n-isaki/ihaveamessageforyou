@@ -65,25 +65,16 @@ export default function AdminDashboard() {
             <div className="max-w-6xl mx-auto">
                 <div className="flex justify-between items-center mb-8">
                     <div>
-                        <h1 className="text-3xl font-bold text-stone-900">Produktions Dashboard</h1>
-                        <p className="text-stone-500 text-sm mt-1">Project ANIMA Control Center</p>
+                        <h1 className="text-3xl font-bold text-stone-900">Dashboard</h1>
+                        <p className="text-stone-500 mt-1">Verwalte deine Connected Gifts</p>
                     </div>
-                    <div className="flex space-x-3">
-                        <Link
-                            to="/admin/simulate"
-                            className="inline-flex items-center px-4 py-2 border border-stone-300 text-sm font-medium rounded-xl shadow-sm text-stone-700 bg-white hover:bg-stone-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
-                        >
-                            <Zap className="h-5 w-5 mr-2 text-emerald-500" />
-                            Simulator
-                        </Link>
-                        <Link
-                            to="/admin/create"
-                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl shadow-sm text-white bg-rose-600 hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-500"
-                        >
-                            <Plus className="h-5 w-5 mr-2" />
-                            Manuell Erstellen
-                        </Link>
-                    </div>
+                    <Link
+                        to="/admin/create"
+                        className="inline-flex items-center px-4 py-2 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-stone-900 hover:bg-stone-800 transition-colors"
+                    >
+                        <Plus className="h-5 w-5 mr-2" />
+                        Neuer Auftrag
+                    </Link>
                 </div>
 
                 <div className="space-y-4">

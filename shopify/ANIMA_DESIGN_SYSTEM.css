@@ -1,0 +1,113 @@
+/* 
+ * ANIMA Design System for Shopify (Base Theme: Dawn)
+ * Copy this into your Shopify Theme:
+ * Online Store -> Themes -> Dawn -> Edit Code -> Assets -> base.css (append at the bottom)
+ * OR
+ * Online Store -> Themes -> Customize -> Theme Settings -> Custom CSS
+ */
+
+:root {
+  /* ANIMA COLOR PALETTE (From App Config) */
+  --anima-stone-50: #fafaf9;
+  --anima-stone-100: #f5f5f4;
+  --anima-stone-200: #e7e5e4;
+  --anima-stone-800: #292524;
+  --anima-stone-900: #1c1917;
+
+  --anima-rose-500: #f43f5e;
+  --anima-rose-600: #e11d48;
+  --anima-rose-700: #be123c;
+
+  --anima-emerald-500: #10b981;
+  --anima-emerald-600: #059669;
+
+  /* Global Overrides */
+  --font-body-family: 'Inter', sans-serif;
+  --font-heading-family: 'Playfair Display', serif; /* Optional for "Premium" feel */
+}
+
+/* 1. TYPOGRAPHY & TEXTURE */
+body {
+  background-color: var(--anima-stone-50) !important;
+  color: var(--anima-stone-900) !important;
+}
+
+h1, h2, h3, h4, .h1, .h2, .h3, .h4 {
+  color: var(--anima-stone-900);
+  letter-spacing: -0.02em; /* Tight tracking like App */
+}
+
+/* 2. BUTTONS - Make them look like the 'Wizard' Primary Button */
+.button, .shopify-payment-button__button--unbranded {
+  background-color: var(--anima-stone-900) !important;
+  color: white !important;
+  border-radius: 12px !important; /* Rounded XL */
+  font-weight: 600 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  border: none !important;
+  transition: all 0.2s ease-in-out !important;
+  text-transform: none !important; /* No UPPERCASE */
+  font-size: 15px !important;
+  padding: 12px 24px !important;
+}
+
+.button:hover, .shopify-payment-button__button--unbranded:hover {
+  background-color: var(--anima-stone-800) !important;
+  transform: translateY(-1px);
+}
+
+.button--secondary {
+  background-color: white !important;
+  color: var(--anima-stone-900) !important;
+  border: 1px solid var(--anima-stone-200) !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+}
+
+/* 3. CARDS & CONTAINERS (Product Grid Items) */
+.card-wrapper {
+  background: white;
+  border-radius: 16px; /* Rounded 2XL */
+  border: 1px solid var(--anima-stone-200);
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-wrapper:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.card__content {
+  padding: 1.5rem !important;
+}
+
+/* 4. HEADER - Transparent / Glassmorphism */
+.header-wrapper {
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--anima-stone-100);
+}
+
+/* 5. PRODUCT PAGE SPECIFICS */
+.product-form__input input[type=radio] + label {
+  border-radius: 8px !important;
+}
+
+.product-form__input input[type=radio]:checked + label {
+  background-color: var(--anima-stone-900) !important;
+  color: white !important;
+}
+
+/* Badge (Sale / Sold Out) */
+.badge {
+  border-radius: 6px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  font-size: 10px !important;
+  letter-spacing: 0.1em !important;
+}
+.badge--bottom-left {
+    background: var(--anima-rose-600) !important;
+    color: white !important;
+    border: none !important;
+}

@@ -8,7 +8,7 @@ import LandingPage from './pages/LandingPage';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import PrintGift from './pages/PrintGift';
-import Simulator from './pages/Simulator';
+
 
 // Anima Modules
 // Anima Modules
@@ -75,11 +75,7 @@ function App() {
             <PrintGift />
           </ProtectedRoute>
         } />
-        <Route path="/admin/simulate" element={
-          <ProtectedRoute>
-            <Simulator />
-          </ProtectedRoute>
-        } />
+
       </Routes>
     </Router>
   );

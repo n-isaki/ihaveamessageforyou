@@ -29,42 +29,6 @@ export const createGift = async (giftData) => {
     }
 };
 
-/**
- * Creates a simulated order as if it came from Shopify.
- * @param {Object} orderData 
- */
-export const createSimulatedOrder = async (orderData) => {
-    try {
-        // Map simulation data to our internal schema
-        const docData = {
-            orderId: `SIM-${Date.now().toString().slice(-6)}`, // Fake Order ID
-            customerName: orderData.customerName || 'Test Kunde',
-            customerEmail: orderData.customerEmail || 'test@example.com',
-            recipientName: orderData.recipientName || 'Empfänger',
-            senderName: orderData.senderName || 'Absender',
-
-            // Core Product Data
-            productType: orderData.productType, // 'mug' or 'bracelet'
-            designImage: orderData.designImage || null, // For Mug
-
-            // Status Tracking
-            status: 'pending_creation', // Waiting for user input (Ritual/Upload)
-            viewed: false,
-            createdAt: serverTimestamp(),
-
-            // Placeholder for the content the user will create
-            messages: [],
-            accessCode: '',
-        };
-
-        const docRef = await addDoc(collection(db, COLLECTION_NAME), docData);
-        return docRef.id;
-    } catch (error) {
-        console.error("Error creating simulated order:", error);
-        throw error;
-    }
-};
-
 export const updateGift = async (id, giftData) => {
     try {
         const docRef = doc(db, COLLECTION_NAME, id);

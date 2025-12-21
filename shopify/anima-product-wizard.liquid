@@ -1,0 +1,172 @@
+<!-- 
+  ANIMA SMART WIZARD V4 (Flow Correction)
+  
+  LOGIK:
+  A. TASSE (Mug):
+     - Zeigt vollen Wizard:
+       1. "Für wen?" (Geschenk/Ich) + Name
+       2. "Nachricht" (Text + Video Link)
+       -> Warenkorb.
+  
+  B. ARMBAND (Bracelet):
+     - KEIN Wizard.
+     - Zeigt sofort den Kaufen-Button.
+     - Info: "Den Rest klären wir nach dem Kauf per Link."
+-->
+
+<div class="anima-wizard-container page-width">
+  
+  <!-- HEADER -->
+  <div class="anima-wizard-card">
+    <div class="wizard-header">
+      <h1 class="h2">{{ product.title }}</h1>
+      <p class="price-large">{{ product.price | money }}</p>
+    </div>
+
+    <!-- START PRODUCT FORM -->
+    <product-form class="product-form">
+      {%- form 'product', product, id: 'product-form-installment', class: 'installment caption-large' -%}
+        <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}">
+
+        <!-- FALLUNTERSCHEIDUNG: ARMBAND vs TASSE -->
+        
+        {% if product.type contains 'Armband' or product.type contains 'Bracelet' %}
+          
+          <!-- ARMBAND: DIREKTER KAUF -->
+          <div class="direct-buy-container">
+            <div class="info-box-highlight">
+              <span class="icon">✨</span>
+              <div>
+                <strong>So funktioniert's:</strong>
+                <p>Kaufe jetzt das Armband. Du erhältst sofort danach einen E-Mail-Link, um dein persönliches Ritual (KI-Chat) zu starten. Dort klären wir auch, für wen es ist und was graviert werden soll.</p>
+              </div>
+            </div>
+            
+            <button type="submit" class="anima-btn-primary full-width big-btn">
+              Jetzt kaufen - {{ product.price | money }}
+            </button>
+          </div>
+
+        {% else %}
+
+          <!-- TASSE: WIZARD FLOW -->
+          
+          <!-- STEP 1: CONTEXT -->
+          <div class="wizard-step" id="step-1">
+            <h3 class="step-title">1. Für wen ist dieses Geschenk?</h3>
+            <div class="options-grid">
+              <label class="option-card">
+                <input type="radio" name="properties[Anlass]" value="Geschenk" checked onchange="toggleRecipientField(true)">
+                <div class="option-content">
+                  <span class="icon">🎁</span>
+                  <span class="label">Als Geschenk</span>
+                </div>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="properties[Anlass]" value="Für Mich" onchange="toggleRecipientField(false)">
+                <div class="option-content">
+                  <span class="icon">🙋‍♂️</span>
+                  <span class="label">Für mich selbst</span>
+                </div>
+              </label>
+            </div>
+            
+            <div id="recipient-container" class="input-group">
+              <label>Name des Empfängers</label>
+              <input type="text" name="properties[Empfänger Name]" placeholder="z.B. Opa Hans" class="anima-input">
+            </div>
+            
+            <button type="button" class="anima-btn-primary" onclick="goToStep(2)">Weiter zu deiner Nachricht</button>
+          </div>
+
+          <!-- STEP 2: CONTENT -->
+          <div class="wizard-step hidden" id="step-2">
+            <h3 class="step-title">2. Deine persönliche Nachricht</h3>
+            <p class="step-desc">Diese Nachricht wird hinter dem QR-Code auf der Tasse hinterlegt.</p>
+
+            <div class="input-group">
+              <label>Deine Nachricht (Text)</label>
+              <textarea name="properties[Erste Nachricht]" rows="4" class="anima-input" placeholder="Schreib etwas Schönes..."></textarea>
+            </div>
+
+            <div class="input-group">
+              <label>Video Link (YouTube) - Optional</label>
+              <input type="text" name="properties[Video Link]" placeholder="https://..." class="anima-input">
+            </div>
+
+            <div class="step-actions">
+              <button type="button" class="anima-btn-secondary" onclick="goToStep(1)">Zurück</button>
+              <button type="submit" class="anima-btn-primary full-width">In den Warenkorb</button>
+            </div>
+          </div>
+
+        {% endif %}
+        <!-- END FALLUNTERSCHEIDUNG -->
+
+      {%- endform -%}
+    </product-form>
+  </div>
+</div>
+
+<style>
+  /* GENERAL SETUP */
+  .anima-wizard-container { max-width: 600px; margin: 40px auto; }
+  .anima-wizard-card { background: white; border: 1px solid #e7e5e4; border-radius: 24px; padding: 32px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05); }
+  .wizard-header { text-align: center; margin-bottom: 32px; border-bottom: 1px solid #f5f5f4; padding-bottom: 20px; }
+  .price-large { font-size: 1.5rem; font-weight: bold; color: #be123c; margin: 0; }
+  .step-title { font-size: 1.25rem; font-weight: bold; margin-bottom: 1rem; color: #1c1917; }
+  .step-desc { font-size: 0.9rem; color: #78716c; margin-bottom: 1.5rem; }
+  .hidden { display: none; }
+
+  /* ARMBAND INFO BOX */
+  .info-box-highlight { 
+    background: #fdf2f8; border: 1px solid #fbcfe8; border-radius: 12px; padding: 16px; 
+    margin-bottom: 24px; display: flex; gap: 12px; align-items: flex-start;
+  }
+  .info-box-highlight .icon { font-size: 20px; }
+  .info-box-highlight p { font-size: 0.9rem; color: #831843; margin: 4px 0 0 0; line-height: 1.4; }
+  .info-box-highlight strong { color: #831843; font-weight: 700; font-size: 0.9rem; }
+
+  /* INPUTS */
+  .input-group { margin-bottom: 20px; text-align: left; }
+  .input-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: #44403c; }
+  .anima-input { width: 100%; padding: 12px; border: 1px solid #d6d3d1; border-radius: 12px; font-size: 1rem; transition: border-color 0.2s; }
+  .anima-input:focus { border-color: #be123c; outline: none; }
+
+  /* RADIO CARDS */
+  .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+  .option-card { cursor: pointer; position: relative; }
+  .option-card input { position: absolute; opacity: 0; }
+  .option-content { border: 2px solid #e7e5e4; border-radius: 16px; padding: 16px; text-align: center; transition: all 0.2s; background: #fafaf9; }
+  .option-card input:checked + .option-content { border-color: #be123c; background: #fff1f2; color: #be123c; }
+  .option-content .icon { display: block; font-size: 24px; margin-bottom: 8px; }
+  .option-content .label { font-weight: 600; font-size: 0.9rem; }
+
+  /* BUTTONS */
+  .step-actions { display: flex; gap: 12px; margin-top: 20px; }
+  .anima-btn-primary { background: #1c1917; color: white; border: none; padding: 14px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; flex: 1; transition: background 0.2s; width: 100%; font-size: 1rem; }
+  .anima-btn-primary:hover { background: #000; }
+  .anima-btn-secondary { background: white; color: #1c1917; border: 1px solid #d6d3d1; padding: 14px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; }
+  
+  .big-btn { padding: 18px 24px; font-size: 1.1rem; }
+</style>
+
+<script>
+  function toggleRecipientField(show) {
+    const el = document.getElementById('recipient-container');
+    if(el) el.style.display = show ? 'block' : 'none';
+  }
+  
+  function goToStep(stepNum) {
+    document.querySelectorAll('.wizard-step').forEach(el => el.classList.add('hidden'));
+    document.getElementById(`step-${stepNum}`).classList.remove('hidden');
+  }
+</script>
+
+{% schema %}
+{
+  "name": "Anima Smart Wizard V4",
+  "settings": [],
+  "presets": [{ "name": "Anima Smart Wizard V4" }]
+}
+{% endschema %}

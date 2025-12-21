@@ -121,7 +121,8 @@ export default function GiftReveal() {
             if (!gift.viewed) {
                 await markGiftAsViewed(id);
             }
-            await sendNotificationEmail(gift);
+            // Email notification disabled for now
+            // await sendNotificationEmail(gift);
         } catch (error) {
             console.error("Error sending confirmation:", error);
         }
