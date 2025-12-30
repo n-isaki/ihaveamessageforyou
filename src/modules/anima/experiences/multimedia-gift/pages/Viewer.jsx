@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { getGiftById, markGiftAsViewed } from '@/services/gifts';
-import { sendNotificationEmail } from '@/services/email';
 import { Lock, Play, Loader, Heart, Check, Sparkles, Type } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
@@ -17,6 +16,7 @@ export default function GiftReveal() {
     const [fontSizeLevel, setFontSizeLevel] = useState(0); // 0=Normal, 1=Large, 2=Extra Large
     const messagesEndRef = useRef(null);
 
+    // Initial Fetch
     useEffect(() => {
         const fetchGift = async () => {
             try {
@@ -36,6 +36,13 @@ export default function GiftReveal() {
             setLoading(false);
         }
     }, [id]);
+
+    // Auto-unlock for bracelets (Physical access is key)
+    useEffect(() => {
+        if (gift && gift.productType === 'bracelet') {
+            setUnlocked(true);
+        }
+    }, [gift]);
 
     const triggerAnimation = (type) => {
         const duration = 3000;
@@ -121,8 +128,6 @@ export default function GiftReveal() {
             if (!gift.viewed) {
                 await markGiftAsViewed(id);
             }
-            // Email notification disabled for now
-            // await sendNotificationEmail(gift);
         } catch (error) {
             console.error("Error sending confirmation:", error);
         }
@@ -142,7 +147,7 @@ export default function GiftReveal() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-stone-50">
+            <div className="min-h-screen flex items-center justify-center bg-stone-950">
                 <Loader className="h-8 w-8 animate-spin text-rose-500" />
             </div>
         );
@@ -150,7 +155,7 @@ export default function GiftReveal() {
 
     if (!gift) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-stone-50 text-stone-900">
+            <div className="min-h-screen flex items-center justify-center bg-stone-950 text-stone-100">
                 <div className="text-center">
                     <h1 className="text-2xl font-bold">Geschenk nicht gefunden</h1>
                     <p className="mt-2 text-stone-500">Bitte überprüfe den Link.</p>
@@ -159,177 +164,227 @@ export default function GiftReveal() {
         );
     }
 
+    const isBracelet = gift?.productType === 'bracelet' || (gift?.engravingText && gift.engravingText.length > 0);
+
     return (
-        <div>
-            <div className="min-h-screen bg-stone-50 text-stone-900 font-sans selection:bg-rose-500/30">
-
-                {!unlocked ? (
-                    <div className="min-h-screen flex items-center justify-center p-4">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="max-w-sm w-full bg-white/80 backdrop-blur-lg border border-stone-200 rounded-3xl p-8 text-center shadow-2xl"
-                        >
-                            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-rose-100 mb-6">
-                                <Lock className="h-8 w-8 text-rose-600" />
-                            </div>
-                            <h1 className="text-2xl font-bold mb-2">Geschenk öffnen</h1>
-                            <p className="text-stone-500 mb-8 text-sm">Gib deinen PIN Code ein.</p>
-
-                            <form onSubmit={handleUnlock} className="space-y-4">
-                                <input
-                                    type="text"
-                                    value={pin}
-                                    onChange={(e) => {
-                                        setPin(e.target.value);
-                                        setError('');
-                                    }}
-                                    className="block w-full text-center text-3xl tracking-[0.5em] bg-stone-50 border border-stone-200 text-stone-900 rounded-xl py-4 focus:ring-2 focus:ring-rose-500 focus:border-transparent outline-none transition-all placeholder-stone-300"
-                                    placeholder="••••"
-                                    maxLength={4}
-                                />
-                                {error && (
-                                    <div className="text-red-500 text-xs font-medium">{error}</div>
-                                )}
-                                <button
-                                    type="submit"
-                                    className="w-full py-3 px-4 rounded-xl text-sm font-semibold text-white bg-rose-600 hover:bg-rose-500 active:scale-95 transition-all shadow-lg shadow-rose-500/20"
-                                >
-                                    Entsperren
-                                </button>
-                            </form>
-                        </motion.div>
-                    </div>
-                ) : (
-                    <>
-                        {/* Header / Top Bar - Minimalist */}
-                        <div className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-stone-100 px-6 py-4 flex justify-between items-center">
-                            <div className="flex items-center space-x-2">
-                                <Sparkles className="h-5 w-5 text-rose-500" />
-                                <span className="font-serif italic text-lg text-stone-800">i have a message for you</span>
-                            </div>
-                            {/* Font Size Toggle moved here for better layout */}
-                            <button
-                                onClick={toggleFontSize}
-                                className="p-2 rounded-full hover:bg-stone-100 text-stone-400 hover:text-stone-600 transition-all"
-                                title="Schriftgröße ändern"
-                            >
-                                <Type className={`transition-all ${fontSizeLevel === 0 ? 'h-5 w-5' : fontSizeLevel === 1 ? 'h-6 w-6' : 'h-7 w-7'}`} />
-                            </button>
+        <div className="min-h-screen bg-stone-950 text-stone-100 font-sans selection:bg-rose-500/30">
+            {!unlocked ? (
+                <div className="min-h-screen flex items-center justify-center p-4 bg-stone-50 text-stone-900">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="max-w-sm w-full bg-white/80 backdrop-blur-lg border border-stone-200 rounded-3xl p-8 text-center shadow-2xl"
+                    >
+                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-rose-100 mb-6">
+                            <Lock className="h-8 w-8 text-rose-600" />
                         </div>
+                        <h1 className="text-2xl font-bold mb-2">Geschenk öffnen</h1>
+                        <p className="text-stone-500 mb-8 text-sm">Gib deinen PIN Code ein.</p>
 
-                        {/* Premium Content Layout */}
-                        <div className="max-w-xl mx-auto px-6 pt-32 pb-40 space-y-12">
-
-                            {/* Intro Text */}
-                            <motion.div
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="text-center space-y-4 mb-16"
+                        <form onSubmit={handleUnlock} className="space-y-4">
+                            <input
+                                type="text"
+                                value={pin}
+                                onChange={(e) => {
+                                    setPin(e.target.value);
+                                    setError('');
+                                }}
+                                className="block w-full text-center text-3xl tracking-[0.5em] bg-stone-50 border border-stone-200 text-stone-900 rounded-xl py-4 focus:ring-2 focus:ring-rose-500 focus:border-transparent outline-none transition-all placeholder-stone-300"
+                                placeholder="••••"
+                                maxLength={4}
+                            />
+                            {error && (
+                                <div className="text-red-500 text-xs font-medium">{error}</div>
+                            )}
+                            <button
+                                type="submit"
+                                className="w-full py-3 px-4 rounded-xl text-sm font-semibold text-white bg-rose-600 hover:bg-rose-500 active:scale-95 transition-all shadow-lg shadow-rose-500/20"
                             >
-                                <h2 className="text-4xl md:text-5xl font-serif text-stone-800 tracking-tight leading-tight">
-                                    Von Herzen für dich
-                                </h2>
-                                <p className="text-lg text-stone-500 font-light">
-                                    Eine persönliche Nachricht von <span className="font-medium text-rose-500">{gift.senderName || gift.customerName}</span>
-                                </p>
-                                <div className="pt-8 flex justify-center">
-                                    <div className="h-px w-24 bg-gradient-to-r from-transparent via-stone-300 to-transparent"></div>
-                                </div>
-                            </motion.div>
+                                Entsperren
+                            </button>
+                        </form>
+                    </motion.div>
+                </div>
+            ) : (
+                <>
+                    {/* Size Toggle (Top Right) */}
+                    <div className="fixed top-0 right-0 z-50 p-6 mix-blend-difference">
+                        <button
+                            onClick={toggleFontSize}
+                            className="p-2 rounded-full hover:bg-white/10 text-stone-500 hover:text-stone-300 transition-all"
+                            title="Schriftgröße ändern"
+                        >
+                            <Type className={`transition-all ${fontSizeLevel === 0 ? 'h-5 w-5' : fontSizeLevel === 1 ? 'h-6 w-6' : 'h-7 w-7'}`} />
+                        </button>
+                    </div>
 
-                            {gift.messages?.map((msg, index) => (
+                    {isBracelet ? (
+                        /* BRACELET MODE (Dark Premium Theme) */
+                        <div className="min-h-screen flex flex-col">
+                            {/* Hero Section */}
+                            <div className="min-h-screen flex flex-col items-center justify-center p-8 relative">
                                 <motion.div
-                                    key={index}
-                                    initial={{ opacity: 0, y: 30 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    viewport={{ once: true, margin: "-50px" }}
-                                    transition={{ duration: 0.6, delay: index * 0.1 }}
-                                    className="bg-white rounded-3xl p-8 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.08)] border border-stone-100 relative overflow-hidden group hover:shadow-[0_20px_50px_-10px_rgba(0,0,0,0.12)] transition-all duration-500"
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    transition={{ duration: 1.5, ease: "easeOut" }}
+                                    className="text-center space-y-8 max-w-4xl"
                                 >
-                                    {/* Decorative background element */}
-                                    <div className="absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 bg-rose-50 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-700 ease-out"></div>
+                                    <div className="inline-block mb-4">
+                                        <Sparkles className="h-6 w-6 text-indigo-400 mx-auto animate-pulse" />
+                                    </div>
+                                    <h1 className="text-5xl md:text-7xl lg:text-8xl italic font-serif tracking-tight leading-tight text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-stone-400">
+                                        "{gift.engravingText || ""}"
+                                    </h1>
+                                </motion.div>
 
-                                    <div className="relative z-10">
-                                        {/* Author Label */}
-                                        <div className="flex items-center space-x-2 mb-6">
-                                            <div className="h-8 w-8 rounded-full bg-stone-100 flex items-center justify-center text-stone-500 font-bold text-xs">
-                                                {msg.author.charAt(0)}
-                                            </div>
-                                            <span className="text-xs font-bold uppercase tracking-widest text-stone-400">
-                                                {msg.author}
-                                            </span>
-                                        </div>
-
-                                        {msg.type === 'text' ? (
-                                            <p className={`${getFontSizeClass()} text-stone-700 font-medium leading-loose whitespace-pre-wrap`}>
-                                                {msg.content}
-                                            </p>
-                                        ) : (
-                                            <div className="rounded-2xl overflow-hidden shadow-lg bg-stone-900">
-                                                {msg.content.includes('youtube') || msg.content.includes('youtu.be') ? (
-                                                    <div className="aspect-w-16 aspect-h-9">
-                                                        <iframe
-                                                            src={msg.content.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
-                                                            title="Video"
-                                                            className="w-full h-full min-h-[250px]"
-                                                            allowFullScreen
-                                                        ></iframe>
-                                                    </div>
-                                                ) : (
-                                                    <a
-                                                        href={msg.content}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="flex flex-col items-center justify-center p-12 hover:bg-white/10 transition-colors text-white group"
-                                                    >
-                                                        <div className="bg-white/20 p-4 rounded-full mb-4 group-hover:scale-110 transition-transform">
-                                                            <Play className="h-8 w-8 fill-current" />
-                                                        </div>
-                                                        <span className="font-medium">Video abspielen</span>
-                                                    </a>
-                                                )}
-                                            </div>
-                                        )}
+                                {/* Scroll Indicator */}
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ delay: 2, duration: 1 }}
+                                    className="absolute bottom-12 left-0 right-0 flex justify-center"
+                                >
+                                    <div className="flex flex-col items-center text-stone-500 text-xs tracking-[0.2em] uppercase animate-bounce">
+                                        <span className="mb-2">Die Bedeutung</span>
+                                        <div className="w-px h-8 bg-gradient-to-b from-stone-500 to-transparent"></div>
                                     </div>
                                 </motion.div>
-                            ))}
-                            <div ref={messagesEndRef} />
-                        </div>
+                            </div>
 
-                        {/* Bottom Action Bar */}
-                        <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-stone-50 via-stone-50/90 to-transparent">
-                            <div className="max-w-sm mx-auto">
-                                <AnimatePresence mode="wait">
-                                    {!confirmationSent && !gift.viewed ? (
-                                        <motion.button
-                                            key="mark-read"
-                                            initial={{ y: 20, opacity: 0 }}
-                                            animate={{ y: 0, opacity: 1 }}
-                                            exit={{ y: -20, opacity: 0 }}
-                                            onClick={handleSendConfirmation}
-                                            className="w-full flex items-center justify-center space-x-2 bg-stone-900 text-white font-bold py-4 rounded-2xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all"
-                                        >
-                                            <Check className="h-5 w-5" />
-                                            <span>Gelesen</span>
-                                        </motion.button>
-                                    ) : (
-                                        <motion.div
-                                            key="thanks"
-                                            initial={{ scale: 0.8, opacity: 0 }}
-                                            animate={{ scale: 1, opacity: 1 }}
-                                            className="flex items-center justify-center space-x-2 bg-white/80 backdrop-blur border border-stone-200 text-emerald-600 font-medium py-4 rounded-2xl shadow-lg"
-                                        >
-                                            <Sparkles className="h-5 w-5" />
-                                            <span>Danke! Bestätigung gesendet.</span>
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
+                            {/* Content Section */}
+                            <div className="min-h-[80vh] bg-stone-900 flex flex-col items-center justify-center p-8 md:p-16">
+                                <div className="max-w-2xl w-full space-y-12 mb-auto mt-auto">
+                                    <div className="h-px w-24 bg-indigo-500 mb-8 opacity-50"></div>
+                                    <p className={`text-stone-300 leading-loose whitespace-pre-wrap font-sans font-light ${fontSizeLevel === 1 ? 'text-xl' : fontSizeLevel === 2 ? 'text-2xl' : 'text-lg'}`}>
+                                        {gift.meaningText || ""}
+                                    </p>
+                                    <div className="flex justify-end">
+                                        <Heart className="h-5 w-5 text-indigo-500 fill-current opacity-50" />
+                                    </div>
+                                </div>
+
+                                {/* Footer */}
+                                <div className="mt-20 text-center opacity-30 hover:opacity-100 transition-opacity pb-20">
+                                    <a href="https://www.kamlimos.de" target="_blank" rel="noopener noreferrer" className="text-xs uppercase tracking-[0.2em] font-light hover:text-white transition-colors">
+                                        www.kamlimos.de
+                                    </a>
+                                </div>
                             </div>
                         </div>
-                    </>
-                )}
-            </div>
+                    ) : (
+                        /* MUG MODE (Cinematic Dark Theme) */
+                        <div className="min-h-screen bg-stone-950 flex flex-col">
+                            {/* Hero Section */}
+                            <div className="min-h-screen flex flex-col items-center justify-center p-8 relative">
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="text-center space-y-6 max-w-4xl"
+                                >
+                                    <div className="inline-flex justify-center mb-4">
+                                        <div className="w-px h-16 bg-gradient-to-b from-transparent via-rose-500 to-transparent opacity-50"></div>
+                                    </div>
+                                    <h2 className="text-5xl md:text-7xl font-serif italic text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-stone-500 tracking-tight leading-tight">
+                                        Von Herzen<br />für dich
+                                    </h2>
+                                    <p className="text-lg text-stone-400 font-light tracking-wide mt-8">
+                                        Eine Botschaft von <span className="font-medium text-rose-400 border-b border-rose-500/30 pb-0.5">{gift.senderName || gift.customerName}</span>
+                                    </p>
+                                </motion.div>
+
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ delay: 1, duration: 1 }}
+                                    className="absolute bottom-12 left-0 right-0 flex justify-center"
+                                >
+                                    <div className="flex flex-col items-center text-stone-500 text-xs tracking-[0.2em] uppercase animate-bounce">
+                                        <span className="mb-2">Nachricht öffnen</span>
+                                        <div className="w-px h-8 bg-gradient-to-b from-stone-500 to-transparent"></div>
+                                    </div>
+                                </motion.div>
+                            </div>
+
+                            {/* Messages Section */}
+                            <div className="min-h-screen bg-stone-900/50 flex flex-col items-center p-6 md:p-12 space-y-24 py-32">
+                                {gift.messages?.map((msg, index) => (
+                                    <motion.div
+                                        key={index}
+                                        initial={{ opacity: 0, y: 30 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        viewport={{ once: true, margin: "-100px" }}
+                                        transition={{ duration: 0.8, delay: index * 0.1 }}
+                                        className="max-w-2xl w-full"
+                                    >
+                                        <div className="bg-stone-900 backdrop-blur-sm rounded-[2rem] p-8 md:p-12 border border-stone-800 shadow-2xl relative overflow-hidden group hover:border-stone-700/50 transition-colors">
+                                            {/* Glow Effect */}
+                                            <div className="absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 bg-rose-500/10 rounded-full blur-3xl group-hover:bg-rose-500/20 transition-all duration-700"></div>
+
+                                            <div className="relative z-10">
+                                                {/* Author Bubble */}
+                                                <div className="flex items-center space-x-3 mb-8">
+                                                    <div className="h-10 w-10 rounded-full bg-stone-800 border border-stone-700 flex items-center justify-center text-stone-300 font-serif italic text-lg shadow-inner">
+                                                        {msg.author.charAt(0)}
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-xs font-bold uppercase tracking-[0.2em] text-rose-500/80">
+                                                            {msg.author}
+                                                        </span>
+                                                        <span className="text-[10px] text-stone-600 uppercase tracking-wider">
+                                                            {msg.type === 'video' ? 'Video Botschaft' : 'Persönliche Worte'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Content */}
+                                                {msg.type === 'text' ? (
+                                                    <div className="relative">
+                                                        <span className="absolute -top-4 -left-2 text-6xl text-stone-800 font-serif opacity-50 user-select-none">"</span>
+                                                        <p className={`${getFontSizeClass()} text-stone-200 font-light leading-loose whitespace-pre-wrap pl-4 border-l-2 border-stone-800`}>
+                                                            {msg.content}
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    <div className="rounded-2xl overflow-hidden shadow-2xl bg-black border border-stone-800 ring-1 ring-white/5">
+                                                        {msg.content.includes('youtube') || msg.content.includes('youtu.be') ? (
+                                                            <div className="aspect-w-16 aspect-h-9">
+                                                                <iframe
+                                                                    src={msg.content.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
+                                                                    title="Video"
+                                                                    className="w-full h-full min-h-[250px]"
+                                                                    allowFullScreen
+                                                                    frameBorder="0"
+                                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                                ></iframe>
+                                                            </div>
+                                                        ) : (
+                                                            <a href={msg.content} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center justify-center p-16 text-stone-400 hover:text-white transition-colors group/video">
+                                                                <div className="w-16 h-16 rounded-full bg-stone-800 flex items-center justify-center mb-4 group-hover/video:scale-110 group-hover/video:bg-rose-600 transition-all duration-300">
+                                                                    <Play className="h-6 w-6 ml-1 text-inherit" />
+                                                                </div>
+                                                                <span className="uppercase tracking-widest text-xs font-bold">Video öffnen</span>
+                                                            </a>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                ))}
+
+                                {/* Footer */}
+                                <div className="mt-20 text-center opacity-30 hover:opacity-100 transition-opacity">
+                                    <Sparkles className="h-6 w-6 mx-auto mb-4 animate-pulse text-stone-500" />
+                                    <a href="https://www.kamlimos.de" target="_blank" rel="noopener noreferrer" className="text-xs uppercase tracking-[0.2em] font-light hover:text-white transition-colors">
+                                        www.kamlimos.de
+                                    </a>
+                                </div>
+                                <div ref={messagesEndRef} />
+                            </div>
+                        </div>
+                    )}
+                </>
+            )}
         </div>
     );
 }

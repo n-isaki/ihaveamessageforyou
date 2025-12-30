@@ -53,10 +53,10 @@ export default function UniversalViewer() {
     }
 
     // THE SMART ROUTING LOGIC
-    // Decide which experience to show based on productType
-    if (gift.productType === 'bracelet') {
-        return <StoryCard />;
-    }
+    // THE SMART ROUTING LOGIC
+    // We now use the unified Viewer (MugViewer) which handles both 'mug' and 'bracelet'
+    // This allows for a consistent codebase and fixes the dark-theme issue.
+    // if (gift.productType === 'bracelet') { ... } REMOVED
 
     // Default Fallback (Mug/Multimedia)
     // We treat 'mug' or undefined as the standard multimedia gift for backward compatibility

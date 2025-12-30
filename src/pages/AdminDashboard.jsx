@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getGifts, deleteGift } from '../services/gifts';
-import { Plus, Gift, Eye, EyeOff, Loader, Printer, ChevronDown, ChevronUp, Edit2, Video, MessageSquare, Trash2, AlertTriangle, X, Watch, Coffee, Zap } from 'lucide-react';
+import { Plus, Gift, Eye, EyeOff, Loader, Printer, ChevronDown, ChevronUp, Edit2, Video, MessageSquare, Trash2, AlertTriangle, X, Watch, Coffee, Zap, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AdminDashboard() {
@@ -141,6 +141,15 @@ export default function AdminDashboard() {
                                             <div className="h-8 w-px bg-stone-200"></div>
 
                                             <div className="flex space-x-1" onClick={e => e.stopPropagation()}>
+                                                <a
+                                                    href={`/v/${gift.id}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="p-2 text-stone-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg"
+                                                    title="Öffnen"
+                                                >
+                                                    <ExternalLink className="h-5 w-5" />
+                                                </a>
                                                 <Link to={`/admin/print/${gift.id}`} target="_blank" className="p-2 text-stone-400 hover:text-stone-800 hover:bg-stone-100 rounded-lg" title="QR Code">
                                                     <Printer className="h-5 w-5" />
                                                 </Link>
@@ -225,10 +234,18 @@ export default function AdminDashboard() {
                                                                 <span className="font-semibold">Absender:</span>
                                                                 <span>{gift.senderName || gift.customerName}</span>
                                                             </div>
-                                                            <div className="flex items-center space-x-2 text-sm text-stone-600">
+                                                            <div className="flex items-center space-x-2 text-sm text-stone-600 mb-4">
                                                                 <span className="font-semibold">Nachrichten:</span>
                                                                 <span>{gift.messages?.length || 0} Elemente</span>
                                                             </div>
+                                                            <a
+                                                                href={`/v/${gift.id}`}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="block w-full py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 text-center rounded-lg text-sm font-medium transition-colors border border-stone-200"
+                                                            >
+                                                                Seite öffnen ↗
+                                                            </a>
                                                         </div>
                                                     </div>
                                                 </div>

@@ -29,7 +29,8 @@ export default function GiftWizard() {
         designImage: '', // URL for placeholder
 
         // Bracelet Specific
-        engravingText: ''
+        engravingText: '',
+        meaningText: ''
     });
 
     useEffect(() => {
@@ -49,7 +50,8 @@ export default function GiftWizard() {
                             openingAnimation: data.openingAnimation || 'none',
                             messages: data.messages || [],
                             designImage: data.designImage || '', // Load design image
-                            engravingText: data.engravingText || '' // Load bracelet text
+                            engravingText: data.engravingText || '', // Load bracelet text
+                            meaningText: data.meaningText || ''
                         });
                     } else {
                         setError("Geschenk nicht gefunden.");
@@ -270,18 +272,33 @@ export default function GiftWizard() {
 
                                 {/* BRACELET ONLY: Engraving Text */}
                                 {isBracelet && (
-                                    <div className="md:col-span-2 bg-indigo-50 p-4 rounded-xl border border-indigo-100">
-                                        <label className="block text-sm font-medium text-indigo-900 mb-1">Gravur Text (Manuell)</label>
-                                        <p className="text-xs text-indigo-500 mb-2">Lass leer, wenn der Kunde dies via Ritual machen soll.</p>
-                                        <textarea
-                                            rows={3}
-                                            name="engravingText"
-                                            value={formData.engravingText}
-                                            onChange={handleInputChange}
-                                            className={`${styles.input} border-indigo-200 focus:border-indigo-500 focus:ring-indigo-500`}
-                                            placeholder="Ich halte dich nicht fest..."
-                                        />
-                                    </div>
+                                    <>
+                                        <div className="md:col-span-2">
+                                            <label className={styles.label}>Gravur Text (z.B. Latein)</label>
+                                            <input
+                                                type="text"
+                                                name="engravingText"
+                                                value={formData.engravingText || ''}
+                                                onChange={handleInputChange}
+                                                className={`${styles.input} font-serif italic text-lg`}
+                                                placeholder="Amor Fati"
+                                            />
+                                            <p className="text-xs text-stone-500 mt-1">Das steht auf dem Armband.</p>
+                                        </div>
+
+                                        <div className="md:col-span-2">
+                                            <label className={styles.label}>Die Bedeutung (Story Card)</label>
+                                            <textarea
+                                                name="meaningText"
+                                                value={formData.meaningText || ''}
+                                                onChange={handleInputChange}
+                                                rows="6"
+                                                className={styles.input}
+                                                placeholder="Erkläre hier die tiefe Bedeutung des Spruchs..."
+                                            />
+                                            <p className="text-xs text-stone-500 mt-1">Dieser Text erscheint, wenn der QR-Code gescannt wird.</p>
+                                        </div>
+                                    </>
                                 )}
                             </div>
 

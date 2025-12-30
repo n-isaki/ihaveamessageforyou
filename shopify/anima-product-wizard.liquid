@@ -1,17 +1,13 @@
 <!-- 
-  ANIMA SMART WIZARD V4 (Flow Correction)
+  ANIMA SMART WIZARD V5 - MVP MUG EDITION
   
-  LOGIK:
-  A. TASSE (Mug):
-     - Zeigt vollen Wizard:
-       1. "Für wen?" (Geschenk/Ich) + Name
-       2. "Nachricht" (Text + Video Link)
-       -> Warenkorb.
+  Fokus: Nur "Multimedia Tasse".
+  Armband-Logik ist vorerst deaktiviert (auskommentiert).
   
-  B. ARMBAND (Bracelet):
-     - KEIN Wizard.
-     - Zeigt sofort den Kaufen-Button.
-     - Info: "Den Rest klären wir nach dem Kauf per Link."
+  Wizard Flow:
+  1. "Für wen?" (Geschenk/Ich) + Name
+  2. "Nachricht" (Text + Video Link)
+  -> Warenkorb.
 -->
 
 <div class="anima-wizard-container page-width">
@@ -28,28 +24,7 @@
       {%- form 'product', product, id: 'product-form-installment', class: 'installment caption-large' -%}
         <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}">
 
-        <!-- FALLUNTERSCHEIDUNG: ARMBAND vs TASSE -->
-        
-        {% if product.type contains 'Armband' or product.type contains 'Bracelet' %}
-          
-          <!-- ARMBAND: DIREKTER KAUF -->
-          <div class="direct-buy-container">
-            <div class="info-box-highlight">
-              <span class="icon">✨</span>
-              <div>
-                <strong>So funktioniert's:</strong>
-                <p>Kaufe jetzt das Armband. Du erhältst sofort danach einen E-Mail-Link, um dein persönliches Ritual (KI-Chat) zu starten. Dort klären wir auch, für wen es ist und was graviert werden soll.</p>
-              </div>
-            </div>
-            
-            <button type="submit" class="anima-btn-primary full-width big-btn">
-              Jetzt kaufen - {{ product.price | money }}
-            </button>
-          </div>
-
-        {% else %}
-
-          <!-- TASSE: WIZARD FLOW -->
+          <!-- TASSE: WIZARD FLOW (STANDARD) -->
           
           <!-- STEP 1: CONTEXT -->
           <div class="wizard-step" id="step-1">
@@ -100,9 +75,6 @@
             </div>
           </div>
 
-        {% endif %}
-        <!-- END FALLUNTERSCHEIDUNG -->
-
       {%- endform -%}
     </product-form>
   </div>
@@ -117,15 +89,6 @@
   .step-title { font-size: 1.25rem; font-weight: bold; margin-bottom: 1rem; color: #1c1917; }
   .step-desc { font-size: 0.9rem; color: #78716c; margin-bottom: 1.5rem; }
   .hidden { display: none; }
-
-  /* ARMBAND INFO BOX */
-  .info-box-highlight { 
-    background: #fdf2f8; border: 1px solid #fbcfe8; border-radius: 12px; padding: 16px; 
-    margin-bottom: 24px; display: flex; gap: 12px; align-items: flex-start;
-  }
-  .info-box-highlight .icon { font-size: 20px; }
-  .info-box-highlight p { font-size: 0.9rem; color: #831843; margin: 4px 0 0 0; line-height: 1.4; }
-  .info-box-highlight strong { color: #831843; font-weight: 700; font-size: 0.9rem; }
 
   /* INPUTS */
   .input-group { margin-bottom: 20px; text-align: left; }
@@ -147,8 +110,6 @@
   .anima-btn-primary { background: #1c1917; color: white; border: none; padding: 14px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; flex: 1; transition: background 0.2s; width: 100%; font-size: 1rem; }
   .anima-btn-primary:hover { background: #000; }
   .anima-btn-secondary { background: white; color: #1c1917; border: 1px solid #d6d3d1; padding: 14px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; }
-  
-  .big-btn { padding: 18px 24px; font-size: 1.1rem; }
 </style>
 
 <script>
@@ -165,8 +126,8 @@
 
 {% schema %}
 {
-  "name": "Anima Smart Wizard V4",
+  "name": "Anima Smart Wizard MVP",
   "settings": [],
-  "presets": [{ "name": "Anima Smart Wizard V4" }]
+  "presets": [{ "name": "Anima Smart Wizard MVP" }]
 }
 {% endschema %}
