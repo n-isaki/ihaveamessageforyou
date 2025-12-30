@@ -1,79 +1,52 @@
 <!-- 
-  ANIMA SMART WIZARD V5 - MVP MUG EDITION
-  
-  Fokus: Nur "Multimedia Tasse".
-  Armband-Logik ist vorerst deaktiviert (auskommentiert).
-  
-  Wizard Flow:
-  1. "Für wen?" (Geschenk/Ich) + Name
-  2. "Nachricht" (Text + Video Link)
-  -> Warenkorb.
+  ANIMA SMART WIZARD V7 - MUG ONLY EDITION
+  Dieses Template sollte im Shopify Admin nur dem Produkt "Multimedia Tasse" zugewiesen werden.
 -->
 
 <div class="anima-wizard-container page-width">
   
-  <!-- HEADER -->
   <div class="anima-wizard-card">
     <div class="wizard-header">
       <h1 class="h2">{{ product.title }}</h1>
       <p class="price-large">{{ product.price | money }}</p>
     </div>
 
-    <!-- START PRODUCT FORM -->
+    <!-- PRODUCT FORM -->
     <product-form class="product-form">
       {%- form 'product', product, id: 'product-form-installment', class: 'installment caption-large' -%}
         <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}">
+        
+        <!-- Fix product type to mug for our backend logic -->
+        <input type="hidden" name="properties[_Digital_Typ]" value="mug">
 
-          <!-- TASSE: WIZARD FLOW (STANDARD) -->
-          
-          <!-- STEP 1: CONTEXT -->
-          <div class="wizard-step" id="step-1">
-            <h3 class="step-title">1. Für wen ist dieses Geschenk?</h3>
-            <div class="options-grid">
-              <label class="option-card">
-                <input type="radio" name="properties[Anlass]" value="Geschenk" checked onchange="toggleRecipientField(true)">
-                <div class="option-content">
-                  <span class="icon">🎁</span>
-                  <span class="label">Als Geschenk</span>
-                </div>
-              </label>
-              <label class="option-card">
-                <input type="radio" name="properties[Anlass]" value="Für Mich" onchange="toggleRecipientField(false)">
-                <div class="option-content">
-                  <span class="icon">🙋‍♂️</span>
-                  <span class="label">Für mich selbst</span>
-                </div>
-              </label>
-            </div>
-            
-            <div id="recipient-container" class="input-group">
-              <label>Name des Empfängers</label>
-              <input type="text" name="properties[Empfänger Name]" placeholder="z.B. Opa Hans" class="anima-input">
-            </div>
-            
-            <button type="button" class="anima-btn-primary" onclick="goToStep(2)">Weiter zu deiner Nachricht</button>
+        <!-- SECTION: MUG FIELDS -->
+        <div class="mm-fields">
+          <div class="info-box">
+            <p><strong>Dein Multimedia-Geschenk gestalten:</strong><br>Hinterlege hier deine persönlichen Nachrichten, Videolinks oder andere Inhalte, die beim Scannen der Tasse erscheinen sollen.</p>
           </div>
 
-          <!-- STEP 2: CONTENT -->
-          <div class="wizard-step hidden" id="step-2">
-            <h3 class="step-title">2. Deine persönliche Nachricht</h3>
-            <p class="step-desc">Diese Nachricht wird hinter dem QR-Code auf der Tasse hinterlegt.</p>
-
-            <div class="input-group">
-              <label>Deine Nachricht (Text)</label>
-              <textarea name="properties[Erste Nachricht]" rows="4" class="anima-input" placeholder="Schreib etwas Schönes..."></textarea>
-            </div>
-
-            <div class="input-group">
-              <label>Video Link (YouTube) - Optional</label>
-              <input type="text" name="properties[Video Link]" placeholder="https://..." class="anima-input">
-            </div>
-
-            <div class="step-actions">
-              <button type="button" class="anima-btn-secondary" onclick="goToStep(1)">Zurück</button>
-              <button type="submit" class="anima-btn-primary full-width">In den Warenkorb</button>
-            </div>
+          <div class="input-group">
+            <label>Deine Nachricht(en) <span class="req">*</span></label>
+            <p class="field-hint">Du kannst mehrere Nachrichten schreiben. <br>Format: "Von [Name]: [Text]"</p>
+            <textarea name="properties[Nachrichten]" rows="6" class="anima-input" placeholder="Von Saskia: Alles Gute zum Geburtstag!&#10;Von Oma: Wir haben dich lieb!" required></textarea>
           </div>
+
+          <div class="input-group">
+            <label>Video Link (YouTube/Vimeo) <span class="opt">(Optional)</span></label>
+            <p class="field-hint">Kopiere hier den Link zu deinem Video rein.</p>
+            <input type="text" name="properties[Video Link]" placeholder="https://youtube.com/watch?v=..." class="anima-input">
+          </div>
+
+          <div class="input-group">
+            <label>Sonstiger Link <span class="opt">(Optional)</span></label>
+            <input type="text" name="properties[Link]" placeholder="https://..." class="anima-input">
+          </div>
+        </div>
+
+        <!-- SUBMIT -->
+        <div class="wizard-footer">
+          <button type="submit" class="anima-btn-primary full-width">In den Warenkorb</button>
+        </div>
 
       {%- endform -%}
     </product-form>
@@ -81,53 +54,70 @@
 </div>
 
 <style>
-  /* GENERAL SETUP */
-  .anima-wizard-container { max-width: 600px; margin: 40px auto; }
-  .anima-wizard-card { background: white; border: 1px solid #e7e5e4; border-radius: 24px; padding: 32px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05); }
-  .wizard-header { text-align: center; margin-bottom: 32px; border-bottom: 1px solid #f5f5f4; padding-bottom: 20px; }
-  .price-large { font-size: 1.5rem; font-weight: bold; color: #be123c; margin: 0; }
-  .step-title { font-size: 1.25rem; font-weight: bold; margin-bottom: 1rem; color: #1c1917; }
-  .step-desc { font-size: 0.9rem; color: #78716c; margin-bottom: 1.5rem; }
-  .hidden { display: none; }
-
-  /* INPUTS */
-  .input-group { margin-bottom: 20px; text-align: left; }
-  .input-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: #44403c; }
-  .anima-input { width: 100%; padding: 12px; border: 1px solid #d6d3d1; border-radius: 12px; font-size: 1rem; transition: border-color 0.2s; }
-  .anima-input:focus { border-color: #be123c; outline: none; }
-
-  /* RADIO CARDS */
-  .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
-  .option-card { cursor: pointer; position: relative; }
-  .option-card input { position: absolute; opacity: 0; }
-  .option-content { border: 2px solid #e7e5e4; border-radius: 16px; padding: 16px; text-align: center; transition: all 0.2s; background: #fafaf9; }
-  .option-card input:checked + .option-content { border-color: #be123c; background: #fff1f2; color: #be123c; }
-  .option-content .icon { display: block; font-size: 24px; margin-bottom: 8px; }
-  .option-content .label { font-weight: 600; font-size: 0.9rem; }
-
-  /* BUTTONS */
-  .step-actions { display: flex; gap: 12px; margin-top: 20px; }
-  .anima-btn-primary { background: #1c1917; color: white; border: none; padding: 14px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; flex: 1; transition: background 0.2s; width: 100%; font-size: 1rem; }
-  .anima-btn-primary:hover { background: #000; }
-  .anima-btn-secondary { background: white; color: #1c1917; border: 1px solid #d6d3d1; padding: 14px 24px; border-radius: 12px; font-weight: 600; cursor: pointer; }
-</style>
-
-<script>
-  function toggleRecipientField(show) {
-    const el = document.getElementById('recipient-container');
-    if(el) el.style.display = show ? 'block' : 'none';
+  /* MODERN CSS VARIABLES */
+  :root {
+    --anima-primary: #1c1917;
+    --anima-accent: #be123c;
+    --anima-bg: #fafaf9;
+    --anima-border: #e7e5e4;
   }
+
+  /* LAYOUT */
+  .anima-wizard-container { max-width: 600px; margin: 40px auto; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  .anima-wizard-card { background: white; border: 1px solid var(--anima-border); border-radius: 24px; padding: 40px; box-shadow: 0 20px 40px -10px rgba(0,0,0,0.05); }
+  .wizard-header { text-align: center; margin-bottom: 32px; }
+  .wizard-header h1 { font-size: 1.8rem; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
+  .price-large { font-size: 1.25rem; color: var(--anima-accent); font-weight: 600; }
+
   
-  function goToStep(stepNum) {
-    document.querySelectorAll('.wizard-step').forEach(el => el.classList.add('hidden'));
-    document.getElementById(`step-${stepNum}`).classList.remove('hidden');
+  /* INFO BOX */
+  .info-box { background: var(--anima-bg); border-left: 4px solid var(--anima-accent); padding: 16px; border-radius: 8px; margin-bottom: 24px; font-size: 0.9rem; line-height: 1.5; color: #44403c; }
+  
+  /* INPUTS */
+  .input-group { margin-bottom: 24px; }
+  .input-group label { display: block; font-weight: 600; font-size: 0.95rem; margin-bottom: 6px; color: var(--anima-primary); }
+  .field-hint { font-size: 0.85rem; color: #78716c; margin-top: 0; margin-bottom: 8px; line-height: 1.4; }
+  .req { color: var(--anima-accent); }
+  .opt { color: #a8a29e; font-weight: normal; font-size: 0.8em; }
+  
+  .anima-input { 
+    width: 100%; 
+    padding: 14px; 
+    border: 1px solid #d6d3d1; 
+    border-radius: 12px; 
+    font-size: 1rem; 
+    transition: all 0.2s; 
+    background: #fff;
+    color: #1c1917;
   }
-</script>
+  .anima-input:focus { border-color: var(--anima-accent); outline: none; box-shadow: 0 0 0 3px rgba(190, 18, 60, 0.1); }
+  textarea.anima-input { resize: vertical; min-height: 120px; line-height: 1.5; }
+
+  /* UTILS */
+  .full-width { width: 100%; }
+
+  /* BUTTON */
+  .anima-btn-primary {
+    background: var(--anima-primary);
+    color: white;
+    border: none;
+    padding: 16px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.2s;
+    margin-top: 10px;
+  }
+  .anima-btn-primary:hover { background: #000; transform: translateY(-1px); }
+  .anima-btn-primary:active { transform: translateY(1px); }
+
+</style>
 
 {% schema %}
 {
-  "name": "Anima Smart Wizard MVP",
+  "name": "Anima Mug Wizard Only",
   "settings": [],
-  "presets": [{ "name": "Anima Smart Wizard MVP" }]
+  "presets": [{ "name": "Anima Mug Wizard Only" }]
 }
 {% endschema %}
