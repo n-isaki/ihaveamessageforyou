@@ -93,7 +93,7 @@ export default function AdminDashboard() {
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'dua' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'
                                 }`}
                         >
-                            Muslim Dua
+                            Dua
                         </button>
                     </div>
 
@@ -126,7 +126,7 @@ export default function AdminDashboard() {
                                         {/* Left Side: Icon & Main Info */}
                                         <div className="flex items-start space-x-4">
                                             <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 ${gift.project === 'dua' ? 'bg-emerald-100 text-emerald-600' :
-                                                    gift.productType === 'bracelet' ? 'bg-indigo-100 text-indigo-600' : 'bg-orange-100 text-orange-600'
+                                                gift.productType === 'bracelet' ? 'bg-indigo-100 text-indigo-600' : 'bg-orange-100 text-orange-600'
                                                 }`}>
                                                 {gift.project === 'dua' ? <Zap className="h-6 w-6" /> :
                                                     gift.productType === 'bracelet' ? <Watch className="h-6 w-6" /> : <Coffee className="h-6 w-6" />}
@@ -138,7 +138,7 @@ export default function AdminDashboard() {
                                                         {gift.recipientName || 'Unbekannt'}
                                                     </h3>
                                                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${gift.project === 'dua' ? 'bg-emerald-50 text-emerald-700' :
-                                                            gift.productType === 'bracelet' ? 'bg-indigo-50 text-indigo-700' : 'bg-orange-50 text-orange-700'
+                                                        gift.productType === 'bracelet' ? 'bg-indigo-50 text-indigo-700' : 'bg-orange-50 text-orange-700'
                                                         }`}>
                                                         {gift.project === 'dua' ? 'Dua Audio' :
                                                             gift.productType === 'bracelet' ? 'Armband' : 'Tasse'}

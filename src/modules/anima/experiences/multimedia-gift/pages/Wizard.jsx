@@ -17,7 +17,8 @@ export default function GiftWizard() {
 
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
-    const [uploading, setUploading] = useState(false);
+    const [uploadingRecitation, setUploadingRecitation] = useState(false);
+    const [uploadingMeaning, setUploadingMeaning] = useState(false);
     const [initialLoading, setInitialLoading] = useState(isEditMode);
     const [error, setError] = useState('');
 
@@ -42,7 +43,8 @@ export default function GiftWizard() {
         // Dua Specific
         title: '',       // e.g. "Dua für Verzeihung"
         arabicText: '',  // The Arabic script
-        audioUrl: '',    // URL to MP3 in Storage
+        audioUrl: '',    // URL to MP3 in Storage (Recitation)
+        meaningAudioUrl: '', // URL to MP3 in Storage (Meaning)
         transliteration: '', // Optional phonetic
     });
 
@@ -70,6 +72,7 @@ export default function GiftWizard() {
                             title: data.title || '',
                             arabicText: data.arabicText || '',
                             audioUrl: data.audioUrl || '',
+                            meaningAudioUrl: data.meaningAudioUrl || '',
                             transliteration: data.transliteration || ''
                         });
                     } else {
@@ -96,23 +99,30 @@ export default function GiftWizard() {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleAudioUpload = async (e) => {
+    const handleAudioUpload = async (e, type) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        setUploading(true);
+        if (type === 'recitation') setUploadingRecitation(true);
+        else setUploadingMeaning(true);
+
         try {
             // Create a reference to 'audio/filename_timestamp'
             const storageRef = ref(storage, `dua-audio/${Date.now()}_${file.name}`);
             await uploadBytes(storageRef, file);
             const url = await getDownloadURL(storageRef);
 
-            setFormData(prev => ({ ...prev, audioUrl: url }));
+            if (type === 'recitation') {
+                setFormData(prev => ({ ...prev, audioUrl: url }));
+            } else {
+                setFormData(prev => ({ ...prev, meaningAudioUrl: url }));
+            }
         } catch (error) {
             console.error("Upload failed", error);
             alert(`Upload Fehler: ${error.message}`);
         } finally {
-            setUploading(false);
+            if (type === 'recitation') setUploadingRecitation(false);
+            else setUploadingMeaning(false);
         }
     };
 
@@ -278,20 +288,20 @@ export default function GiftWizard() {
                                         <input type="text" name="title" value={formData.title} onChange={handleInputChange} className={styles.input} placeholder="Titel..." />
                                     </div>
 
-                                    {/* AUDIO UPLOAD */}
+                                    {/* AUDIO 1: RECITATION */}
                                     <div className="bg-emerald-50 p-6 rounded-xl border border-emerald-100">
-                                        <label className={styles.label}>Audio Datei (MP3)</label>
+                                        <label className={styles.label}>1. Audio: Rezitation (Arabisch)</label>
                                         <div className="mt-2 flex items-center space-x-4">
                                             <label className="cursor-pointer flex items-center px-4 py-2 border border-emerald-300 rounded-lg shadow-sm text-sm font-medium text-emerald-700 bg-white hover:bg-emerald-50">
-                                                {uploading ? <Loader className="animate-spin h-5 w-5" /> : <UploadCloud className="h-5 w-5 mr-2" />}
-                                                {uploading ? 'Lädt hoch...' : 'Datei wählen'}
-                                                <input type="file" accept="audio/*" className="hidden" onChange={handleAudioUpload} />
+                                                {uploadingRecitation ? <Loader className="animate-spin h-5 w-5" /> : <UploadCloud className="h-5 w-5 mr-2" />}
+                                                {uploadingRecitation ? 'Lädt hoch...' : 'Datei wählen'}
+                                                <input type="file" accept="audio/*" className="hidden" onChange={(e) => handleAudioUpload(e, 'recitation')} />
                                             </label>
 
                                             {formData.audioUrl ? (
                                                 <div className="flex items-center text-emerald-700 text-sm">
                                                     <FileAudio className="h-5 w-5 mr-2" />
-                                                    <span>Audio erfolgreich hochgeladen!</span>
+                                                    <span>Vorhanden ✅</span>
                                                     <audio src={formData.audioUrl} controls className="ml-4 h-8" />
                                                 </div>
                                             ) : (
@@ -313,15 +323,38 @@ export default function GiftWizard() {
                                         />
                                     </div>
 
+                                    {/* AUDIO 2: MEANING */}
+                                    <div className="bg-stone-50 p-6 rounded-xl border border-stone-200">
+                                        <label className={styles.label}>2. Audio: Bedeutung/Story (Deutsch)</label>
+                                        <p className="text-xs text-stone-500 mb-2">Optional: Läuft im Abschnitt der Bedeutung.</p>
+                                        <div className="mt-2 flex items-center space-x-4">
+                                            <label className="cursor-pointer flex items-center px-4 py-2 border border-stone-300 rounded-lg shadow-sm text-sm font-medium text-stone-700 bg-white hover:bg-stone-50">
+                                                {uploadingMeaning ? <Loader className="animate-spin h-5 w-5" /> : <UploadCloud className="h-5 w-5 mr-2" />}
+                                                {uploadingMeaning ? 'Lädt hoch...' : 'Datei wählen'}
+                                                <input type="file" accept="audio/*" className="hidden" onChange={(e) => handleAudioUpload(e, 'meaning')} />
+                                            </label>
+
+                                            {formData.meaningAudioUrl ? (
+                                                <div className="flex items-center text-stone-700 text-sm">
+                                                    <FileAudio className="h-5 w-5 mr-2" />
+                                                    <span>Vorhanden ✅</span>
+                                                    <audio src={formData.meaningAudioUrl} controls className="ml-4 h-8" />
+                                                </div>
+                                            ) : (
+                                                <span className="text-sm text-stone-400">Keine Datei ausgewählt</span>
+                                            )}
+                                        </div>
+                                    </div>
+
                                     <div>
-                                        <label className={styles.label}>Bedeutung / Übersetzung (Markdown möglich)</label>
+                                        <label className={styles.label}>Bedeutung Text (Markdown)</label>
                                         <textarea
                                             name="meaningText"
                                             value={formData.meaningText}
                                             onChange={handleInputChange}
                                             rows="5"
                                             className={styles.input}
-                                            placeholder="**Im Namen Allahs**..."
+                                            placeholder="Erklärung hier..."
                                         />
                                     </div>
 
@@ -338,7 +371,7 @@ export default function GiftWizard() {
                                     </div>
                                 </div>
                             ) : (
-                                /* KAMLIMOS FORM (Simplified for brevity as it was working) */
+                                /* KAMLIMOS FORM (Standard) */
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label className={styles.label}>Empfänger</label>
@@ -400,7 +433,8 @@ export default function GiftWizard() {
                                 {isDua && (
                                     <>
                                         <p><strong>Titel:</strong> {formData.title}</p>
-                                        <p><strong>Audio:</strong> {formData.audioUrl ? 'Vorhanden ✅' : 'Fehlt ❌'}</p>
+                                        <p><strong>Audio (Rezitation):</strong> {formData.audioUrl ? 'Vorhanden ✅' : 'Fehlt ❌'}</p>
+                                        <p><strong>Audio (Bedeutung):</strong> {formData.meaningAudioUrl ? 'Vorhanden ✅' : 'Fehlt ❌'}</p>
                                         <p><strong>Arabisch:</strong> {formData.arabicText ? 'Vorhanden ✅' : 'Fehlt ❌'}</p>
                                     </>
                                 )}
