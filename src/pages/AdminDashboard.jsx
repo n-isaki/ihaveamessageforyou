@@ -135,7 +135,9 @@ export default function AdminDashboard() {
                                             <div>
                                                 <div className="flex items-center space-x-2">
                                                     <h3 className="text-lg font-bold text-stone-900">
-                                                        {gift.recipientName || 'Unbekannt'}
+                                                        {gift.project === 'dua'
+                                                            ? (gift.title || gift.customerName || (gift.customerEmail ? gift.customerEmail.split('@')[0] : 'Unbekanntes Dua'))
+                                                            : (gift.recipientName || 'Unbekannt')}
                                                     </h3>
                                                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${gift.project === 'dua' ? 'bg-emerald-50 text-emerald-700' :
                                                         gift.productType === 'bracelet' ? 'bg-indigo-50 text-indigo-700' : 'bg-orange-50 text-orange-700'
