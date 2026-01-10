@@ -13,6 +13,9 @@ export default function AdminDashboard() {
     const [deleteId, setDeleteId] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
+    // Project Tabs
+    const [activeTab, setActiveTab] = useState('kamlimos'); // 'kamlimos' | 'dua'
+
     useEffect(() => {
         fetchGifts();
     }, []);
@@ -27,6 +30,11 @@ export default function AdminDashboard() {
             setLoading(false);
         }
     };
+
+    const filteredGifts = gifts.filter(g => {
+        if (activeTab === 'dua') return g.project === 'dua';
+        return !g.project || g.project === 'kamlimos';
+    });
 
     const toggleExpand = (id) => {
         setExpandedId(expandedId === id ? null : id);
@@ -63,13 +71,34 @@ export default function AdminDashboard() {
     return (
         <div className="min-h-screen bg-stone-50 p-8 relative">
             <div className="max-w-6xl mx-auto">
-                <div className="flex justify-between items-center mb-8">
+
+                {/* Header & Tabs */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <div>
                         <h1 className="text-3xl font-bold text-stone-900">Dashboard</h1>
-                        <p className="text-stone-500 mt-1">Verwalte deine Connected Gifts</p>
+                        <p className="text-stone-500 mt-1">Verwalte deine Connected Produkte</p>
                     </div>
+
+                    {/* TABS */}
+                    <div className="flex p-1 bg-stone-200 rounded-xl">
+                        <button
+                            onClick={() => setActiveTab('kamlimos')}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'kamlimos' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'
+                                }`}
+                        >
+                            Kamlimos
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('dua')}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'dua' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'
+                                }`}
+                        >
+                            Muslim Dua
+                        </button>
+                    </div>
+
                     <Link
-                        to="/admin/create"
+                        to={activeTab === 'dua' ? "/admin/create?project=dua" : "/admin/create"}
                         className="inline-flex items-center px-4 py-2 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-stone-900 hover:bg-stone-800 transition-colors"
                     >
                         <Plus className="h-5 w-5 mr-2" />
@@ -78,14 +107,14 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="space-y-4">
-                    {gifts.length === 0 ? (
+                    {filteredGifts.length === 0 ? (
                         <div className="text-center py-20 bg-white rounded-3xl shadow-sm">
                             <Gift className="h-12 w-12 mx-auto text-stone-300 mb-4" />
                             <h3 className="text-lg font-medium text-stone-900">Keine Aufträge</h3>
-                            <p className="text-stone-500">Warte auf Bestellungen oder nutze den Simulator.</p>
+                            <p className="text-stone-500">In diesem Projekt ist noch nichts los.</p>
                         </div>
                     ) : (
-                        gifts.map((gift) => (
+                        filteredGifts.map((gift) => (
                             <motion.div
                                 layout
                                 key={gift.id}
@@ -96,9 +125,11 @@ export default function AdminDashboard() {
 
                                         {/* Left Side: Icon & Main Info */}
                                         <div className="flex items-start space-x-4">
-                                            <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 ${gift.productType === 'bracelet' ? 'bg-indigo-100 text-indigo-600' : 'bg-orange-100 text-orange-600'
+                                            <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 ${gift.project === 'dua' ? 'bg-emerald-100 text-emerald-600' :
+                                                    gift.productType === 'bracelet' ? 'bg-indigo-100 text-indigo-600' : 'bg-orange-100 text-orange-600'
                                                 }`}>
-                                                {gift.productType === 'bracelet' ? <Watch className="h-6 w-6" /> : <Coffee className="h-6 w-6" />}
+                                                {gift.project === 'dua' ? <Zap className="h-6 w-6" /> :
+                                                    gift.productType === 'bracelet' ? <Watch className="h-6 w-6" /> : <Coffee className="h-6 w-6" />}
                                             </div>
 
                                             <div>
@@ -106,24 +137,16 @@ export default function AdminDashboard() {
                                                     <h3 className="text-lg font-bold text-stone-900">
                                                         {gift.recipientName || 'Unbekannt'}
                                                     </h3>
-                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${gift.productType === 'bracelet' ? 'bg-indigo-50 text-indigo-700' : 'bg-orange-50 text-orange-700'
+                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${gift.project === 'dua' ? 'bg-emerald-50 text-emerald-700' :
+                                                            gift.productType === 'bracelet' ? 'bg-indigo-50 text-indigo-700' : 'bg-orange-50 text-orange-700'
                                                         }`}>
-                                                        {gift.productType === 'bracelet' ? 'Armband' : 'Tasse'}
+                                                        {gift.project === 'dua' ? 'Dua Audio' :
+                                                            gift.productType === 'bracelet' ? 'Armband' : 'Tasse'}
                                                     </span>
                                                 </div>
                                                 <p className="text-sm text-stone-500">
                                                     Bestellung <span className="font-mono bg-stone-100 px-1 rounded">{gift.orderId || 'MANUAL'}</span> von {gift.customerName}
                                                 </p>
-
-                                                {/* Quick Production Info Preview */}
-                                                <div className="mt-2 flex items-center space-x-4 text-xs font-medium text-stone-400">
-                                                    {gift.productType === 'mug' && gift.designImage && (
-                                                        <span className="flex items-center text-emerald-600">
-                                                            <div className="w-4 h-4 rounded-full bg-emerald-500 mr-2"></div>
-                                                            Design vorhanden
-                                                        </span>
-                                                    )}
-                                                </div>
                                             </div>
                                         </div>
 
@@ -179,89 +202,50 @@ export default function AdminDashboard() {
                                         >
                                             <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
 
-                                                {/* Col 1: Production Data (THE IMPORTANT PART) */}
+                                                {/* DATA VIEW */}
                                                 <div className="md:col-span-2 space-y-6">
-                                                    <div>
-                                                        <h4 className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-4">Produktions-Daten (Laser)</h4>
-
-                                                        <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-sm">
-                                                            {gift.productType === 'mug' ? (
-                                                                <div className="flex items-start space-x-6">
-                                                                    {gift.designImage ? (
-                                                                        <div className="shrink-0">
-                                                                            <img src={gift.designImage} alt="Design" className="h-32 w-32 object-cover rounded-lg border border-stone-100 shadow-sm" />
-                                                                            <p className="mt-2 text-xs text-center text-stone-400">Gewähltes Design</p>
-                                                                        </div>
-                                                                    ) : (
-                                                                        <div className="h-32 w-32 bg-stone-100 rounded-lg flex items-center justify-center text-stone-400 text-xs">Kein Bild</div>
-                                                                    )}
-                                                                    <div className="flex-1">
-                                                                        <h5 className="font-bold text-stone-900 mb-1">Tassen-Gravur</h5>
-                                                                        <p className="text-sm text-stone-600 mb-4">Bitte das gewählte Design + QR Code lasern.</p>
-                                                                        <a
-                                                                            href={gift.designImage}
-                                                                            target="_blank"
-                                                                            className="inline-flex items-center text-xs font-bold text-rose-600 hover:text-rose-700 underline"
-                                                                        >
-                                                                            Bild in voller Größe öffnen
-                                                                        </a>
+                                                    {gift.project === 'dua' ? (
+                                                        <div className="bg-white p-6 rounded-xl border border-stone-200">
+                                                            <h4 className="font-bold mb-4">Dua Audio Details</h4>
+                                                            <p><strong>Audio URL:</strong> <a href={gift.audioUrl} className="text-blue-500 underline truncate block">{gift.audioUrl}</a></p>
+                                                            <p className="mt-2"><strong>Arabisch:</strong> {gift.arabicText?.substring(0, 50)}...</p>
+                                                        </div>
+                                                    ) : (
+                                                        <div>
+                                                            <h4 className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-4">Produktions-Daten (Laser)</h4>
+                                                            <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-sm">
+                                                                {gift.productType === 'mug' ? (
+                                                                    <div className="flex items-start space-x-6">
+                                                                        {gift.designImage ? (
+                                                                            <div className="shrink-0">
+                                                                                <img src={gift.designImage} alt="Design" className="h-32 w-32 object-cover rounded-lg border border-stone-100 shadow-sm" />
+                                                                                <p className="mt-2 text-xs text-center text-stone-400">Design</p>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="h-32 w-32 bg-stone-100 rounded-lg flex items-center justify-center text-stone-400 text-xs">Kein Bild</div>
+                                                                        )}
                                                                     </div>
-                                                                </div>
-                                                            ) : (
-                                                                // BRACELET VIEW
-                                                                <div>
-                                                                    <h5 className="font-bold text-stone-900 mb-2">Armband-Gravur</h5>
-                                                                    {gift.engravingText ? (
+                                                                ) : (
+                                                                    <div>
+                                                                        <h5 className="font-bold text-stone-900 mb-2">Armband-Gravur</h5>
                                                                         <div className="p-4 bg-stone-100 rounded-lg border-l-4 border-indigo-500">
-                                                                            <p className="font-mono text-xl text-stone-900 tracking-wide">{gift.engravingText}</p>
+                                                                            <p className="font-mono text-xl text-stone-900 tracking-wide">{gift.engravingText || '-'}</p>
                                                                         </div>
-                                                                    ) : (
-                                                                        <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-100 text-yellow-800 text-sm flex items-center">
-                                                                            <AlertTriangle className="h-4 w-4 mr-2" />
-                                                                            Warte auf Kunden-Input (Ritual noch nicht beendet).
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Digital Content Preview */}
-                                                    <div>
-                                                        <h4 className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-4">Digitaler Inhalt (QR Ziel)</h4>
-                                                        <div className="bg-white p-4 rounded-xl border border-stone-200">
-                                                            <div className="flex items-center space-x-2 text-sm text-stone-600 mb-2">
-                                                                <span className="font-semibold">Absender:</span>
-                                                                <span>{gift.senderName || gift.customerName}</span>
+                                                                    </div>
+                                                                )}
                                                             </div>
-                                                            <div className="flex items-center space-x-2 text-sm text-stone-600 mb-4">
-                                                                <span className="font-semibold">Nachrichten:</span>
-                                                                <span>{gift.messages?.length || 0} Elemente</span>
-                                                            </div>
-                                                            <a
-                                                                href={`/v/${gift.id}`}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="block w-full py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 text-center rounded-lg text-sm font-medium transition-colors border border-stone-200"
-                                                            >
-                                                                Seite öffnen ↗
-                                                            </a>
                                                         </div>
-                                                    </div>
+                                                    )}
                                                 </div>
 
-                                                {/* Col 2: Meta Data */}
+                                                {/* Meta Data */}
                                                 <div className="space-y-6">
                                                     <div>
                                                         <h4 className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-4">Metadaten</h4>
                                                         <dl className="space-y-3 text-sm">
                                                             <div className="flex justify-between pb-2 border-b border-stone-100">
                                                                 <dt className="text-stone-500">Kunden E-Mail</dt>
-                                                                <dd className="font-medium text-stone-900 truncate ml-2" title={gift.customerEmail}>{gift.customerEmail}</dd>
-                                                            </div>
-                                                            <div className="flex justify-between pb-2 border-b border-stone-100">
-                                                                <dt className="text-stone-500">Erstellt am</dt>
-                                                                <dd className="text-stone-900">{gift.createdAt?.seconds ? new Date(gift.createdAt.seconds * 1000).toLocaleDateString() : 'N/A'}</dd>
+                                                                <dd className="font-medium text-stone-900 truncate ml-2">{gift.customerEmail}</dd>
                                                             </div>
                                                             <div className="flex justify-between pb-2 border-b border-stone-100">
                                                                 <dt className="text-stone-500">PIN Code</dt>
@@ -269,10 +253,6 @@ export default function AdminDashboard() {
                                                             </div>
                                                         </dl>
                                                     </div>
-
-                                                    <button className="w-full py-2 bg-stone-900 text-white rounded-lg text-sm font-bold hover:bg-stone-800 transition-colors shadow-lg shadow-stone-200">
-                                                        Status Update (Versendet)
-                                                    </button>
                                                 </div>
 
                                             </div>

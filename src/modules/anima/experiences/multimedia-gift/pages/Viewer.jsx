@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { getGiftById, markGiftAsViewed } from '@/services/gifts';
-import { Lock, Play, Loader, Heart, Check, Sparkles, Type } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Lock, Play, Loader, Heart, Sparkles, Type } from 'lucide-react';
+import { motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
+import ReactMarkdown from 'react-markdown';
 
 export default function GiftReveal() {
     const { id } = useParams();
@@ -12,7 +13,6 @@ export default function GiftReveal() {
     const [pin, setPin] = useState('');
     const [error, setError] = useState('');
     const [unlocked, setUnlocked] = useState(false);
-    const [confirmationSent, setConfirmationSent] = useState(false);
     const [fontSizeLevel, setFontSizeLevel] = useState(0); // 0=Normal, 1=Large, 2=Extra Large
     const messagesEndRef = useRef(null);
 
@@ -37,12 +37,15 @@ export default function GiftReveal() {
         }
     }, [id]);
 
-    // Auto-unlock for bracelets (Physical access is key)
+    // Auto-unlock for bracelets AND Mark as Viewed immediately
     useEffect(() => {
         if (gift && gift.productType === 'bracelet') {
             setUnlocked(true);
+            if (!gift.viewed) {
+                markGiftAsViewed(id).catch(err => console.error("Error marking as viewed", err));
+            }
         }
-    }, [gift]);
+    }, [gift, id]);
 
     const triggerAnimation = (type) => {
         const duration = 3000;
@@ -112,24 +115,17 @@ export default function GiftReveal() {
         e.preventDefault();
         if (gift && pin === gift.accessCode) {
             setUnlocked(true);
+
+            // Mark as viewed when unlocked with PIN
+            if (!gift.viewed) {
+                markGiftAsViewed(id).catch(err => console.error("Error marking as viewed", err));
+            }
+
             if (gift.openingAnimation && gift.openingAnimation !== 'none') {
                 setTimeout(() => triggerAnimation(gift.openingAnimation), 500);
             }
         } else {
             setError("Falscher PIN Code.");
-        }
-    };
-
-    const handleSendConfirmation = async () => {
-        if (!gift || confirmationSent) return;
-
-        try {
-            setConfirmationSent(true);
-            if (!gift.viewed) {
-                await markGiftAsViewed(id);
-            }
-        } catch (error) {
-            console.error("Error sending confirmation:", error);
         }
     };
 
@@ -169,17 +165,20 @@ export default function GiftReveal() {
     return (
         <div className="min-h-screen bg-stone-950 text-stone-100 font-sans selection:bg-rose-500/30">
             {!unlocked ? (
-                <div className="min-h-screen flex items-center justify-center p-4 bg-stone-50 text-stone-900">
+                <div className="min-h-screen flex items-center justify-center p-4 bg-stone-950 text-stone-100">
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="max-w-sm w-full bg-white/80 backdrop-blur-lg border border-stone-200 rounded-3xl p-8 text-center shadow-2xl"
+                        className="max-w-sm w-full bg-stone-900/60 backdrop-blur-xl border border-stone-800 rounded-3xl p-8 text-center shadow-2xl relative overflow-hidden"
                     >
-                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-rose-100 mb-6">
-                            <Lock className="h-8 w-8 text-rose-600" />
+                        {/* Background Glow */}
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 bg-rose-500/10 rounded-full blur-3xl -z-10"></div>
+
+                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-stone-800 border border-stone-700 mb-6 shadow-inner">
+                            <Lock className="h-6 w-6 text-rose-500" />
                         </div>
-                        <h1 className="text-2xl font-bold mb-2">Geschenk öffnen</h1>
-                        <p className="text-stone-500 mb-8 text-sm">Gib deinen PIN Code ein.</p>
+                        <h1 className="text-2xl font-serif italic text-stone-100 mb-2">Deine Nachricht</h1>
+                        <p className="text-stone-400 mb-8 text-sm font-light">Eine persönliche Botschaft wartet auf dich.</p>
 
                         <form onSubmit={handleUnlock} className="space-y-4">
                             <input
@@ -189,18 +188,18 @@ export default function GiftReveal() {
                                     setPin(e.target.value);
                                     setError('');
                                 }}
-                                className="block w-full text-center text-3xl tracking-[0.5em] bg-stone-50 border border-stone-200 text-stone-900 rounded-xl py-4 focus:ring-2 focus:ring-rose-500 focus:border-transparent outline-none transition-all placeholder-stone-300"
+                                className="block w-full text-center text-3xl tracking-[0.5em] bg-stone-950/50 border border-stone-700 text-white rounded-xl py-4 focus:ring-1 focus:ring-rose-500/50 focus:border-rose-500/50 outline-none transition-all placeholder-stone-700"
                                 placeholder="••••"
                                 maxLength={4}
                             />
                             {error && (
-                                <div className="text-red-500 text-xs font-medium">{error}</div>
+                                <div className="text-rose-500 text-xs font-medium tracking-wide">{error}</div>
                             )}
                             <button
                                 type="submit"
-                                className="w-full py-3 px-4 rounded-xl text-sm font-semibold text-white bg-rose-600 hover:bg-rose-500 active:scale-95 transition-all shadow-lg shadow-rose-500/20"
+                                className="w-full py-4 px-4 rounded-xl text-sm font-medium tracking-wide text-white bg-rose-600 hover:bg-rose-500 active:scale-95 transition-all shadow-lg shadow-rose-900/20 mt-2"
                             >
-                                Entsperren
+                                Nachricht öffnen
                             </button>
                         </form>
                     </motion.div>
@@ -253,12 +252,29 @@ export default function GiftReveal() {
 
                             {/* Content Section */}
                             <div className="min-h-[80vh] bg-stone-900 flex flex-col items-center justify-center p-8 md:p-16">
-                                <div className="max-w-2xl w-full space-y-12 mb-auto mt-auto">
+                                <div className="max-w-2xl w-full space-y-8 mb-auto mt-auto">
                                     <div className="h-px w-24 bg-indigo-500 mb-8 opacity-50"></div>
-                                    <p className={`text-stone-300 leading-loose whitespace-pre-wrap font-sans font-light ${fontSizeLevel === 1 ? 'text-xl' : fontSizeLevel === 2 ? 'text-2xl' : 'text-lg'}`}>
-                                        {gift.meaningText || ""}
-                                    </p>
-                                    <div className="flex justify-end">
+
+                                    {/* MARKDOWN CONTENT */}
+                                    <div className={`prose prose-invert prose-stone max-w-none ${getFontSizeClass()}`}>
+                                        <ReactMarkdown
+                                            components={{
+                                                p: ({ node, ...props }) => <p className="mb-6 leading-loose text-stone-300 font-light" {...props} />,
+                                                strong: ({ node, ...props }) => <strong className="font-semibold text-white" {...props} />,
+                                                h1: ({ node, ...props }) => <h1 className="text-3xl font-serif text-white mt-8 mb-4" {...props} />,
+                                                h2: ({ node, ...props }) => <h2 className="text-2xl font-serif text-stone-200 mt-8 mb-4 border-b border-stone-800 pb-2" {...props} />,
+                                                h3: ({ node, ...props }) => <h3 className="text-xl font-serif text-stone-200 mt-6 mb-3" {...props} />,
+                                                ul: ({ node, ...props }) => <ul className="list-disc pl-6 mb-6 space-y-2 text-stone-300" {...props} />,
+                                                li: ({ node, ...props }) => <li className="pl-2" {...props} />,
+                                                blockquote: ({ node, ...props }) => <blockquote className="border-l-4 border-indigo-500 pl-4 py-1 italic text-stone-400 my-6 bg-stone-950/30 p-4 rounded-r-lg" {...props} />,
+                                                a: ({ node, ...props }) => <a className="text-indigo-400 hover:text-indigo-300 underline" {...props} />,
+                                            }}
+                                        >
+                                            {gift.meaningText || ""}
+                                        </ReactMarkdown>
+                                    </div>
+
+                                    <div className="flex justify-end mt-12">
                                         <Heart className="h-5 w-5 text-indigo-500 fill-current opacity-50" />
                                     </div>
                                 </div>

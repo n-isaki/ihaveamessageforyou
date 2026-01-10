@@ -5,7 +5,8 @@ import { Loader } from 'lucide-react';
 
 // Import Specific Experiences
 import MugViewer from '../experiences/multimedia-gift/pages/Viewer';
-import StoryCard from '../experiences/engraving-ritual/pages/StoryCard';
+import DuaViewer from '../experiences/dua/pages/DuaViewer';
+
 
 export default function UniversalViewer() {
     const { id } = useParams();
@@ -53,12 +54,10 @@ export default function UniversalViewer() {
     }
 
     // THE SMART ROUTING LOGIC
-    // THE SMART ROUTING LOGIC
-    // We now use the unified Viewer (MugViewer) which handles both 'mug' and 'bracelet'
-    // This allows for a consistent codebase and fixes the dark-theme issue.
-    // if (gift.productType === 'bracelet') { ... } REMOVED
+    if (gift.project === 'dua' || gift.productType === 'dua-audio') {
+        return <DuaViewer />;
+    }
 
-    // Default Fallback (Mug/Multimedia)
-    // We treat 'mug' or undefined as the standard multimedia gift for backward compatibility
+    // Default Fallback (Mug/Multimedia/Bracelet)
     return <MugViewer />;
 }

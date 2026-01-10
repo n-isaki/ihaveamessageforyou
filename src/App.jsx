@@ -14,7 +14,7 @@ import PrintGift from './pages/PrintGift';
 // Anima Modules
 import GiftWizard from './modules/anima/experiences/multimedia-gift/pages/Wizard';
 import UniversalViewer from './modules/anima/core/UniversalViewer';
-import RitualChat from './modules/anima/experiences/engraving-ritual/pages/RitualChat';
+
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -47,7 +47,7 @@ function App() {
         <Route path="/v/:id" element={<UniversalViewer />} />
 
         {/* Experiences */}
-        <Route path="/ritual/:id" element={<RitualChat />} />
+
 
         {/* Legacy / Alias */}
         <Route path="/gift/:id" element={<UniversalViewer />} />
