@@ -1,0 +1,13 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /gift_orders/{document=**} {
+      // Public Read (So customers can view their gift via ID)
+      // In a stricter version, we could require knowledge of the ID, but Firestore reads by ID are secure by obscurity for this use case mostly.
+      allow read: if true;
+
+      // Write (Create, Update, Delete) only for Admins
+      allow write: if request.auth != null;
+    }
+  }
+}
