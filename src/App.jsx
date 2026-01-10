@@ -36,12 +36,25 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+// Domain Routing Logic
+const DomainAwareHome = () => {
+  const host = window.location.hostname;
+
+  // If user visits admin.kamlimos.com (root path), go to dashboard
+  if (host.startsWith('admin.')) {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
+
+  // Otherwise show standard Landing Page
+  return <LandingPage />;
+};
+
 function App() {
   return (
     <Router>
       <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<LandingPage />} />
+        {/* Public Routes with Domain Logic */}
+        <Route path="/" element={<DomainAwareHome />} />
 
         {/* The Smart Viewer (QR Target) */}
         <Route path="/v/:id" element={<UniversalViewer />} />
