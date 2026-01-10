@@ -10,7 +10,8 @@ import {
     query,
     orderBy
 } from "firebase/firestore";
-import { db } from "../firebase";
+import { ref, deleteObject } from "firebase/storage";
+import { db, storage } from "../firebase";
 
 const COLLECTION_NAME = "gift_orders";
 
@@ -44,6 +45,30 @@ export const updateGift = async (id, giftData) => {
 
 export const deleteGift = async (id) => {
     try {
+        // 1. Get Data to find URLs to delete from storage
+        const gift = await getGiftById(id);
+
+        if (gift) {
+            // Collect all potential file URLs
+            const potentialFiles = [gift.audioUrl, gift.meaningAudioUrl, gift.designImage];
+
+            // Filter only valid Firebase Storage URLs
+            const filesToDelete = potentialFiles.filter(url => url && typeof url === 'string' && url.includes('firebasestorage.googleapis.com'));
+
+            // Delete each file
+            for (const url of filesToDelete) {
+                try {
+                    const fileRef = ref(storage, url);
+                    await deleteObject(fileRef);
+                    console.log("Deleted file from storage:", url);
+                } catch (err) {
+                    // Ignore errors if file doesn't exist anymore or isn't deletable
+                    console.warn("Could not delete file (maybe already gone or external URL):", url);
+                }
+            }
+        }
+
+        // 2. Delete the DB Document
         const docRef = doc(db, COLLECTION_NAME, id);
         await deleteDoc(docRef);
     } catch (error) {
