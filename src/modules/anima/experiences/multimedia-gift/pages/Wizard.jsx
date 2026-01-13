@@ -85,6 +85,7 @@ export default function GiftWizard() {
                             lifeDates: data.lifeDates || '',
                             photoUrl: data.photoUrl || ''
                         });
+                        setStep(2); // Jump to details step on edit
                     } else {
                         setError("Geschenk nicht gefunden.");
                     }

@@ -36,6 +36,20 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+// Admin Domain Guard
+const AdminDomainGuard = ({ children }) => {
+  // Only allow if hostname starts with 'admin.' or is localhost (for dev)
+  const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const isAdminDomain = window.location.hostname.startsWith('admin.');
+
+  if (!isDev && !isAdminDomain) {
+    // Redirect to main domain root if trying to access admin on wrong domain
+    window.location.href = 'https://kamlimos.com';
+    return null;
+  }
+  return children;
+};
+
 // Domain Routing Logic
 const DomainAwareHome = () => {
   const host = window.location.hostname;
@@ -44,6 +58,10 @@ const DomainAwareHome = () => {
   if (host.startsWith('admin.')) {
     return <Navigate to="/admin/dashboard" replace />;
   }
+
+  // If user visits /admin/* on non-admin domain, redirect to home (or could redirect to admin subdomain)
+  // This logic is better handled in the route guard, but if we are at root and NOT admin subdomain, we show LandingPage.
+  // The actual protection for /admin routes needs to be in the Route definition.
 
   // Otherwise show standard Landing Page
   return <LandingPage />;
@@ -69,19 +87,25 @@ function App() {
 
         {/* Admin Routes */}
         <Route path="/admin/dashboard" element={
-          <ProtectedRoute>
-            <AdminDashboard />
-          </ProtectedRoute>
+          <AdminDomainGuard>
+            <ProtectedRoute>
+              <AdminDashboard />
+            </ProtectedRoute>
+          </AdminDomainGuard>
         } />
         <Route path="/admin/create" element={
-          <ProtectedRoute>
-            <GiftWizard />
-          </ProtectedRoute>
+          <AdminDomainGuard>
+            <ProtectedRoute>
+              <GiftWizard />
+            </ProtectedRoute>
+          </AdminDomainGuard>
         } />
         <Route path="/admin/edit/:id" element={
-          <ProtectedRoute>
-            <GiftWizard />
-          </ProtectedRoute>
+          <AdminDomainGuard>
+            <ProtectedRoute>
+              <GiftWizard />
+            </ProtectedRoute>
+          </AdminDomainGuard>
         } />
         <Route path="/admin/print/:id" element={
           <ProtectedRoute>
