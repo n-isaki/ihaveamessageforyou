@@ -3,7 +3,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { createGift, getGiftById, updateGift } from '@/services/gifts';
 import { storage } from '@/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { Plus, Trash2, Video, MessageSquare, ArrowRight, ArrowLeft, Save, Loader, Coffee, Watch, Music, FileAudio, UploadCloud, Zap } from 'lucide-react';
+import { Plus, Trash2, Video, MessageSquare, ArrowRight, ArrowLeft, Save, Loader, Coffee, Watch, Music, FileAudio, UploadCloud, Zap, Heart, Image as ImageIcon } from 'lucide-react';
 
 export default function GiftWizard() {
     const navigate = useNavigate();
@@ -19,13 +19,14 @@ export default function GiftWizard() {
     const [loading, setLoading] = useState(false);
     const [uploadingRecitation, setUploadingRecitation] = useState(false);
     const [uploadingMeaning, setUploadingMeaning] = useState(false);
+    const [uploadingPhoto, setUploadingPhoto] = useState(false);
     const [initialLoading, setInitialLoading] = useState(isEditMode);
     const [error, setError] = useState('');
 
     const [formData, setFormData] = useState({
         // Common
-        project: urlProjectMode || 'kamlimos', // 'kamlimos' | 'dua'
-        productType: 'mug', // 'mug', 'bracelet', 'dua-audio'
+        project: urlProjectMode || 'kamlimos', // 'kamlimos' | 'dua' | 'memoria' | 'ritual'
+        productType: 'mug', // 'mug', 'bracelet', 'dua-audio', 'memory-card'
         recipientName: '',
         senderName: '',
         customerName: '',
@@ -46,6 +47,11 @@ export default function GiftWizard() {
         audioUrl: '',    // URL to MP3 in Storage (Recitation)
         meaningAudioUrl: '', // URL to MP3 in Storage (Meaning)
         transliteration: '', // Optional phonetic
+
+        // Memoria Specific
+        deceasedName: '',
+        lifeDates: '', // e.g. "1954 - 2023"
+        photoUrl: '', // URL to image in Storage
     });
 
     useEffect(() => {
@@ -73,7 +79,11 @@ export default function GiftWizard() {
                             arabicText: data.arabicText || '',
                             audioUrl: data.audioUrl || '',
                             meaningAudioUrl: data.meaningAudioUrl || '',
-                            transliteration: data.transliteration || ''
+                            transliteration: data.transliteration || '',
+                            // Memoria
+                            deceasedName: data.deceasedName || '',
+                            lifeDates: data.lifeDates || '',
+                            photoUrl: data.photoUrl || ''
                         });
                     } else {
                         setError("Geschenk nicht gefunden.");
@@ -87,9 +97,16 @@ export default function GiftWizard() {
             };
             fetchGift();
         } else {
-            // If new, set product type based on project
+            // New gift creation with preset project mode
             if (urlProjectMode === 'dua') {
                 setFormData(prev => ({ ...prev, project: 'dua', productType: 'dua-audio' }));
+                setStep(2);
+            } else if (urlProjectMode === 'memoria') {
+                setFormData(prev => ({ ...prev, project: 'memoria', productType: 'memory-card' }));
+                setStep(2);
+            } else if (urlProjectMode === 'ritual') {
+                setFormData(prev => ({ ...prev, project: 'ritual', productType: 'bracelet' }));
+                setStep(2);
             }
         }
     }, [id, isEditMode, urlProjectMode]);
@@ -123,6 +140,23 @@ export default function GiftWizard() {
         } finally {
             if (type === 'recitation') setUploadingRecitation(false);
             else setUploadingMeaning(false);
+        }
+    };
+
+    const handlePhotoUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        setUploadingPhoto(true);
+        try {
+            const storageRef = ref(storage, `memoria-photos/${Date.now()}_${file.name}`);
+            await uploadBytes(storageRef, file);
+            const url = await getDownloadURL(storageRef);
+            setFormData(prev => ({ ...prev, photoUrl: url }));
+        } catch (error) {
+            console.error("Upload failed", error);
+            alert(`Upload Fehler: ${error.message}`);
+        } finally {
+            setUploadingPhoto(false);
         }
     };
 
@@ -193,14 +227,16 @@ export default function GiftWizard() {
     };
 
     const isDua = formData.project === 'dua';
-    const isBracelet = formData.productType === 'bracelet';
+    const isMemoria = formData.project === 'memoria';
+    const isRitual = formData.project === 'ritual' || formData.productType === 'bracelet';
+    const isBracelet = isRitual; // Alias for readability in render logic if needed
 
     return (
         <div className="min-h-screen bg-stone-50 py-12 px-4 sm:px-6 lg:px-8 font-sans">
             <div className="max-w-3xl mx-auto">
                 <div className="flex items-center justify-between mb-8">
                     <h1 className="text-3xl font-bold text-stone-900">
-                        {isEditMode ? 'Auftrag bearbeiten' : isDua ? 'Neues Dua Audio' : 'Neuer Auftrag'}
+                        {isEditMode ? 'Auftrag bearbeiten' : isDua ? 'Neues Noor' : isMemoria ? 'Neues Memoria' : 'Neuer Auftrag'}
                     </h1>
                     <button
                         onClick={() => navigate('/admin/dashboard')}
@@ -212,9 +248,9 @@ export default function GiftWizard() {
 
                 {/* Progress Steps */}
                 <div className="mb-8 flex space-x-2">
-                    <div className={`h-2 flex-1 rounded-full ${step >= 1 ? (isDua ? 'bg-emerald-500' : 'bg-rose-500') : 'bg-stone-200'}`}></div>
-                    <div className={`h-2 flex-1 rounded-full ${step >= 2 ? (isDua ? 'bg-emerald-500' : 'bg-rose-500') : 'bg-stone-200'}`}></div>
-                    <div className={`h-2 flex-1 rounded-full ${step >= 3 ? (isDua ? 'bg-emerald-500' : 'bg-rose-500') : 'bg-stone-200'}`}></div>
+                    <div className={`h-2 flex-1 rounded-full ${step >= 1 ? (isDua ? 'bg-emerald-500' : isMemoria ? 'bg-stone-600' : isRitual ? 'bg-indigo-500' : 'bg-rose-500') : 'bg-stone-200'}`}></div>
+                    <div className={`h-2 flex-1 rounded-full ${step >= 2 ? (isDua ? 'bg-emerald-500' : isMemoria ? 'bg-stone-600' : isRitual ? 'bg-indigo-500' : 'bg-rose-500') : 'bg-stone-200'}`}></div>
+                    <div className={`h-2 flex-1 rounded-full ${step >= 3 ? (isDua ? 'bg-emerald-500' : isMemoria ? 'bg-stone-600' : isRitual ? 'bg-indigo-500' : 'bg-rose-500') : 'bg-stone-200'}`}></div>
                 </div>
 
                 <div className="bg-white shadow rounded-2xl p-8 border border-stone-100">
@@ -232,10 +268,25 @@ export default function GiftWizard() {
                                         <div className="flex items-center justify-between">
                                             <div>
                                                 <Zap className="h-8 w-8 mb-4 text-emerald-600" />
-                                                <h3 className="font-bold text-stone-900">Dua Audio Card</h3>
+                                                <h3 className="font-bold text-stone-900">Noor Audio Card</h3>
                                                 <p className="text-xs text-stone-500 mt-1">Audio Player + Arabisch + Übersetzung</p>
                                             </div>
                                             <div className="h-4 w-4 rounded-full bg-emerald-500"></div>
+                                        </div>
+                                    </button>
+                                </div>
+                            ) : isMemoria ? (
+                                <div className="grid grid-cols-1 gap-4">
+                                    <button
+                                        className={`p-6 rounded-xl border-2 text-left transition-all border-stone-500 bg-stone-50 ring-2 ring-stone-200`}
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <Heart className="h-8 w-8 mb-4 text-stone-600" />
+                                                <h3 className="font-bold text-stone-900">Memory Card</h3>
+                                                <p className="text-xs text-stone-500 mt-1">Foto + Audio + Geschichte (A4 + Stand)</p>
+                                            </div>
+                                            <div className="h-4 w-4 rounded-full bg-stone-500"></div>
                                         </div>
                                     </button>
                                 </div>
@@ -310,18 +361,7 @@ export default function GiftWizard() {
                                         </div>
                                     </div>
 
-                                    <div>
-                                        <label className={styles.label}>Arabischer Text</label>
-                                        <textarea
-                                            name="arabicText"
-                                            value={formData.arabicText}
-                                            onChange={handleInputChange}
-                                            rows="4"
-                                            dir="rtl"
-                                            className={`${styles.input} font-serif text-xl leading-loose`}
-                                            placeholder="بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ"
-                                        />
-                                    </div>
+                                    {/* ARABIC TEXT INPUT REMOVED PER USER REQUEST */}
 
                                     {/* AUDIO 2: MEANING */}
                                     <div className="bg-stone-50 p-6 rounded-xl border border-stone-200">
@@ -359,7 +399,74 @@ export default function GiftWizard() {
                                     </div>
 
                                     {/* Basic Metadata needed for DB */}
-                                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-stone-100">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-stone-100">
+                                        <div>
+                                            <label className={styles.label}>Bestellnummer (Shopify/Etsy)</label>
+                                            <input type="text" name="orderId" value={formData.orderId} onChange={handleInputChange} className={styles.input} placeholder="#1001" />
+                                        </div>
+                                        <div>
+                                            <label className={styles.label}>Kunden Name</label>
+                                            <input type="text" name="customerName" value={formData.customerName} onChange={handleInputChange} className={styles.input} />
+                                        </div>
+                                        <div>
+                                            <label className={styles.label}>Kunden Email</label>
+                                            <input type="text" name="customerEmail" value={formData.customerEmail} onChange={handleInputChange} className={styles.input} />
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : isMemoria ? (
+                                /* MEMORIA FORM */
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <div>
+                                            <label className={styles.label}>Name des Verstorbenen</label>
+                                            <input type="text" name="deceasedName" value={formData.deceasedName} onChange={handleInputChange} className={styles.input} placeholder="z.B. Opa Hans" />
+                                        </div>
+                                        <div>
+                                            <label className={styles.label}>Lebensdaten (Jahr - Jahr)</label>
+                                            <input type="text" name="lifeDates" value={formData.lifeDates} onChange={handleInputChange} className={styles.input} placeholder="1950 - 2024" />
+                                        </div>
+                                    </div>
+
+                                    {/* AUDIO (Recitation slot reused as Main Audio) */}
+                                    <div className="bg-stone-50 p-6 rounded-xl border border-stone-200">
+                                        <label className={styles.label}>Audio Geschichte/Musik (Suno)</label>
+                                        <div className="mt-2 flex items-center space-x-4">
+                                            <label className="cursor-pointer flex items-center px-4 py-2 border border-stone-300 rounded-lg shadow-sm text-sm font-medium text-stone-700 bg-white hover:bg-stone-50">
+                                                {uploadingRecitation ? <Loader className="animate-spin h-5 w-5" /> : <UploadCloud className="h-5 w-5 mr-2" />}
+                                                {uploadingRecitation ? 'Lädt hoch...' : 'Audio wählen'}
+                                                <input type="file" accept="audio/*" className="hidden" onChange={(e) => handleAudioUpload(e, 'recitation')} />
+                                            </label>
+
+                                            {formData.audioUrl ? (
+                                                <div className="flex items-center text-stone-700 text-sm">
+                                                    <FileAudio className="h-5 w-5 mr-2" />
+                                                    <span>Vorhanden ✅</span>
+                                                    <audio src={formData.audioUrl} controls className="ml-4 h-8" />
+                                                </div>
+                                            ) : (
+                                                <span className="text-sm text-stone-400">Keine Datei ausgewählt</span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className={styles.label}>Geschichte / Text (Markdown)</label>
+                                        <textarea
+                                            name="meaningText"
+                                            value={formData.meaningText}
+                                            onChange={handleInputChange}
+                                            rows="8"
+                                            className={styles.input}
+                                            placeholder="Hier die Geschichte des Verstorbenen schreiben..."
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-stone-100">
+                                        <div>
+                                            <label className={styles.label}>Bestellnummer</label>
+                                            <input type="text" name="orderId" value={formData.orderId} onChange={handleInputChange} className={styles.input} placeholder="#1001" />
+                                        </div>
                                         <div>
                                             <label className={styles.label}>Kunden Name</label>
                                             <input type="text" name="customerName" value={formData.customerName} onChange={handleInputChange} className={styles.input} />
@@ -373,6 +480,10 @@ export default function GiftWizard() {
                             ) : (
                                 /* KAMLIMOS FORM (Standard) */
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="md:col-span-2">
+                                        <label className={styles.label}>Bestellnummer (Shopify/Etsy)</label>
+                                        <input type="text" name="orderId" value={formData.orderId} onChange={handleInputChange} className={styles.input} placeholder="#1001" />
+                                    </div>
                                     <div>
                                         <label className={styles.label}>Empfänger</label>
                                         <input type="text" name="recipientName" value={formData.recipientName} onChange={handleInputChange} className={styles.input} />
@@ -404,7 +515,8 @@ export default function GiftWizard() {
                             )}
 
                             <div className="flex justify-between pt-4">
-                                <button onClick={() => setStep(1)} className={styles.btnSecondary}>Zurück</button>
+                                {!urlProjectMode && <button onClick={() => setStep(1)} className={styles.btnSecondary}>Zurück</button>}
+                                <div className="flex-1"></div>
                                 <button onClick={() => setStep(3)} className={styles.btnPrimary}>
                                     Weiter <ArrowRight className="ml-2 h-4 w-4 inline" />
                                 </button>
@@ -430,12 +542,18 @@ export default function GiftWizard() {
                             <div className="bg-stone-50 p-6 rounded-xl space-y-4">
                                 <p><strong>Projekt:</strong> {formData.project}</p>
                                 <p><strong>Typ:</strong> {formData.productType}</p>
+                                {isMemoria && (
+                                    <>
+                                        <p><strong>Name:</strong> {formData.deceasedName}</p>
+                                        <p><strong>Daten:</strong> {formData.lifeDates}</p>
+                                        <p><strong>Audio:</strong> {formData.audioUrl ? 'Vorhanden ✅' : 'Fehlt ❌'}</p>
+                                    </>
+                                )}
                                 {isDua && (
                                     <>
                                         <p><strong>Titel:</strong> {formData.title}</p>
                                         <p><strong>Audio (Rezitation):</strong> {formData.audioUrl ? 'Vorhanden ✅' : 'Fehlt ❌'}</p>
                                         <p><strong>Audio (Bedeutung):</strong> {formData.meaningAudioUrl ? 'Vorhanden ✅' : 'Fehlt ❌'}</p>
-                                        <p><strong>Arabisch:</strong> {formData.arabicText ? 'Vorhanden ✅' : 'Fehlt ❌'}</p>
                                     </>
                                 )}
                             </div>

@@ -6,6 +6,7 @@ import { Loader } from 'lucide-react';
 // Import Specific Experiences
 import MugViewer from '../experiences/multimedia-gift/pages/Viewer';
 import DuaViewer from '../experiences/dua/pages/DuaViewer';
+import MemoryViewer from '../experiences/memoria/pages/MemoryViewer';
 
 
 export default function UniversalViewer() {
@@ -54,6 +55,10 @@ export default function UniversalViewer() {
     }
 
     // THE SMART ROUTING LOGIC
+    if (gift.project === 'memoria') {
+        return <MemoryViewer />;
+    }
+
     if (gift.project === 'dua' || gift.productType === 'dua-audio') {
         return <DuaViewer />;
     }

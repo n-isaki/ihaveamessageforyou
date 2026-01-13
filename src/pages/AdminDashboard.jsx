@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getGifts, deleteGift } from '../services/gifts';
-import { Plus, Gift, Eye, EyeOff, Loader, Printer, ChevronDown, ChevronUp, Edit2, Video, MessageSquare, Trash2, AlertTriangle, X, Watch, Coffee, Zap, ExternalLink } from 'lucide-react';
+import { Plus, Gift, Eye, EyeOff, Loader, Printer, ChevronDown, ChevronUp, Edit2, Video, MessageSquare, Trash2, AlertTriangle, X, Watch, Coffee, Zap, ExternalLink, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AdminDashboard() {
@@ -14,7 +14,7 @@ export default function AdminDashboard() {
     const [isDeleting, setIsDeleting] = useState(false);
 
     // Project Tabs
-    const [activeTab, setActiveTab] = useState('kamlimos'); // 'kamlimos' | 'dua'
+    const [activeTab, setActiveTab] = useState('kamlimos'); // 'kamlimos' | 'dua' | 'memoria' | 'ritual'
 
     useEffect(() => {
         fetchGifts();
@@ -33,7 +33,10 @@ export default function AdminDashboard() {
 
     const filteredGifts = gifts.filter(g => {
         if (activeTab === 'dua') return g.project === 'dua';
-        return !g.project || g.project === 'kamlimos';
+        if (activeTab === 'memoria') return g.project === 'memoria';
+        if (activeTab === 'ritual') return g.project === 'ritual' || (g.productType === 'bracelet' && (!g.project || g.project === 'kamlimos'));
+        // Kamlimos defaults (Mugs/Multimedia Tasse)
+        return (!g.project || g.project === 'kamlimos') && g.productType !== 'bracelet';
     });
 
     const toggleExpand = (id) => {
@@ -80,26 +83,43 @@ export default function AdminDashboard() {
                     </div>
 
                     {/* TABS */}
-                    <div className="flex p-1 bg-stone-200 rounded-xl">
+                    <div className="flex p-1 bg-stone-200 rounded-xl overflow-x-auto">
                         <button
                             onClick={() => setActiveTab('kamlimos')}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'kamlimos' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'kamlimos' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'
                                 }`}
                         >
-                            Kamlimos
+                            Tasse
                         </button>
                         <button
                             onClick={() => setActiveTab('dua')}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'dua' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'dua' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'
                                 }`}
                         >
-                            Dua
+                            Noor
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('memoria')}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'memoria' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'
+                                }`}
+                        >
+                            Memoria
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('ritual')}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'ritual' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'
+                                }`}
+                        >
+                            Armband
                         </button>
                     </div>
 
                     <Link
-                        to={activeTab === 'dua' ? "/admin/create?project=dua" : "/admin/create"}
-                        className="inline-flex items-center px-4 py-2 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-stone-900 hover:bg-stone-800 transition-colors"
+                        to={activeTab === 'memoria' ? "/admin/create?project=memoria" :
+                            activeTab === 'dua' ? "/admin/create?project=dua" :
+                                activeTab === 'ritual' ? "/admin/create?project=ritual" :
+                                    "/admin/create"}
+                        className="inline-flex items-center px-4 py-2 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-stone-900 hover:bg-stone-800 transition-colors shrink-0"
                     >
                         <Plus className="h-5 w-5 mr-2" />
                         Neuer Auftrag
@@ -126,10 +146,12 @@ export default function AdminDashboard() {
                                         {/* Left Side: Icon & Main Info */}
                                         <div className="flex items-start space-x-4">
                                             <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 ${gift.project === 'dua' ? 'bg-emerald-100 text-emerald-600' :
-                                                gift.productType === 'bracelet' ? 'bg-indigo-100 text-indigo-600' : 'bg-orange-100 text-orange-600'
+                                                gift.project === 'memoria' ? 'bg-stone-100 text-stone-600' :
+                                                    gift.productType === 'bracelet' ? 'bg-indigo-100 text-indigo-600' : 'bg-orange-100 text-orange-600'
                                                 }`}>
                                                 {gift.project === 'dua' ? <Zap className="h-6 w-6" /> :
-                                                    gift.productType === 'bracelet' ? <Watch className="h-6 w-6" /> : <Coffee className="h-6 w-6" />}
+                                                    gift.project === 'memoria' ? <Heart className="h-6 w-6" /> :
+                                                        gift.productType === 'bracelet' ? <Watch className="h-6 w-6" /> : <Coffee className="h-6 w-6" />}
                                             </div>
 
                                             <div>
@@ -137,13 +159,17 @@ export default function AdminDashboard() {
                                                     <h3 className="text-lg font-bold text-stone-900">
                                                         {gift.project === 'dua'
                                                             ? (gift.title || gift.customerName || (gift.customerEmail ? gift.customerEmail.split('@')[0] : 'Unbekanntes Dua'))
-                                                            : (gift.recipientName || 'Unbekannt')}
+                                                            : gift.project === 'memoria'
+                                                                ? (gift.deceasedName || 'Unbekannter Name')
+                                                                : (gift.recipientName || 'Unbekannt')}
                                                     </h3>
                                                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${gift.project === 'dua' ? 'bg-emerald-50 text-emerald-700' :
-                                                        gift.productType === 'bracelet' ? 'bg-indigo-50 text-indigo-700' : 'bg-orange-50 text-orange-700'
+                                                        gift.project === 'memoria' ? 'bg-stone-100 text-stone-500' :
+                                                            gift.productType === 'bracelet' ? 'bg-indigo-50 text-indigo-700' : 'bg-orange-50 text-orange-700'
                                                         }`}>
-                                                        {gift.project === 'dua' ? 'Dua Audio' :
-                                                            gift.productType === 'bracelet' ? 'Armband' : 'Tasse'}
+                                                        {gift.project === 'dua' ? 'Noor' :
+                                                            gift.project === 'memoria' ? 'Memoria' :
+                                                                gift.productType === 'bracelet' ? 'Armband' : 'Tasse'}
                                                     </span>
                                                 </div>
                                                 <p className="text-sm text-stone-500">
@@ -208,7 +234,7 @@ export default function AdminDashboard() {
                                                 <div className="md:col-span-2 space-y-6">
                                                     {gift.project === 'dua' ? (
                                                         <div className="bg-white p-6 rounded-xl border border-stone-200">
-                                                            <h4 className="font-bold mb-4">Dua Audio Details</h4>
+                                                            <h4 className="font-bold mb-4">Noor Details</h4>
                                                             <p><strong>Audio URL:</strong> <a href={gift.audioUrl} className="text-blue-500 underline truncate block">{gift.audioUrl}</a></p>
                                                             <p className="mt-2"><strong>Arabisch:</strong> {gift.arabicText?.substring(0, 50)}...</p>
                                                         </div>

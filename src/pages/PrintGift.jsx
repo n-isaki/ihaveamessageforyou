@@ -36,7 +36,13 @@ export default function PrintGift() {
         return <div className="text-center p-8">Gift not found</div>;
     }
 
-    const giftUrl = `${window.location.origin}/gift/${gift.id}`;
+    // Determine Domain based on Project
+    let baseUrl = 'https://kamlimos.com';
+    if (gift.project === 'memoria') {
+        baseUrl = 'https://memoria.kamlimos.com';
+    }
+
+    const giftUrl = `${baseUrl}/v/${gift.id}`;
 
     return (
         <div className="min-h-screen bg-white p-8">

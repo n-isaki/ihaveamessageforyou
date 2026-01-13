@@ -141,96 +141,121 @@ export default function DuaViewer() {
 
     return (
         <div className="min-h-screen bg-[#0a0f0d] text-[#e8e4d9] font-sans selection:bg-emerald-500/30 overflow-hidden relative">
-            {/* Import Arabic Font */}
-            <style>
-                {`@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&display=swap');`}
-            </style>
 
-            {/* Background Texture/Gradient */}
-            <div className="absolute inset-0 bg-gradient-to-b from-stone-950 via-emerald-950/20 to-stone-950 z-0 pointer-events-none"></div>
+            {/* Background Texture (Subtle Noise or Gradient) */}
+            <div className="fixed inset-0 bg-[#0a0f0d] z-0">
+                <div className="absolute inset-0 bg-gradient-to-b from-emerald-950/10 via-[#0a0f0d] to-[#0a0f0d]"></div>
+            </div>
 
-            <div className="relative z-10 max-w-2xl mx-auto px-6 py-12 flex flex-col min-h-screen">
+            <div className="relative z-10">
 
-                {/* Header (Minimal) */}
-                <div className="text-center mb-8 opacity-60">
-                    <div className="w-px h-12 bg-gradient-to-b from-transparent via-emerald-500/50 to-transparent mx-auto mb-4"></div>
-                    <span className="text-xs uppercase tracking-[0.3em] font-light">Light of Remembrance</span>
-                </div>
+                {/* --- SEKTION 1: REZITATION (FULL SCREEN) --- */}
+                <div className="h-screen flex flex-col items-center justify-center p-8 relative">
 
-                {/* Main Content Area */}
-                <div className="flex-1 flex flex-col items-center space-y-12 mb-12">
-
-                    {/* 1. Recitation Player (Prominent) */}
-                    <div className="my-4">
-                        <CircularPlayer
-                            url={gift.audioUrl}
-                            label="Rezitation"
-                            isActive={playingState === 'recitation'}
-                            onToggle={() => toggleAudio('recitation')}
-                        />
-                    </div>
-
-                    {/* Arabic Text */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="text-center w-full"
-                    >
-                        <h1
-                            className="text-4xl md:text-5xl lg:text-6xl text-transparent bg-clip-text bg-gradient-to-b from-[#fbfdf2] to-[#c7c2b0] leading-[2.0] py-4"
-                            style={{ fontFamily: "'Amiri', serif" }}
-                            dir="rtl"
-                        >
-                            {gift.arabicText}
-                        </h1>
-                    </motion.div>
-
-                    {/* Divider */}
-                    <div className="w-24 h-px bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent"></div>
-
-                    {/* Translation Area */}
+                    {/* Header Minimal */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        transition={{ delay: 0.4 }}
-                        className="w-full max-w-lg space-y-8"
+                        transition={{ duration: 2 }}
+                        className="absolute top-12 left-0 right-0 text-center"
                     >
-                        {/* Title */}
-                        <div className="text-center">
-                            <h2 className="text-emerald-500/80 text-sm font-bold uppercase tracking-widest mb-2">
-                                {gift.title}
-                            </h2>
-                        </div>
+                        <span className="text-[10px] uppercase tracking-[0.4em] text-emerald-500/40 font-light">
+                            Light of Remembrance
+                        </span>
+                    </motion.div>
 
-                        {/* 2. Meaning Player (Inline Bar) - Only show if URL exists */}
-                        {gift.meaningAudioUrl && (
-                            <InlinePlayer
-                                url={gift.meaningAudioUrl}
-                                label="Bedeutung & Geschichte"
-                                isActive={playingState === 'meaning'}
-                                onToggle={() => toggleAudio('meaning')}
-                            />
-                        )}
+                    <motion.div
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 1, ease: 'easeOut' }}
+                        className="flex flex-col items-center"
+                    >
+                        {/* THE BIG PLAYER */}
+                        <CircularPlayer
+                            url={gift.audioUrl}
+                            isActive={playingState === 'recitation'}
+                            onToggle={() => toggleAudio('recitation')}
+                        />
 
-                        {/* Text Content */}
-                        <div className="prose prose-invert prose-stone mx-auto text-center md:text-justify">
-                            <ReactMarkdown
-                                components={{
-                                    p: ({ node, ...props }) => <p className="text-lg font-light leading-relaxed text-stone-300" {...props} />,
-                                    strong: ({ node, ...props }) => <strong className="font-medium text-emerald-200" {...props} />,
-                                }}
-                            >
-                                {gift.meaningText}
-                            </ReactMarkdown>
-                        </div>
+                        <h1 className="mt-12 text-2xl md:text-3xl font-serif text-stone-200 tracking-wide text-center max-w-lg leading-relaxed">
+                            {gift.title}
+                        </h1>
+                    </motion.div>
+
+                    {/* Scroll Indicator */}
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 2, duration: 1 }}
+                        className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 text-stone-500/50"
+                    >
+                        <span className="text-[9px] uppercase tracking-widest">Die Bedeutung</span>
+                        <div className="w-px h-8 bg-gradient-to-b from-emerald-500/50 to-transparent"></div>
                     </motion.div>
                 </div>
 
-                {/* Footer */}
-                <div className="mt-auto text-center opacity-30 cursor-default">
-                    <Sparkles className="h-4 w-4 mx-auto mb-4 text-emerald-500/50" />
+
+                {/* --- SEKTION 2: BEDEUTUNG (SCROLL) --- */}
+                <div className="min-h-[80vh] flex flex-col items-center px-6 py-24 bg-gradient-to-b from-transparent to-black/40">
+
+                    <div className="w-full max-w-lg space-y-12">
+
+                        {/* Divider */}
+                        <div className="flex justify-center mb-12">
+                            <Sparkles className="h-5 w-5 text-emerald-900/40" />
+                        </div>
+
+                        {/* Meaning Audio Player (If exists) */}
+                        {gift.meaningAudioUrl && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.8 }}
+                            >
+                                <InlinePlayer
+                                    url={gift.meaningAudioUrl}
+                                    label="Bedeutung anhören"
+                                    isActive={playingState === 'meaning'}
+                                    onToggle={() => toggleAudio('meaning')}
+                                />
+                            </motion.div>
+                        )}
+
+                        {/* Text Content */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            whileInView={{ opacity: 1 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.8, delay: 0.2 }}
+                            className="prose prose-invert prose-stone prose-lg mx-auto text-center md:text-justify leading-relaxed"
+                        >
+                            <ReactMarkdown
+                                components={{
+                                    p: ({ node, ...props }) => <p className="text-xl font-light text-stone-300/90 mb-8" style={{ lineHeight: '1.8' }} {...props} />,
+                                    strong: ({ node, ...props }) => <strong className="font-medium text-emerald-400" {...props} />,
+                                }}
+                            >
+                                {gift.meaningText || "_Keine schriftliche Bedeutung hinterlegt._"}
+                            </ReactMarkdown>
+                        </motion.div>
+
+                        {/* Footer Branding */}
+                        <div className="pt-32 pb-12 flex flex-col items-center gap-4 opacity-40 hover:opacity-100 transition-opacity duration-500">
+                            <div className="h-px w-12 bg-emerald-500/50"></div>
+                            <a
+                                href="https://www.kamlimos.com"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs uppercase tracking-[0.3em] text-emerald-100 hover:text-emerald-400 font-light"
+                            >
+                                www.kamlimos.com
+                            </a>
+                        </div>
+
+                    </div>
                 </div>
+
             </div>
         </div>
     );
