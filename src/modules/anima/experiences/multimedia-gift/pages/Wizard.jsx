@@ -85,7 +85,6 @@ export default function GiftWizard() {
                             lifeDates: data.lifeDates || '',
                             photoUrl: data.photoUrl || ''
                         });
-                        setStep(2); // Jump to details step on edit
                     } else {
                         setError("Geschenk nicht gefunden.");
                     }
@@ -101,16 +100,12 @@ export default function GiftWizard() {
             // New gift creation with preset project mode
             if (urlProjectMode === 'dua') {
                 setFormData(prev => ({ ...prev, project: 'dua', productType: 'dua-audio' }));
-                setStep(2);
             } else if (urlProjectMode === 'memoria') {
                 setFormData(prev => ({ ...prev, project: 'memoria', productType: 'memory-card' }));
-                setStep(2);
             } else if (urlProjectMode === 'ritual') {
                 setFormData(prev => ({ ...prev, project: 'ritual', productType: 'bracelet' }));
-                setStep(2);
             } else if (urlProjectMode === 'tasse') {
                 setFormData(prev => ({ ...prev, project: 'kamlimos', productType: 'mug' }));
-                setStep(2);
             }
         }
     }, [id, isEditMode, urlProjectMode]);
@@ -254,86 +249,14 @@ export default function GiftWizard() {
                 <div className="mb-8 flex space-x-2">
                     <div className={`h-2 flex-1 rounded-full ${step >= 1 ? (isDua ? 'bg-emerald-500' : isMemoria ? 'bg-stone-600' : isRitual ? 'bg-indigo-500' : 'bg-rose-500') : 'bg-stone-200'}`}></div>
                     <div className={`h-2 flex-1 rounded-full ${step >= 2 ? (isDua ? 'bg-emerald-500' : isMemoria ? 'bg-stone-600' : isRitual ? 'bg-indigo-500' : 'bg-rose-500') : 'bg-stone-200'}`}></div>
-                    <div className={`h-2 flex-1 rounded-full ${step >= 3 ? (isDua ? 'bg-emerald-500' : isMemoria ? 'bg-stone-600' : isRitual ? 'bg-indigo-500' : 'bg-rose-500') : 'bg-stone-200'}`}></div>
                 </div>
 
                 <div className="bg-white shadow rounded-2xl p-8 border border-stone-100">
 
-                    {/* ---------- STEP 1: TYPE SELECTION ---------- */}
+                    {/* ---------- STEP 1: DETAILS (Formerly Step 2) ---------- */}
                     {step === 1 && (
-                        <div className="space-y-6">
-                            <h2 className="text-2xl font-bold text-stone-900">1. Produkt wählen</h2>
-
-                            {isDua ? (
-                                <div className="grid grid-cols-1 gap-4">
-                                    <button
-                                        className={`p-6 rounded-xl border-2 text-left transition-all border-emerald-500 bg-emerald-50 ring-2 ring-emerald-200`}
-                                    >
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <Zap className="h-8 w-8 mb-4 text-emerald-600" />
-                                                <h3 className="font-bold text-stone-900">Noor Audio Card</h3>
-                                                <p className="text-xs text-stone-500 mt-1">Audio Player + Arabisch + Übersetzung</p>
-                                            </div>
-                                            <div className="h-4 w-4 rounded-full bg-emerald-500"></div>
-                                        </div>
-                                    </button>
-                                </div>
-                            ) : isMemoria ? (
-                                <div className="grid grid-cols-1 gap-4">
-                                    <button
-                                        className={`p-6 rounded-xl border-2 text-left transition-all border-stone-500 bg-stone-50 ring-2 ring-stone-200`}
-                                    >
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <Heart className="h-8 w-8 mb-4 text-stone-600" />
-                                                <h3 className="font-bold text-stone-900">Memory Card</h3>
-                                                <p className="text-xs text-stone-500 mt-1">Foto + Audio + Geschichte (A4 + Stand)</p>
-                                            </div>
-                                            <div className="h-4 w-4 rounded-full bg-stone-500"></div>
-                                        </div>
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-2 gap-4">
-                                    <button
-                                        onClick={() => setFormData(p => ({ ...p, productType: 'mug' }))}
-                                        className={`p-6 rounded-xl border-2 text-left transition-all ${formData.productType === 'mug'
-                                            ? 'border-rose-500 bg-rose-50 ring-2 ring-rose-200'
-                                            : 'border-stone-200 hover:border-stone-400'
-                                            }`}
-                                    >
-                                        <Coffee className={`h-8 w-8 mb-4 ${formData.productType === 'mug' ? 'text-rose-600' : 'text-stone-400'}`} />
-                                        <h3 className="font-bold text-stone-900">Multimedia Tasse</h3>
-                                        <p className="text-xs text-stone-500 mt-1">Design + Video + PIN</p>
-                                    </button>
-
-                                    <button
-                                        onClick={() => setFormData(p => ({ ...p, productType: 'bracelet' }))}
-                                        className={`p-6 rounded-xl border-2 text-left transition-all ${formData.productType === 'bracelet'
-                                            ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-200'
-                                            : 'border-stone-200 hover:border-stone-400'
-                                            }`}
-                                    >
-                                        <Watch className={`h-8 w-8 mb-4 ${formData.productType === 'bracelet' ? 'text-indigo-600' : 'text-stone-400'}`} />
-                                        <h3 className="font-bold text-stone-900">Ritual Armband</h3>
-                                        <p className="text-xs text-stone-500 mt-1">Gravur + Story Card</p>
-                                    </button>
-                                </div>
-                            )}
-
-                            <div className="flex justify-end pt-4">
-                                <button onClick={() => setStep(2)} className={styles.btnPrimary}>
-                                    Weiter <ArrowRight className="ml-2 h-4 w-4 inline" />
-                                </button>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* ---------- STEP 2: DETAILS ---------- */}
-                    {step === 2 && (
                         <div className="space-y-8">
-                            <h2 className="text-2xl font-bold text-stone-900">2. Inhalte erfassen</h2>
+                            <h2 className="text-2xl font-bold text-stone-900">1. Inhalte erfassen</h2>
 
                             {/* DUA FORM */}
                             {isDua ? (
@@ -519,52 +442,114 @@ export default function GiftWizard() {
                             )}
 
                             <div className="flex justify-between pt-4">
-                                {!urlProjectMode && <button onClick={() => setStep(1)} className={styles.btnSecondary}>Zurück</button>}
+                                <button onClick={() => navigate('/admin/dashboard')} className={styles.btnSecondary}>Zurück</button>
                                 <div className="flex-1"></div>
-                                <button onClick={() => setStep(3)} className={styles.btnPrimary}>
+                                <button onClick={() => setStep(2)} className={styles.btnPrimary}>
                                     Weiter <ArrowRight className="ml-2 h-4 w-4 inline" />
                                 </button>
                             </div>
                         </div>
                     )}
 
-                    {/* ---------- STEP 3: REVIEW / or MESSAGES ---------- */}
-                    {step === 3 && (
+                    {/* ---------- STEP 2: SUMMARY (Formerly Step 3/Messages) ---------- */}
+                    {step === 2 && (
                         <div className="space-y-6">
                             {/* Standard Mug Messages flow would go here if needed, but for MVP we merge messages into Step 2 or skip if not needed for Dua */}
                             {!isDua && !isBracelet ? (
                                 // MUG MESSAGES LOGIC (Skipped details for brevity, assumed standard)
                                 <div className="space-y-4">
                                     <h2 className="text-2xl font-bold">Nachrichten hinzufügen</h2>
-                                    <button onClick={() => addMessage('text')} className={styles.btnSecondary}>+ Text Nachricht</button>
-                                    {/* Message list renderer... */}
+                                    <div className="flex flex-wrap gap-2">
+                                        <button onClick={() => addMessage('text')} className={styles.btnSmall + " bg-stone-100 text-stone-700 border border-stone-200"}>
+                                            <MessageSquare className="h-4 w-4 mr-1" /> Text
+                                        </button>
+                                        <button onClick={() => addMessage('video')} className={styles.btnSmall + " bg-stone-100 text-stone-700 border border-stone-200"}>
+                                            <Video className="h-4 w-4 mr-1" /> Video
+                                        </button>
+                                        <button onClick={() => addMessage('image')} className={styles.btnSmall + " bg-stone-100 text-stone-700 border border-stone-200"}>
+                                            <ImageIcon className="h-4 w-4 mr-1" /> Bild
+                                        </button>
+                                    </div>
+
+                                    <div className="space-y-4 mt-4">
+                                        {formData.messages.map((msg, index) => (
+                                            <div key={msg.id} className="bg-white p-4 rounded-lg border border-stone-200 shadow-sm relative group">
+                                                <button
+                                                    onClick={() => removeMessage(msg.id)}
+                                                    className="absolute top-2 right-2 p-1 text-stone-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </button>
+                                                <label className="block text-xs font-bold text-stone-500 uppercase mb-1">
+                                                    {msg.type === 'video' ? 'YouTube / Video Link' :
+                                                        msg.type === 'image' ? 'Bild URL' :
+                                                            msg.type === 'link' ? 'Link URL' : 'Nachricht'} {index + 1}
+                                                </label>
+
+                                                {/* Author Input */}
+                                                <div className="mb-2">
+                                                    <input
+                                                        type="text"
+                                                        value={msg.author}
+                                                        onChange={(e) => updateMessage(msg.id, 'author', e.target.value)}
+                                                        className={styles.inputSm + " font-medium text-stone-900 border-b border-stone-200 mb-2"}
+                                                        placeholder="Name des Absenders"
+                                                    />
+                                                </div>
+                                                {msg.type === 'text' ? (
+                                                    <textarea
+                                                        value={msg.content}
+                                                        onChange={(e) => updateMessage(msg.id, 'content', e.target.value)}
+                                                        className={styles.input}
+                                                        rows="3"
+                                                        placeholder="Nachricht eingeben..."
+                                                    />
+                                                ) : (
+                                                    <input
+                                                        type="text"
+                                                        value={msg.content}
+                                                        onChange={(e) => updateMessage(msg.id, 'content', e.target.value)}
+                                                        className={styles.input}
+                                                        placeholder={msg.type === 'video' ? 'https://youtube.com/...' : 'https://...'}
+                                                    />
+                                                )}
+                                            </div>
+                                        ))}
+                                        {formData.messages.length === 0 && (
+                                            <p className="text-sm text-stone-400 italic">Noch keine Inhalte hinzugefügt.</p>
+                                        )}
+                                    </div>
                                 </div>
                             ) : (
                                 <h2 className="text-2xl font-bold text-stone-900">Zusammenfassung</h2>
                             )}
 
-                            <div className="bg-stone-50 p-6 rounded-xl space-y-4">
-                                <p><strong>Projekt:</strong> {formData.project}</p>
-                                <p><strong>Typ:</strong> {formData.productType}</p>
-                                {isMemoria && (
-                                    <>
-                                        <p><strong>Name:</strong> {formData.deceasedName}</p>
-                                        <p><strong>Daten:</strong> {formData.lifeDates}</p>
-                                        <p><strong>Audio:</strong> {formData.audioUrl ? 'Vorhanden ✅' : 'Fehlt ❌'}</p>
-                                    </>
-                                )}
-                                {isDua && (
-                                    <>
-                                        <p><strong>Titel:</strong> {formData.title}</p>
-                                        <p><strong>Audio (Rezitation):</strong> {formData.audioUrl ? 'Vorhanden ✅' : 'Fehlt ❌'}</p>
-                                        <p><strong>Audio (Bedeutung):</strong> {formData.meaningAudioUrl ? 'Vorhanden ✅' : 'Fehlt ❌'}</p>
-                                    </>
-                                )}
-                            </div>
+                            {(isMemoria || isDua) && (
+                                <div className="bg-stone-50 p-6 rounded-xl space-y-4">
+                                    {isMemoria && (
+                                        <>
+                                            <p><strong>Name:</strong> {formData.deceasedName}</p>
+                                            <p><strong>Daten:</strong> {formData.lifeDates}</p>
+                                            <p><strong>Audio:</strong> {formData.audioUrl ? 'Vorhanden ✅' : 'Fehlt ❌'}</p>
+                                        </>
+                                    )}
+                                    {isDua && (
+                                        <>
+                                            <p><strong>Titel:</strong> {formData.title}</p>
+                                            <p><strong>Audio (Rezitation):</strong> {formData.audioUrl ? 'Vorhanden ✅' : 'Fehlt ❌'}</p>
+                                            <p><strong>Audio (Bedeutung):</strong> {formData.meaningAudioUrl ? 'Vorhanden ✅' : 'Fehlt ❌'}</p>
+                                        </>
+                                    )}
+                                </div>
+                            )}
 
-                            <button onClick={handleSubmit} disabled={loading} className={`${styles.btnPrimary} w-full`}>
-                                {loading ? <Loader className="animate-spin h-5 w-5 mx-auto" /> : 'Speichern'}
-                            </button>
+                            <div className="flex justify-between pt-4">
+                                <button onClick={() => setStep(1)} className={styles.btnSecondary}>Zurück</button>
+                                <div className="w-4"></div>
+                                <button onClick={handleSubmit} disabled={loading} className={`${styles.btnPrimary} flex-1`}>
+                                    {loading ? <Loader className="animate-spin h-5 w-5 mx-auto" /> : 'Speichern'}
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>

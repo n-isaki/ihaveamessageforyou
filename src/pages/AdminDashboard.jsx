@@ -235,32 +235,40 @@ export default function AdminDashboard() {
                                                     {gift.project === 'dua' ? (
                                                         <div className="bg-white p-6 rounded-xl border border-stone-200">
                                                             <h4 className="font-bold mb-4">Noor Details</h4>
-                                                            <p><strong>Audio URL:</strong> <a href={gift.audioUrl} className="text-blue-500 underline truncate block">{gift.audioUrl}</a></p>
-                                                            <p className="mt-2"><strong>Arabisch:</strong> {gift.arabicText?.substring(0, 50)}...</p>
+                                                            <p className="mb-2"><strong>Titel:</strong> {gift.title || '-'}</p>
+                                                            <p><strong>Audio URL:</strong> <a href={gift.audioUrl} className="text-emerald-600 underline truncate block text-sm">{gift.audioUrl ? 'Anhören' : '-'}</a></p>
                                                         </div>
-                                                    ) : (
+                                                    ) : gift.project === 'memoria' ? (
+                                                        <div className="bg-white p-6 rounded-xl border border-stone-200">
+                                                            <h4 className="font-bold mb-4">Memoria Details</h4>
+                                                            <p className="mb-2"><strong>Name des Verstorbenen:</strong> {gift.deceasedName || '-'}</p>
+                                                            <p className="mb-2"><strong>Lebensdaten:</strong> {gift.lifeDates || '-'}</p>
+                                                            <p><strong>Audio:</strong> {gift.audioUrl ? 'Vorhanden ✅' : 'Fehlt ❌'}</p>
+                                                        </div>
+                                                    ) : gift.productType === 'bracelet' ? (
                                                         <div>
                                                             <h4 className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-4">Produktions-Daten (Laser)</h4>
                                                             <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-sm">
-                                                                {gift.productType === 'mug' ? (
-                                                                    <div className="flex items-start space-x-6">
-                                                                        {gift.designImage ? (
-                                                                            <div className="shrink-0">
-                                                                                <img src={gift.designImage} alt="Design" className="h-32 w-32 object-cover rounded-lg border border-stone-100 shadow-sm" />
-                                                                                <p className="mt-2 text-xs text-center text-stone-400">Design</p>
-                                                                            </div>
-                                                                        ) : (
-                                                                            <div className="h-32 w-32 bg-stone-100 rounded-lg flex items-center justify-center text-stone-400 text-xs">Kein Bild</div>
-                                                                        )}
-                                                                    </div>
-                                                                ) : (
-                                                                    <div>
-                                                                        <h5 className="font-bold text-stone-900 mb-2">Armband-Gravur</h5>
-                                                                        <div className="p-4 bg-stone-100 rounded-lg border-l-4 border-indigo-500">
-                                                                            <p className="font-mono text-xl text-stone-900 tracking-wide">{gift.engravingText || '-'}</p>
+                                                                <h5 className="font-bold text-stone-900 mb-2">Armband-Gravur</h5>
+                                                                <div className="p-4 bg-stone-100 rounded-lg border-l-4 border-indigo-500">
+                                                                    <p className="font-mono text-xl text-stone-900 tracking-wide">{gift.engravingText || '-'}</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div>
+                                                            <h4 className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-4">Produktions-Daten (Tasse)</h4>
+                                                            <div className="bg-white p-6 rounded-xl border border-stone-200 shadow-sm">
+                                                                <div className="flex items-start space-x-6">
+                                                                    {gift.designImage ? (
+                                                                        <div className="shrink-0">
+                                                                            <img src={gift.designImage} alt="Design" className="h-32 w-32 object-cover rounded-lg border border-stone-100 shadow-sm" />
+                                                                            <p className="mt-2 text-xs text-center text-stone-400">Design</p>
                                                                         </div>
-                                                                    </div>
-                                                                )}
+                                                                    ) : (
+                                                                        <div className="h-32 w-32 bg-stone-100 rounded-lg flex items-center justify-center text-stone-400 text-xs">Kein Bild</div>
+                                                                    )}
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     )}
@@ -273,12 +281,14 @@ export default function AdminDashboard() {
                                                         <dl className="space-y-3 text-sm">
                                                             <div className="flex justify-between pb-2 border-b border-stone-100">
                                                                 <dt className="text-stone-500">Kunden E-Mail</dt>
-                                                                <dd className="font-medium text-stone-900 truncate ml-2">{gift.customerEmail}</dd>
+                                                                <dd className="font-medium text-stone-900 truncate ml-2">{gift.customerEmail || '-'}</dd>
                                                             </div>
-                                                            <div className="flex justify-between pb-2 border-b border-stone-100">
-                                                                <dt className="text-stone-500">PIN Code</dt>
-                                                                <dd className="font-mono font-bold text-stone-900">{gift.accessCode || '-'}</dd>
-                                                            </div>
+                                                            {gift.productType === 'mug' && (
+                                                                <div className="flex justify-between pb-2 border-b border-stone-100">
+                                                                    <dt className="text-stone-500">PIN Code</dt>
+                                                                    <dd className="font-mono font-bold text-stone-900">{gift.accessCode || '-'}</dd>
+                                                                </div>
+                                                            )}
                                                         </dl>
                                                     </div>
                                                 </div>
