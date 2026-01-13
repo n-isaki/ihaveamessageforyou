@@ -107,6 +107,9 @@ export default function GiftWizard() {
             } else if (urlProjectMode === 'ritual') {
                 setFormData(prev => ({ ...prev, project: 'ritual', productType: 'bracelet' }));
                 setStep(2);
+            } else if (urlProjectMode === 'tasse') {
+                setFormData(prev => ({ ...prev, project: 'kamlimos', productType: 'mug' }));
+                setStep(2);
             }
         }
     }, [id, isEditMode, urlProjectMode]);

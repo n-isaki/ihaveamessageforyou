@@ -118,7 +118,7 @@ export default function AdminDashboard() {
                         to={activeTab === 'memoria' ? "/admin/create?project=memoria" :
                             activeTab === 'dua' ? "/admin/create?project=dua" :
                                 activeTab === 'ritual' ? "/admin/create?project=ritual" :
-                                    "/admin/create"}
+                                    "/admin/create?project=tasse"}
                         className="inline-flex items-center px-4 py-2 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-stone-900 hover:bg-stone-800 transition-colors shrink-0"
                     >
                         <Plus className="h-5 w-5 mr-2" />
