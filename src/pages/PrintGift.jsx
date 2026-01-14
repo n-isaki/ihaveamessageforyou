@@ -37,9 +37,14 @@ export default function PrintGift() {
     }
 
     // Determine Domain based on Project
-    let baseUrl = 'https://kamlimos.com';
-    if (gift.project === 'memoria') {
+    let baseUrl = 'https://scan.kamlimos.com'; // Default for Mugs
+
+    if (gift.project === 'dua') {
+        baseUrl = 'https://noor.kamlimos.com';
+    } else if (gift.project === 'memoria') {
         baseUrl = 'https://memoria.kamlimos.com';
+    } else if (gift.project === 'ritual' || gift.productType === 'bracelet') {
+        baseUrl = 'https://ritual.kamlimos.com';
     }
 
     const giftUrl = `${baseUrl}/v/${gift.id}`;

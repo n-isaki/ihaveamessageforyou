@@ -81,6 +81,25 @@ export default function AdminDashboard() {
         );
     }
 
+    const getViewerUrl = (gift) => {
+        // If on local or staging, keep relative/same domain to ensure we test current env
+        const isDevOrStaging = window.location.hostname.includes('localhost') ||
+            window.location.hostname.includes('127.0.0.1') ||
+            window.location.hostname.includes('staging');
+
+        if (isDevOrStaging) {
+            return `/v/${gift.id}`;
+        }
+
+        // Production: Use branded domains
+        let domain = 'https://scan.kamlimos.com';
+        if (gift.project === 'dua') domain = 'https://noor.kamlimos.com';
+        else if (gift.project === 'memoria') domain = 'https://memoria.kamlimos.com';
+        else if (gift.project === 'ritual' || gift.productType === 'bracelet') domain = 'https://ritual.kamlimos.com';
+
+        return `${domain}/v/${gift.id}`;
+    };
+
     return (
         <div className="min-h-screen bg-stone-50 p-8 relative">
             <div className="max-w-6xl mx-auto">
@@ -203,7 +222,7 @@ export default function AdminDashboard() {
 
                                             <div className="flex space-x-1" onClick={e => e.stopPropagation()}>
                                                 <a
-                                                    href={`/v/${gift.id}`}
+                                                    href={getViewerUrl(gift)}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                     className="p-2 text-stone-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg"
