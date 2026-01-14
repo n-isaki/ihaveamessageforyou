@@ -42,8 +42,9 @@ const AdminDomainGuard = ({ children }) => {
   // Only allow if hostname starts with 'admin.' or is localhost (for dev)
   const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   const isAdminDomain = window.location.hostname.startsWith('admin.');
+  const isStaging = window.location.hostname.includes('staging');
 
-  if (!isDev && !isAdminDomain) {
+  if (!isDev && !isAdminDomain && !isStaging) {
     // Redirect to main domain root if trying to access admin on wrong domain
     window.location.href = 'https://kamlimos.com';
     return null;

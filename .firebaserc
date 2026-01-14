@@ -1,5 +1,18 @@
 {
   "projects": {
     "default": "gift-shop-app-7bbd3"
-  }
+  },
+  "targets": {
+    "gift-shop-app-7bbd3": {
+      "hosting": {
+        "production": [
+          "gift-shop-app-7bbd3"
+        ],
+        "staging": [
+          "gift-shop-app-staging"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }
