@@ -197,13 +197,20 @@ export default function GiftWizard() {
             } else {
                 await createGift(formData);
             }
-            navigate('/admin/dashboard');
+            navigate(`/admin/dashboard?tab=${getDashboardTab()}`);
         } catch (err) {
             console.error("Failed to save gift:", err);
             setError(`Fehler: ${err.message}`);
         } finally {
             setLoading(false);
         }
+    };
+
+    const getDashboardTab = () => {
+        if (formData.project === 'dua') return 'dua';
+        if (formData.project === 'memoria') return 'memoria';
+        if (formData.project === 'ritual' || formData.productType === 'bracelet') return 'ritual';
+        return 'kamlimos';
     };
 
     if (initialLoading) {
@@ -238,7 +245,7 @@ export default function GiftWizard() {
                         {isEditMode ? 'Auftrag bearbeiten' : isDua ? 'Neues Noor' : isMemoria ? 'Neues Memoria' : 'Neuer Auftrag'}
                     </h1>
                     <button
-                        onClick={() => navigate('/admin/dashboard')}
+                        onClick={() => navigate(`/admin/dashboard?tab=${getDashboardTab()}`)}
                         className="text-stone-500 hover:text-stone-700"
                     >
                         Abbrechen
@@ -442,7 +449,7 @@ export default function GiftWizard() {
                             )}
 
                             <div className="flex justify-between pt-4">
-                                <button onClick={() => navigate('/admin/dashboard')} className={styles.btnSecondary}>Zurück</button>
+                                <button onClick={() => navigate(`/admin/dashboard?tab=${getDashboardTab()}`)} className={styles.btnSecondary}>Zurück</button>
                                 <div className="flex-1"></div>
                                 <button onClick={() => setStep(2)} className={styles.btnPrimary}>
                                     Weiter <ArrowRight className="ml-2 h-4 w-4 inline" />

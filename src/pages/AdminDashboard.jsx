@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { getGifts, deleteGift } from '../services/gifts';
 import { Plus, Gift, Eye, EyeOff, Loader, Printer, ChevronDown, ChevronUp, Edit2, Video, MessageSquare, Trash2, AlertTriangle, X, Watch, Coffee, Zap, ExternalLink, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -13,8 +13,9 @@ export default function AdminDashboard() {
     const [deleteId, setDeleteId] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    // Project Tabs
-    const [activeTab, setActiveTab] = useState('kamlimos'); // 'kamlimos' | 'dua' | 'memoria' | 'ritual'
+    const [searchParams, setSearchParams] = useSearchParams();
+    // Initialize tab from URL or default to 'kamlimos'
+    const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'kamlimos');
 
     useEffect(() => {
         fetchGifts();
@@ -23,6 +24,15 @@ export default function AdminDashboard() {
     const fetchGifts = async () => {
         try {
             const data = await getGifts();
+
+            // Sort by Last Modified / Created (Newest First)
+            data.sort((a, b) => {
+                const getT = (t) => t ? (t.seconds || t._seconds || 0) : 0;
+                const timeA = Math.max(getT(a.updatedAt), getT(a.createdAt));
+                const timeB = Math.max(getT(b.updatedAt), getT(b.createdAt));
+                return timeB - timeA;
+            });
+
             setGifts(data);
         } catch (error) {
             console.error("Failed to fetch gifts", error);
@@ -85,28 +95,28 @@ export default function AdminDashboard() {
                     {/* TABS */}
                     <div className="flex p-1 bg-stone-200 rounded-xl overflow-x-auto">
                         <button
-                            onClick={() => setActiveTab('kamlimos')}
+                            onClick={() => { setActiveTab('kamlimos'); setSearchParams({ tab: 'kamlimos' }); }}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'kamlimos' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'
                                 }`}
                         >
                             Tasse
                         </button>
                         <button
-                            onClick={() => setActiveTab('dua')}
+                            onClick={() => { setActiveTab('dua'); setSearchParams({ tab: 'dua' }); }}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'dua' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'
                                 }`}
                         >
                             Noor
                         </button>
                         <button
-                            onClick={() => setActiveTab('memoria')}
+                            onClick={() => { setActiveTab('memoria'); setSearchParams({ tab: 'memoria' }); }}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'memoria' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'
                                 }`}
                         >
                             Memoria
                         </button>
                         <button
-                            onClick={() => setActiveTab('ritual')}
+                            onClick={() => { setActiveTab('ritual'); setSearchParams({ tab: 'ritual' }); }}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${activeTab === 'ritual' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'
                                 }`}
                         >
