@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Pages
 import LandingPage from './pages/LandingPage';
@@ -69,52 +70,54 @@ const DomainAwareHome = () => {
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        {/* Public Routes with Domain Logic */}
-        <Route path="/" element={<DomainAwareHome />} />
+    <ErrorBoundary>
+      <Router>
+        <Routes>
+          {/* Public Routes with Domain Logic */}
+          <Route path="/" element={<DomainAwareHome />} />
 
-        {/* The Smart Viewer (QR Target) */}
-        <Route path="/v/:id" element={<UniversalViewer />} />
+          {/* The Smart Viewer (QR Target) */}
+          <Route path="/v/:id" element={<UniversalViewer />} />
 
-        {/* Experiences */}
+          {/* Experiences */}
 
 
-        {/* Legacy / Alias */}
-        <Route path="/gift/:id" element={<UniversalViewer />} />
+          {/* Legacy / Alias */}
+          <Route path="/gift/:id" element={<UniversalViewer />} />
 
-        <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
 
-        {/* Admin Routes */}
-        <Route path="/admin/dashboard" element={
-          <AdminDomainGuard>
+          {/* Admin Routes */}
+          <Route path="/admin/dashboard" element={
+            <AdminDomainGuard>
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            </AdminDomainGuard>
+          } />
+          <Route path="/admin/create" element={
+            <AdminDomainGuard>
+              <ProtectedRoute>
+                <GiftWizard />
+              </ProtectedRoute>
+            </AdminDomainGuard>
+          } />
+          <Route path="/admin/edit/:id" element={
+            <AdminDomainGuard>
+              <ProtectedRoute>
+                <GiftWizard />
+              </ProtectedRoute>
+            </AdminDomainGuard>
+          } />
+          <Route path="/admin/print/:id" element={
             <ProtectedRoute>
-              <AdminDashboard />
+              <PrintGift />
             </ProtectedRoute>
-          </AdminDomainGuard>
-        } />
-        <Route path="/admin/create" element={
-          <AdminDomainGuard>
-            <ProtectedRoute>
-              <GiftWizard />
-            </ProtectedRoute>
-          </AdminDomainGuard>
-        } />
-        <Route path="/admin/edit/:id" element={
-          <AdminDomainGuard>
-            <ProtectedRoute>
-              <GiftWizard />
-            </ProtectedRoute>
-          </AdminDomainGuard>
-        } />
-        <Route path="/admin/print/:id" element={
-          <ProtectedRoute>
-            <PrintGift />
-          </ProtectedRoute>
-        } />
+          } />
 
-      </Routes>
-    </Router>
+        </Routes>
+      </Router>
+    </ErrorBoundary>
   );
 }
 

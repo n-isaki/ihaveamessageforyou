@@ -4,6 +4,7 @@ import { createGift, getGiftById, updateGift } from '@/services/gifts';
 import { storage } from '@/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Plus, Trash2, Video, MessageSquare, ArrowRight, ArrowLeft, Save, Loader, Coffee, Watch, Music, FileAudio, UploadCloud, Zap, Heart, Image as ImageIcon } from 'lucide-react';
+import WizardMessageEditor from '../components/WizardMessageEditor';
 
 export default function GiftWizard() {
     const navigate = useNavigate();
@@ -464,70 +465,15 @@ export default function GiftWizard() {
                             {/* Standard Mug Messages flow would go here if needed, but for MVP we merge messages into Step 2 or skip if not needed for Dua */}
                             {!isDua && !isBracelet ? (
                                 // MUG MESSAGES LOGIC (Skipped details for brevity, assumed standard)
-                                <div className="space-y-4">
-                                    <h2 className="text-2xl font-bold">Nachrichten hinzufügen</h2>
-                                    <div className="flex flex-wrap gap-2">
-                                        <button onClick={() => addMessage('text')} className={styles.btnSmall + " bg-stone-100 text-stone-700 border border-stone-200"}>
-                                            <MessageSquare className="h-4 w-4 mr-1" /> Text
-                                        </button>
-                                        <button onClick={() => addMessage('video')} className={styles.btnSmall + " bg-stone-100 text-stone-700 border border-stone-200"}>
-                                            <Video className="h-4 w-4 mr-1" /> Video
-                                        </button>
-                                        <button onClick={() => addMessage('image')} className={styles.btnSmall + " bg-stone-100 text-stone-700 border border-stone-200"}>
-                                            <ImageIcon className="h-4 w-4 mr-1" /> Bild
-                                        </button>
-                                    </div>
-
-                                    <div className="space-y-4 mt-4">
-                                        {formData.messages.map((msg, index) => (
-                                            <div key={msg.id} className="bg-white p-4 rounded-lg border border-stone-200 shadow-sm relative group">
-                                                <button
-                                                    onClick={() => removeMessage(msg.id)}
-                                                    className="absolute top-2 right-2 p-1 text-stone-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </button>
-                                                <label className="block text-xs font-bold text-stone-500 uppercase mb-1">
-                                                    {msg.type === 'video' ? 'YouTube / Video Link' :
-                                                        msg.type === 'image' ? 'Bild URL' :
-                                                            msg.type === 'link' ? 'Link URL' : 'Nachricht'} {index + 1}
-                                                </label>
-
-                                                {/* Author Input */}
-                                                <div className="mb-2">
-                                                    <input
-                                                        type="text"
-                                                        value={msg.author}
-                                                        onChange={(e) => updateMessage(msg.id, 'author', e.target.value)}
-                                                        className={styles.inputSm + " font-medium text-stone-900 border-b border-stone-200 mb-2"}
-                                                        placeholder="Name des Absenders"
-                                                    />
-                                                </div>
-                                                {msg.type === 'text' ? (
-                                                    <textarea
-                                                        value={msg.content}
-                                                        onChange={(e) => updateMessage(msg.id, 'content', e.target.value)}
-                                                        className={styles.input}
-                                                        rows="3"
-                                                        placeholder="Nachricht eingeben..."
-                                                    />
-                                                ) : (
-                                                    <input
-                                                        type="text"
-                                                        value={msg.content}
-                                                        onChange={(e) => updateMessage(msg.id, 'content', e.target.value)}
-                                                        className={styles.input}
-                                                        placeholder={msg.type === 'video' ? 'https://youtube.com/...' : 'https://...'}
-                                                    />
-                                                )}
-                                            </div>
-                                        ))}
-                                        {formData.messages.length === 0 && (
-                                            <p className="text-sm text-stone-400 italic">Noch keine Inhalte hinzugefügt.</p>
-                                        )}
-                                    </div>
-                                </div>
+                                // MUG MESSAGES LOGIC
+                                <WizardMessageEditor
+                                    messages={formData.messages}
+                                    onAdd={addMessage}
+                                    onRemove={removeMessage}
+                                    onUpdate={updateMessage}
+                                />
                             ) : (
+
                                 <h2 className="text-2xl font-bold text-stone-900">Zusammenfassung</h2>
                             )}
 
@@ -561,6 +507,6 @@ export default function GiftWizard() {
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
