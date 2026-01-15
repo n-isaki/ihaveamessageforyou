@@ -124,9 +124,8 @@ export default function Configurator({ productId, mode = 'multimedia', onSave })
                         type="text"
                         value={formData.accessCode}
                         onChange={(e) => setFormData(p => ({ ...p, accessCode: e.target.value }))}
-                        className="w-full p-3 rounded-lg border border-stone-200 bg-stone-50 focus:bg-white focus:ring-2 focus:ring-stone-200 outline-none text-sm font-mono tracking-widest text-center uppercase transition-all"
-                        placeholder="123456"
-                        maxLength={8}
+                        className="w-full p-3 rounded-lg border border-stone-200 bg-stone-50 focus:bg-white focus:ring-2 focus:ring-stone-200 outline-none text-sm font-mono tracking-wider text-center uppercase transition-all"
+                        placeholder="1234AB"
                     />
                     <p className="text-xs text-stone-400 mt-1 text-center">
                         Bitte gib den Code ein, der auf deiner Karte aufgedruckt ist.

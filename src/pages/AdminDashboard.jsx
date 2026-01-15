@@ -202,7 +202,9 @@ export default function AdminDashboard() {
                                                     </span>
                                                 </div>
                                                 <p className="text-sm text-stone-500">
-                                                    Bestellung <span className="font-mono bg-stone-100 px-1 rounded">{gift.orderId || 'MANUAL'}</span> von {gift.customerName}
+                                                    Bestellung <span className="font-mono bg-stone-100 px-1 rounded">{gift.orderId || 'MANUAL'}</span>
+                                                    {gift.productVariant && <span className="mx-1 text-stone-400">• {gift.productVariant} •</span>}
+                                                    von {gift.customerName}
                                                 </p>
                                             </div>
                                         </div>
@@ -311,6 +313,10 @@ export default function AdminDashboard() {
                                                             <div className="flex justify-between pb-2 border-b border-stone-100">
                                                                 <dt className="text-stone-500">Kunden E-Mail</dt>
                                                                 <dd className="font-medium text-stone-900 truncate ml-2">{gift.customerEmail || '-'}</dd>
+                                                            </div>
+                                                            <div className="flex justify-between pb-2 border-b border-stone-100">
+                                                                <dt className="text-stone-500">Variante</dt>
+                                                                <dd className="font-medium text-stone-900 truncate ml-2">{gift.productVariant || '-'}</dd>
                                                             </div>
                                                             {gift.productType === 'mug' && (
                                                                 <div className="flex justify-between pb-2 border-b border-stone-100">

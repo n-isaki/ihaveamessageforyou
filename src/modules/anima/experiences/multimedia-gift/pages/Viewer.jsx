@@ -188,9 +188,8 @@ export default function GiftReveal() {
                                     setPin(e.target.value);
                                     setError('');
                                 }}
-                                className="block w-full text-center text-3xl tracking-[0.5em] bg-stone-950/50 border border-stone-700 text-white rounded-xl py-4 focus:ring-1 focus:ring-rose-500/50 focus:border-rose-500/50 outline-none transition-all placeholder-stone-700"
-                                placeholder="••••"
-                                maxLength={4}
+                                className="block w-full text-center text-3xl tracking-widest bg-stone-950/50 border border-stone-700 text-white rounded-xl py-4 focus:ring-1 focus:ring-rose-500/50 focus:border-rose-500/50 outline-none transition-all placeholder-stone-700 font-mono uppercase"
+                                placeholder="CODE"
                             />
                             {error && (
                                 <div className="text-rose-500 text-xs font-medium tracking-wide">{error}</div>

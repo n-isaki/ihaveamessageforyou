@@ -39,6 +39,7 @@ exports.shopifyOrderCreate = onRequest({ cors: true }, async (req, res) => {
             batch.update(giftRef, {
                 status: 'paid', // Mark as paid/linked
                 orderId: order.name,
+                productVariant: item.variant_title || '',
                 shopifyOrderId: String(order.id),
                 shopifyOrderNumber: String(order.order_number), // plain number e.g. 1001
                 orderName: order.name, // e.g. #1001
