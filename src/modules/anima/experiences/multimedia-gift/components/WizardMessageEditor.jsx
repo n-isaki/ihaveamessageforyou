@@ -1,7 +1,7 @@
 import React from 'react';
 import { Trash2, MessageSquare, Video, Image as ImageIcon } from 'lucide-react';
 
-export default function WizardMessageEditor({ messages, onAdd, onRemove, onUpdate }) {
+export default function WizardMessageEditor({ messages, onAdd, onRemove, onUpdate, widgetMode }) {
     // Styles reused from Wizard or passed down? 
     // Copied for simplicity to make component self-contained
     const styles = {
@@ -12,7 +12,7 @@ export default function WizardMessageEditor({ messages, onAdd, onRemove, onUpdat
 
     return (
         <div className="space-y-4">
-            <h2 className="text-2xl font-bold font-serif text-stone-800">Inhalte hinzufügen</h2>
+            {!widgetMode && <h2 className="text-2xl font-bold font-serif text-stone-800">Inhalte hinzufügen</h2>}
             <div className="flex flex-wrap gap-2">
                 <button onClick={() => onAdd('text')} className={styles.btnSmall + " bg-stone-100 text-stone-700 border border-stone-200 hover:bg-white hover:shadow-sm"}>
                     <MessageSquare className="h-4 w-4 mr-1" /> Text
@@ -38,8 +38,8 @@ export default function WizardMessageEditor({ messages, onAdd, onRemove, onUpdat
 
                         <div className="flex justify-between items-center mb-2">
                             <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${msg.type === 'video' ? 'bg-red-50 text-red-600' :
-                                    msg.type === 'image' ? 'bg-blue-50 text-blue-600' :
-                                        'bg-stone-100 text-stone-600'
+                                msg.type === 'image' ? 'bg-blue-50 text-blue-600' :
+                                    'bg-stone-100 text-stone-600'
                                 }`}>
                                 {msg.type === 'video' ? 'Video' : msg.type === 'image' ? 'Bild' : 'Text'}
                             </span>
@@ -84,7 +84,7 @@ export default function WizardMessageEditor({ messages, onAdd, onRemove, onUpdat
                         </div>
                     </div>
                 ))}
-                {messages.length === 0 && (
+                {!widgetMode && messages.length === 0 && (
                     <div className="text-center py-8 border-2 border-dashed border-stone-200 rounded-xl">
                         <MessageSquare className="h-8 w-8 text-stone-300 mx-auto mb-2" />
                         <p className="text-stone-400 text-sm italic">Noch keine Inhalte hinzugefügt.</p>

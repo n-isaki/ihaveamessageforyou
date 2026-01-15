@@ -15,12 +15,15 @@ function initWidget() {
     if (container.dataset.rendered === "true") return; // Prevent double render
 
     const productId = container.dataset.productId;
+    const mode = container.dataset.mode || 'multimedia';
+
     const root = ReactDOM.createRoot(container);
 
     root.render(
         <React.StrictMode>
             <Configurator
                 productId={productId}
+                mode={mode}
                 onSave={(id) => {
                     console.log("Gift Saved:", id);
                     // Find hidden input and set value logic is inside component, 

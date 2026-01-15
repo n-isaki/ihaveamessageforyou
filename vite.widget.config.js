@@ -23,10 +23,7 @@ export default defineConfig({
         },
         rollupOptions: {
             output: {
-                assetFileNames: (assetInfo) => {
-                    if (assetInfo.name === 'style.css') return 'widget.css';
-                    return assetInfo.name;
-                },
+                assetFileNames: 'widget.[ext]',
             }
         }
     }
