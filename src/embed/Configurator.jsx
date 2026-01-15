@@ -86,7 +86,7 @@ export default function Configurator({ productId, mode = 'multimedia', onSave })
 
     return (
 
-        <div className="anima-widget space-y-4">
+        <div className="anima-widget space-y-4 w-full">
 
             {/* Header logic - Only show if combined or engraving mode */}
             {(!showMultimedia || showEngraving) && (

@@ -25,10 +25,17 @@ Ein neues Modul in diesem Projekt (`src/embed/`).
 6.  Beim Klick auf den Shopify "In den Warenkorb"-Button wird die ID mitbestellt.
 
 ### 3. Integration in Shopify
-Wir müssen eine kleine Code-Schnipsel in dein Shopify Theme (`main-product.liquid`) einfügen:
+Wir nutzen einen "Custom Liquid" Block im Produkt-Template. Erstellte diesen Block dort, wo die Konfiguration erscheinen soll:
+
 ```html
-<div id="anima-configurator" data-product-id="{{ product.id }}"></div>
-<script src="https://gift-shop-app-7bbd3.web.app/widget.js"></script>
+<link rel="stylesheet" href="https://admin.kamlimos.com/widget/widget.css?v=13">
+<script src="https://admin.kamlimos.com/widget/widget.js?v=13" async></script>
+
+<!-- WICHTIG: style sorgt für volle Breite im Theme -->
+<div id="anima-configurator" 
+     data-product-id="{{ product.id }}"
+     style="width: 100%; display: block;">
+</div>
 ```
 
 ## Vorteile

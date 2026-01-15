@@ -12,6 +12,8 @@ function initWidget() {
         return;
     }
 
+
+
     if (container.dataset.rendered === "true") return; // Prevent double render
 
     const productId = container.dataset.productId;
