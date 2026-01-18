@@ -1,0 +1,23 @@
+
+> ihmfy@0.0.0 build
+> vite build
+
+vite v7.2.4 building client environment for production...
+transforming...
+✓ 21 modules transformed.
+✗ Build failed in 253ms
+error during build:
+[vite]: Rollup failed to resolve import "uuid" from "/Users/nazifisaki/Projekte/ihmfy/src/pages/CustomerSetup.jsx".
+This is most likely unintended because it can break your application at runtime.
+If you do want to externalize this module explicitly add it to
+`build.rollupOptions.external`
+    at viteLog (file:///Users/nazifisaki/Projekte/ihmfy/node_modules/vite/dist/node/chunks/config.js:34283:57)
+    at file:///Users/nazifisaki/Projekte/ihmfy/node_modules/vite/dist/node/chunks/config.js:34317:73
+    at onwarn (file:///Users/nazifisaki/Projekte/ihmfy/node_modules/@vitejs/plugin-react/dist/index.js:76:7)
+    at file:///Users/nazifisaki/Projekte/ihmfy/node_modules/vite/dist/node/chunks/config.js:34317:28
+    at onRollupLog (file:///Users/nazifisaki/Projekte/ihmfy/node_modules/vite/dist/node/chunks/config.js:34312:63)
+    at onLog (file:///Users/nazifisaki/Projekte/ihmfy/node_modules/vite/dist/node/chunks/config.js:34115:4)
+    at file:///Users/nazifisaki/Projekte/ihmfy/node_modules/rollup/dist/es/shared/node-entry.js:20961:32
+    at Object.logger [as onLog] (file:///Users/nazifisaki/Projekte/ihmfy/node_modules/rollup/dist/es/shared/node-entry.js:22848:9)
+    at ModuleLoader.handleInvalidResolvedId (file:///Users/nazifisaki/Projekte/ihmfy/node_modules/rollup/dist/es/shared/node-entry.js:21592:26)
+    at file:///Users/nazifisaki/Projekte/ihmfy/node_modules/rollup/dist/es/shared/node-entry.js:21550:26

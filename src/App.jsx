@@ -8,6 +8,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import LandingPage from './pages/LandingPage';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
+import CustomerSetup from './pages/CustomerSetup';
 import PrintGift from './pages/PrintGift';
 
 
@@ -98,6 +99,9 @@ function App() {
 
           {/* Legacy / Alias */}
           <Route path="/gift/:id" element={<UniversalViewer />} />
+
+          {/* Customer Setup (Etsy Flow) */}
+          <Route path="/setup/:id" element={<CustomerSetup />} />
 
           <Route path="/admin/login" element={<AdminLogin />} />
 

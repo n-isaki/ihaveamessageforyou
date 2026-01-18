@@ -47,6 +47,19 @@ export default function GiftReveal() {
         }
     }, [gift, id]);
 
+    // Redirect to Setup if empty and unlocked (Scan-to-Setup)
+    useEffect(() => {
+        if (gift && !gift.locked && (!gift.messages || gift.messages.length === 0) && gift.productType !== 'bracelet') {
+            // Use window.location for hard redirect or navigate
+            // Since we are in Router context... I need useNavigate.
+            // But Viewer uses useParams. I need to add useNavigate hook.
+            // For now window.location is safer if I don't want to change imports excessively, 
+            // but useNavigate is better SPA practice.
+            // I'll check imports.
+            window.location.href = `/setup/${id}`;
+        }
+    }, [gift, id]);
+
     const triggerAnimation = (type) => {
         const duration = 3000;
         const end = Date.now() + duration;

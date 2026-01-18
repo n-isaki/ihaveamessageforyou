@@ -2,14 +2,22 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /gift_orders/{document=**} {
-      // Public Read (So customers can view their gift via ID)
+      // Public Read
       allow read: if true;
       
-      // Public Create (For Shopify Widget)
+      // Public Create (Shopify Widget)
       allow create: if true;
 
-      // Update/Delete only for Admins
-      allow update, delete: if request.auth != null;
+      // Update Logic:
+      // 1. Admin can always update.
+      // 2. Setup Phase: If NOT locked, anyone (Customer) can update all fields (to setup gift).
+      // 3. View Phase: If LOCKED, anyone (Recipient) can ONLY update 'viewed'/'viewedAt'.
+      allow update: if request.auth != null 
+                    || resource.data.get('locked', false) == false
+                    || (resource.data.get('locked', false) == true && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewed', 'viewedAt']));
+      
+      // Delete: Only Admin
+      allow delete: if request.auth != null;
     }
   }
 }

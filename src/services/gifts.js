@@ -15,6 +15,26 @@ import { db, storage } from "../firebase";
 
 const COLLECTION_NAME = "gift_orders";
 
+export const createEtsyOrder = async (data) => {
+    // Data: { recipientName, senderName, personalizationText, etsyOrderId, productType }
+    try {
+        const docRef = await addDoc(collection(db, COLLECTION_NAME), {
+            ...data,
+            status: 'open',
+            platform: 'etsy',
+            securityToken: self.crypto.randomUUID(), // Secure Token for Magic Link
+            locked: false,
+            createdAt: serverTimestamp(),
+            viewed: false,
+            setupStarted: false
+        });
+        return docRef.id;
+    } catch (error) {
+        console.error("Error creating etsy order:", error);
+        throw error;
+    }
+};
+
 export const createGift = async (giftData) => {
     try {
         const docRef = await addDoc(collection(db, COLLECTION_NAME), {
@@ -113,8 +133,22 @@ export const markGiftAsViewed = async (id) => {
             viewed: true,
             viewedAt: serverTimestamp()
         });
+        // ... existing code ...
     } catch (error) {
         console.error("Error marking gift as viewed:", error);
         throw error;
+    }
+};
+
+export const markSetupAsStarted = async (id) => {
+    try {
+        const docRef = doc(db, COLLECTION_NAME, id);
+        await updateDoc(docRef, {
+            setupStarted: true,
+            setupStartedAt: serverTimestamp()
+        });
+    } catch (error) {
+        console.error("Error marking setup as started:", error);
+        // Don't throw, just log. It's analytics.
     }
 };
