@@ -97,7 +97,7 @@ export default function AdminKanban({ gifts }) {
                                 </div>
 
                                 <h4 className="font-bold text-stone-800 mb-1 truncate">
-                                    {gift.recipientName || gift.customerName || 'Unbekannt'}
+                                    {gift.customerName || gift.senderName || gift.recipientName || 'Unbekannt'}
                                 </h4>
 
                                 <div className="text-xs text-stone-500 mb-3 line-clamp-2">

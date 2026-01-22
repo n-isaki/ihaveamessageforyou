@@ -288,7 +288,7 @@ export default function AdminDashboard() {
 
                                                                     {/* Column 4: Customer */}
                                                                     <td className="p-2 align-middle">
-                                                                        <div className="text-sm font-medium text-stone-900">{gift.customerName || gift.recipientName || 'Unbekannt'}</div>
+                                                                        <div className="text-sm font-medium text-stone-900">{gift.customerName || gift.senderName || gift.recipientName || 'Unbekannt'}</div>
                                                                         <div className="text-xs text-stone-400 truncate max-w-[150px]" title={gift.customerEmail}>
                                                                             {gift.customerEmail || '-'}
                                                                         </div>
