@@ -238,11 +238,11 @@ export default function AdminDashboard() {
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y divide-stone-100 bg-white">
-                                                        {filteredGifts.map((gift) => (
+                                                        {filteredGifts.map((gift, index) => (
                                                             <React.Fragment key={gift.id}>
                                                                 <tr
                                                                     onClick={() => toggleExpand(gift.id)}
-                                                                    className={`cursor-pointer hover:bg-stone-50 transition-colors ${expandedId === gift.id ? 'bg-emerald-50/60 ring-1 ring-inset ring-emerald-100' : ''}`}
+                                                                    className={`cursor-pointer hover:bg-stone-100 transition-colors ${expandedId === gift.id ? 'bg-emerald-50/60 ring-1 ring-inset ring-emerald-100' : index % 2 === 0 ? 'bg-white' : 'bg-stone-50/50'}`}
                                                                 >
                                                                     {/* Column 1: Status */}
                                                                     <td className="p-2 pl-4 align-middle">
