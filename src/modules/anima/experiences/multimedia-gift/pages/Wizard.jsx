@@ -441,6 +441,14 @@ export default function GiftWizard() {
                                             <input type="text" name="orderId" value={formData.orderId} onChange={handleInputChange} className={styles.input} placeholder="#1001" />
                                         </div>
                                         <div>
+                                            <label className={styles.label}>Kunden Name (Käufer)</label>
+                                            <input type="text" name="customerName" value={formData.customerName} onChange={handleInputChange} className={styles.input} />
+                                        </div>
+                                        <div>
+                                            <label className={styles.label}>Kunden Email</label>
+                                            <input type="text" name="customerEmail" value={formData.customerEmail} onChange={handleInputChange} className={styles.input} />
+                                        </div>
+                                        <div>
                                             <label className={styles.label}>Empfänger</label>
                                             <input type="text" name="recipientName" value={formData.recipientName} onChange={handleInputChange} className={styles.input} />
                                         </div>
