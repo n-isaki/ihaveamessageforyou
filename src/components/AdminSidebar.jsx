@@ -89,7 +89,14 @@ export default function AdminSidebar({ activeView, onViewChange, onRefresh, isOp
                         {/* Collapsible Create Menu */}
                         <div>
                             <button
-                                onClick={() => !collapsed && setIsCreateOpen(!isCreateOpen)}
+                                onClick={() => {
+                                    if (collapsed) {
+                                        setCollapsed(false);
+                                        setIsCreateOpen(true);
+                                    } else {
+                                        setIsCreateOpen(!isCreateOpen);
+                                    }
+                                }}
                                 className={`flex items-center justify-between w-full px-4 py-3 rounded-xl text-stone-400 hover:text-stone-100 hover:bg-stone-900 transition-all font-medium text-sm ${collapsed ? 'justify-center px-2' : ''}`}
                                 title="Neuer Auftrag"
                             >
