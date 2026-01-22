@@ -8,7 +8,7 @@ import AdminKanban from '../components/AdminKanban';
 
 export default function AdminDashboard() {
     const [gifts, setGifts] = useState([]);
-    const [hoveredGift, setHoveredGift] = useState(null);
+
     const [loading, setLoading] = useState(true);
     const [expandedId, setExpandedId] = useState(null);
     const [viewMode, setViewMode] = useState('list');
@@ -335,8 +335,6 @@ export default function AdminDashboard() {
                                                             <React.Fragment key={gift.id}>
                                                                 <tr
                                                                     onClick={() => toggleExpand(gift.id)}
-                                                                    onMouseEnter={() => setHoveredGift(gift)}
-                                                                    onMouseLeave={() => setHoveredGift(null)}
                                                                     className={`cursor-pointer hover:bg-stone-100 transition-colors ${expandedId === gift.id ? 'bg-emerald-50/60 ring-1 ring-inset ring-emerald-100' : index % 2 === 0 ? 'bg-white' : 'bg-stone-50/50'}`}
                                                                 >
                                                                     {/* Column 1: Status */}
@@ -397,8 +395,8 @@ export default function AdminDashboard() {
                                                                     {/* Column 6: Actions */}
                                                                     <td className="p-2 align-middle text-right pr-4">
                                                                         <div className="flex justify-end items-center space-x-1" onClick={e => e.stopPropagation()}>
-                                                                            {/* Link Copy (For Customers) */}
-                                                                            {!gift.locked && (
+                                                                            {/* Link Copy (For Customers - Only Mugs) */}
+                                                                            {!gift.locked && (!gift.project || gift.project === 'kamlimos' || gift.project === 'tasse') && (
                                                                                 <button
                                                                                     onClick={e => {
                                                                                         e.stopPropagation();
@@ -803,50 +801,6 @@ export default function AdminDashboard() {
                 )}
             </main>
 
-            {/* Magic Live Preview Overlay */}
-            <AnimatePresence>
-                {hoveredGift && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 20, scale: 0.9 }}
-                        transition={{ duration: 0.2 }}
-                        className="fixed bottom-8 right-8 w-60 z-50 pointer-events-none"
-                    >
-                        <div className="relative bg-stone-900 rounded-[2rem] border-4 border-stone-800 shadow-2xl overflow-hidden aspect-[9/16] flex flex-col">
-                            {/* iPhone Notch */}
-                            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-4 bg-stone-800 rounded-b-lg z-20"></div>
-
-                            {/* Content */}
-                            <div className="flex-1 bg-stone-50 relative flex flex-col">
-                                {(hoveredGift.designImage || hoveredGift.photoUrl) ? (
-                                    <img src={hoveredGift.designImage || hoveredGift.photoUrl} className="w-full h-full object-cover" />
-                                ) : (
-                                    <div className={`w-full h-full flex items-center justify-center ${hoveredGift.project === 'noor' || hoveredGift.project === 'dua' ? 'bg-emerald-50' : 'bg-rose-50'}`}>
-                                        {hoveredGift.project === 'noor' || hoveredGift.project === 'dua' ? (
-                                            <div className="text-center p-4">
-                                                <Zap className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
-                                                <p className="text-xs font-bold text-emerald-900">{hoveredGift.title}</p>
-                                            </div>
-                                        ) : (
-                                            <div className="text-center p-4">
-                                                <Coffee className="h-8 w-8 text-rose-500 mx-auto mb-2" />
-                                                <p className="text-xs font-bold text-rose-900">{hoveredGift.headline || 'Deine Botschaft'}</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                {/* Overlay Text */}
-                                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-4 text-white">
-                                    <p className="text-[10px] opacity-80 uppercase tracking-widest mb-1">Vorschau</p>
-                                    <p className="text-xs font-bold line-clamp-2">{hoveredGift.headline || hoveredGift.title || hoveredGift.recipientName}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
         </div>
     );
 }
