@@ -84,7 +84,9 @@ export default function PrintGift() {
                 </div>
 
                 <div className="pt-12 border-t border-stone-100 mt-12">
-                    <p className="text-rose-400 font-serif italic">Von {gift.customerName}</p>
+                    <p className="text-rose-400 font-serif italic">
+                        {(gift.senderName || gift.customerName) ? `Von ${gift.senderName || gift.customerName}` : ''}
+                    </p>
                 </div>
             </div>
 
