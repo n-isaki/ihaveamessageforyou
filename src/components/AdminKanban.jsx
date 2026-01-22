@@ -51,6 +51,7 @@ export default function AdminKanban({ gifts }) {
             case 'bracelet': return <Watch className="h-4 w-4" />;
             case 'memoria': return <Heart className="h-4 w-4" />;
             case 'dua': return <Zap className="h-4 w-4" />;
+            case 'noor': return <Zap className="h-4 w-4" />;
             default: return <Coffee className="h-4 w-4" />;
         }
     };
@@ -86,7 +87,7 @@ export default function AdminKanban({ gifts }) {
                                 <div className="flex justify-between items-start mb-2">
                                     <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-wide bg-stone-100 text-stone-500`}>
                                         {getIcon(gift.project || 'tasse')}
-                                        <span className="ml-1">{gift.project || 'tasse'}</span>
+                                        <span className="ml-1">{(gift.project === 'dua' || gift.project === 'noor') ? 'Noor' : (gift.project || 'Tasse')}</span>
                                     </span>
                                     {gift.createdAt && (
                                         <span className="text-[10px] text-stone-400">{timeAgo(gift.createdAt)}</span>

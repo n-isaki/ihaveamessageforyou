@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { getGiftById, updateGift, markSetupAsStarted } from '../services/gifts';
 import WizardMessageEditor from '../modules/anima/experiences/multimedia-gift/components/WizardMessageEditor';
-import { Loader, Lock, CheckCircle, Save, Info, ShieldAlert, X, HelpCircle, AlertTriangle } from 'lucide-react';
+import { Loader, Lock, CheckCircle, Save, Info, ShieldAlert, X, HelpCircle, AlertTriangle, Eye, Edit2 } from 'lucide-react';
+import MugViewer from '../modules/anima/experiences/multimedia-gift/pages/Viewer';
 import { v4 as uuidv4 } from 'uuid';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -19,6 +20,9 @@ export default function CustomerSetup() {
     const [locked, setLocked] = useState(false);
     const [accessDenied, setAccessDenied] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [headline, setHeadline] = useState('');
+    const [subheadline, setSubheadline] = useState('');
+    const [showPreview, setShowPreview] = useState(false);
 
     useEffect(() => {
         const init = async () => {
@@ -35,6 +39,8 @@ export default function CustomerSetup() {
                     setGift(data);
                     setMessages(data.messages || []);
                     setLocked(!!data.locked);
+                    setHeadline(data.headline || '');
+                    setSubheadline(data.subheadline || '');
 
                     // Track that customer opened the link
                     if (!data.setupStarted && !data.locked) {
@@ -80,6 +86,8 @@ export default function CustomerSetup() {
         try {
             await updateGift(id, {
                 messages,
+                headline,
+                subheadline,
                 locked: true,
                 setupCompletedAt: new Date()
             });
@@ -154,24 +162,59 @@ export default function CustomerSetup() {
             <div className="max-w-2xl mx-auto p-6 space-y-8 mt-4">
 
                 {/* Greeting Card */}
+                {/* Intro Screen Editor */}
                 <div className="bg-gradient-to-br from-stone-900 to-stone-900/50 p-8 rounded-3xl shadow-xl border border-stone-800 relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
 
-                    <h1 className="text-3xl font-serif font-bold mb-3 text-white">Hallo {gift.customerName || gift.senderName || 'Gast'},</h1>
-                    <p className="text-stone-400 leading-relaxed">
-                        Hier kannst du deinem Geschenk <strong>"{gift.personalizationText || 'Unvergesslich'}"</strong> Leben einhauchen.
-                        Füge persönliche Videos, Bilder oder Texte hinzu, die beim Scannen erscheinen sollen.
-                    </p>
+                    <div className="flex justify-between items-start mb-6">
+                        <h2 className="text-xl font-bold font-serif text-white flex items-center">
+                            <Edit2 className="w-5 h-5 mr-2 text-rose-500" />
+                            1. Start-Bildschirm
+                        </h2>
+                        <button
+                            onClick={() => setShowPreview(true)}
+                            className="flex items-center px-4 py-2 bg-stone-800 hover:bg-rose-600 rounded-lg text-sm font-medium text-white transition-colors shadow-lg border border-stone-700 group"
+                        >
+                            <Eye className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
+                            Live Vorschau
+                        </button>
+                    </div>
 
-                    {gift.personalizationText && (
-                        <div className="mt-6 p-4 bg-stone-950/50 rounded-xl text-sm border border-stone-800 flex items-start gap-3">
-                            <Info className="h-5 w-5 text-rose-500 mt-0.5 shrink-0" />
-                            <div>
-                                <span className="block font-bold text-stone-500 text-xs uppercase tracking-wider mb-1">Etsy Gravur/Text</span>
-                                <span className="text-stone-200 font-medium text-base font-serif italic">"{gift.personalizationText}"</span>
-                            </div>
+                    <div className="space-y-6 relative z-10">
+                        <div>
+                            <label className="text-xs uppercase tracking-wider text-stone-500 font-bold mb-2 block flex items-center">
+                                Titel (z.B. Von Herzen)
+                                <Info className="h-3 w-3 ml-2 text-stone-600" />
+                            </label>
+                            <input
+                                type="text"
+                                value={headline}
+                                onChange={e => setHeadline(e.target.value)}
+                                placeholder="Von Herzen für dich"
+                                className="w-full bg-stone-950/50 border border-stone-800 rounded-xl p-4 text-2xl font-serif text-white placeholder-stone-700 focus:ring-2 focus:ring-rose-500/50 outline-none transition-all"
+                            />
                         </div>
-                    )}
+                        <div>
+                            <label className="text-xs uppercase tracking-wider text-stone-500 font-bold mb-2 block">Untertitel / Absender</label>
+                            <input
+                                type="text"
+                                value={subheadline}
+                                onChange={e => setSubheadline(e.target.value)}
+                                placeholder={`Eine Botschaft von ${gift.senderName || gift.customerName}`}
+                                className="w-full bg-stone-950/50 border border-stone-800 rounded-xl p-4 text-base text-stone-300 placeholder-stone-700 focus:ring-2 focus:ring-rose-500/50 outline-none transition-all"
+                            />
+                        </div>
+
+                        {gift.personalizationText && (
+                            <div className="mt-4 p-4 bg-stone-950/50 rounded-xl text-sm border border-stone-800 flex items-start gap-3">
+                                <Info className="h-5 w-5 text-rose-500 mt-0.5 shrink-0" />
+                                <div>
+                                    <span className="block font-bold text-stone-500 text-xs uppercase tracking-wider mb-1">Deine Etsy Gravur</span>
+                                    <span className="text-stone-200 font-medium text-base font-serif italic">"{gift.personalizationText}"</span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Editor */}
@@ -271,6 +314,23 @@ export default function CustomerSetup() {
                                 </div>
                             </div>
                         </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Preview Modal */}
+            <AnimatePresence>
+                {showPreview && (
+                    <div className="fixed inset-0 z-[100] bg-black">
+                         <button 
+                            onClick={() => setShowPreview(false)}
+                            className="fixed top-6 right-6 z-[110] bg-stone-900/80 backdrop-blur text-white p-3 rounded-full hover:bg-rose-600 transition-colors border border-stone-700 hover:scale-110 shadow-xl"
+                         >
+                            <X className="h-6 w-6" />
+                         </button>
+                         <div className="h-full w-full overflow-y-auto">
+                             <MugViewer initialData={{ ...gift, headline, subheadline, messages }} />
+                         </div>
                     </div>
                 )}
             </AnimatePresence>

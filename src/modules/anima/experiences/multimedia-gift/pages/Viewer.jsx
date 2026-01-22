@@ -6,18 +6,25 @@ import { motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import ReactMarkdown from 'react-markdown';
 
-export default function GiftReveal() {
+export default function GiftReveal({ initialData }) {
     const { id } = useParams();
-    const [gift, setGift] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [gift, setGift] = useState(initialData || null);
+    const [loading, setLoading] = useState(!initialData);
     const [pin, setPin] = useState('');
     const [error, setError] = useState('');
     const [unlocked, setUnlocked] = useState(false);
     const [fontSizeLevel, setFontSizeLevel] = useState(0); // 0=Normal, 1=Large, 2=Extra Large
+    const isPreview = !!initialData;
     const messagesEndRef = useRef(null);
 
-    // Initial Fetch
+    // Initial Fetch (Only if no initialData)
     useEffect(() => {
+        if (initialData) {
+            setGift(initialData);
+            setLoading(false);
+            return;
+        }
+
         const fetchGift = async () => {
             try {
                 const data = await getGiftById(id);
@@ -35,21 +42,22 @@ export default function GiftReveal() {
         } else {
             setLoading(false);
         }
-    }, [id]);
+    }, [id, initialData]);
+
 
     // Auto-unlock for bracelets AND Mark as Viewed immediately
     useEffect(() => {
         if (gift && gift.productType === 'bracelet') {
             setUnlocked(true);
-            if (!gift.viewed) {
+            if (!gift.viewed && !isPreview) {
                 markGiftAsViewed(id).catch(err => console.error("Error marking as viewed", err));
             }
         }
-    }, [gift, id]);
+    }, [gift, id, isPreview]);
 
     // Redirect to Setup if empty and unlocked (Scan-to-Setup)
     useEffect(() => {
-        if (gift && !gift.locked && (!gift.messages || gift.messages.length === 0) && gift.productType !== 'bracelet') {
+        if (gift && !gift.locked && (!gift.messages || gift.messages.length === 0) && gift.productType !== 'bracelet' && !isPreview) {
             // Use window.location for hard redirect or navigate
             // Since we are in Router context... I need useNavigate.
             // But Viewer uses useParams. I need to add useNavigate hook.
@@ -58,7 +66,7 @@ export default function GiftReveal() {
             // I'll check imports.
             window.location.href = `/setup/${id}`;
         }
-    }, [gift, id]);
+    }, [gift, id, isPreview]);
 
     const triggerAnimation = (type) => {
         const duration = 3000;
@@ -130,7 +138,7 @@ export default function GiftReveal() {
             setUnlocked(true);
 
             // Mark as viewed when unlocked with PIN
-            if (!gift.viewed) {
+            if (!gift.viewed && !isPreview) {
                 markGiftAsViewed(id).catch(err => console.error("Error marking as viewed", err));
             }
 
@@ -313,10 +321,18 @@ export default function GiftReveal() {
                                         <div className="w-px h-16 bg-gradient-to-b from-transparent via-rose-500 to-transparent opacity-50"></div>
                                     </div>
                                     <h2 className="text-5xl md:text-7xl font-serif italic text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-stone-500 tracking-tight leading-tight">
-                                        Von Herzen<br />für dich
+                                        {gift.headline ? (
+                                            <span dangerouslySetInnerHTML={{ __html: gift.headline.replace(/\n/g, '<br/>') }} />
+                                        ) : (
+                                            <>Von Herzen<br />für dich</>
+                                        )}
                                     </h2>
                                     <p className="text-lg text-stone-400 font-light tracking-wide mt-8">
-                                        Eine Botschaft von <span className="font-medium text-rose-400 border-b border-rose-500/30 pb-0.5">{gift.senderName || gift.customerName}</span>
+                                        {gift.subheadline ? (
+                                            <span>{gift.subheadline}</span>
+                                        ) : (
+                                            <>Eine Botschaft von <span className="font-medium text-rose-400 border-b border-rose-500/30 pb-0.5">{gift.senderName || gift.customerName}</span></>
+                                        )}
                                     </p>
                                 </motion.div>
 

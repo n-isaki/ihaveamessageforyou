@@ -3,8 +3,9 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { createGift, getGiftById, updateGift } from '@/services/gifts';
 import { storage } from '@/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { Plus, Trash2, Video, MessageSquare, ArrowRight, ArrowLeft, Save, Loader, Coffee, Watch, Music, FileAudio, UploadCloud, Zap, Heart, Image as ImageIcon } from 'lucide-react';
+import { Plus, Trash2, Video, MessageSquare, ArrowRight, ArrowLeft, Save, Loader, Coffee, Watch, Music, FileAudio, UploadCloud, Zap, Heart, Image as ImageIcon, Menu } from 'lucide-react';
 import WizardMessageEditor from '../components/WizardMessageEditor';
+import AdminSidebar from '@/components/AdminSidebar';
 
 export default function GiftWizard() {
     const navigate = useNavigate();
@@ -17,6 +18,7 @@ export default function GiftWizard() {
     const urlProjectMode = searchParams.get('project');
 
     const [step, setStep] = useState(1);
+    const [isSidebarOpen, setSidebarOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [uploadingRecitation, setUploadingRecitation] = useState(false);
     const [uploadingMeaning, setUploadingMeaning] = useState(false);
@@ -26,8 +28,8 @@ export default function GiftWizard() {
 
     const [formData, setFormData] = useState({
         // Common
-        project: urlProjectMode || 'kamlimos', // 'kamlimos' | 'dua' | 'memoria' | 'ritual'
-        productType: 'mug', // 'mug', 'bracelet', 'dua-audio', 'memory-card'
+        project: urlProjectMode || 'kamlimos', // 'kamlimos' | 'noor' | 'memoria' | 'ritual'
+        productType: 'mug', // 'mug', 'bracelet', 'noor-audio', 'memory-card'
         recipientName: '',
         senderName: '',
         customerName: '',
@@ -42,7 +44,7 @@ export default function GiftWizard() {
         engravingText: '',
         meaningText: '',
 
-        // Dua Specific
+        // Noor Specific
         title: '',       // e.g. "Dua für Verzeihung"
         arabicText: '',  // The Arabic script
         audioUrl: '',    // URL to MP3 in Storage (Recitation)
@@ -75,7 +77,7 @@ export default function GiftWizard() {
                             designImage: data.designImage || '',
                             engravingText: data.engravingText || '',
                             meaningText: data.meaningText || '',
-                            // Dua
+                            // Noor
                             title: data.title || '',
                             arabicText: data.arabicText || '',
                             audioUrl: data.audioUrl || '',
@@ -99,8 +101,8 @@ export default function GiftWizard() {
             fetchGift();
         } else {
             // New gift creation with preset project mode
-            if (urlProjectMode === 'dua') {
-                setFormData(prev => ({ ...prev, project: 'dua', productType: 'dua-audio' }));
+            if (urlProjectMode === 'noor' || urlProjectMode === 'dua') {
+                setFormData(prev => ({ ...prev, project: 'noor', productType: 'noor-audio' }));
             } else if (urlProjectMode === 'memoria') {
                 setFormData(prev => ({ ...prev, project: 'memoria', productType: 'memory-card' }));
             } else if (urlProjectMode === 'ritual') {
@@ -125,7 +127,7 @@ export default function GiftWizard() {
 
         try {
             // Create a reference to 'audio/filename_timestamp'
-            const storageRef = ref(storage, `dua-audio/${Date.now()}_${file.name}`);
+            const storageRef = ref(storage, `noor-audio/${Date.now()}_${file.name}`);
             await uploadBytes(storageRef, file);
             const url = await getDownloadURL(storageRef);
 
@@ -208,7 +210,7 @@ export default function GiftWizard() {
     };
 
     const getDashboardTab = () => {
-        if (formData.project === 'dua') return 'dua';
+        if (formData.project === 'noor' || formData.project === 'dua') return 'noor';
         if (formData.project === 'memoria') return 'memoria';
         if (formData.project === 'ritual' || formData.productType === 'bracelet') return 'ritual';
         return 'kamlimos';
@@ -233,280 +235,300 @@ export default function GiftWizard() {
         btnSmall: "inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md hover:bg-stone-50 transition-colors"
     };
 
-    const isDua = formData.project === 'dua';
+    const isNoor = formData.project === 'noor' || formData.project === 'dua';
     const isMemoria = formData.project === 'memoria';
     const isRitual = formData.project === 'ritual' || formData.productType === 'bracelet';
     const isBracelet = isRitual; // Alias for readability in render logic if needed
 
     return (
-        <div className="min-h-screen bg-stone-50 py-12 px-4 sm:px-6 lg:px-8 font-sans">
-            <div className="max-w-3xl mx-auto">
-                <div className="flex items-center justify-between mb-8">
-                    <h1 className="text-3xl font-bold text-stone-900">
-                        {isEditMode ? 'Auftrag bearbeiten' : isDua ? 'Neues Noor' : isMemoria ? 'Neues Memoria' : 'Neuer Auftrag'}
-                    </h1>
-                    <button
-                        onClick={() => navigate(`/admin/dashboard?tab=${getDashboardTab()}`)}
-                        className="text-stone-500 hover:text-stone-700"
-                    >
-                        Abbrechen
-                    </button>
-                </div>
+        <div className="flex bg-stone-50 min-h-screen font-sans">
+            <AdminSidebar
+                activeView="edit"
+                onViewChange={() => navigate('/admin/dashboard')}
+                onRefresh={() => window.location.reload()}
+                isOpen={isSidebarOpen}
+                onClose={() => setSidebarOpen(false)}
+            />
+            <main className="flex-1 h-screen overflow-y-auto relative py-12 px-4 sm:px-6 lg:px-8">
+                <button onClick={() => setSidebarOpen(true)} className="md:hidden absolute top-4 left-4 z-40 p-2 text-stone-600 bg-stone-100/80 backdrop-blur rounded-lg shadow-sm border border-stone-200">
+                    <Menu className="h-6 w-6" />
+                </button>
+                <div className="max-w-3xl mx-auto">
+                    <div className="flex items-center justify-between mb-8">
+                        <h1 className="text-3xl font-bold text-stone-900">
+                            {isEditMode
+                                ? 'Auftrag bearbeiten'
+                                : isNoor
+                                    ? 'Neues Noor'
+                                    : isMemoria
+                                        ? 'Neues Memoria'
+                                        : isBracelet
+                                            ? 'Neues Armband'
+                                            : 'Neue Tasse'}
+                        </h1>
+                        <button
+                            onClick={() => navigate(`/admin/dashboard?tab=${getDashboardTab()}`)}
+                            className="text-stone-500 hover:text-stone-700"
+                        >
+                            Abbrechen
+                        </button>
+                    </div>
 
-                {/* Progress Steps */}
-                <div className="mb-8 flex space-x-2">
-                    <div className={`h-2 flex-1 rounded-full ${step >= 1 ? (isDua ? 'bg-emerald-500' : isMemoria ? 'bg-stone-600' : isRitual ? 'bg-indigo-500' : 'bg-rose-500') : 'bg-stone-200'}`}></div>
-                    <div className={`h-2 flex-1 rounded-full ${step >= 2 ? (isDua ? 'bg-emerald-500' : isMemoria ? 'bg-stone-600' : isRitual ? 'bg-indigo-500' : 'bg-rose-500') : 'bg-stone-200'}`}></div>
-                </div>
+                    {/* Progress Steps */}
+                    <div className="mb-8 flex space-x-2">
+                        <div className={`h-2 flex-1 rounded-full ${step >= 1 ? (isNoor ? 'bg-emerald-500' : isMemoria ? 'bg-stone-600' : isRitual ? 'bg-indigo-500' : 'bg-rose-500') : 'bg-stone-200'}`}></div>
+                        <div className={`h-2 flex-1 rounded-full ${step >= 2 ? (isNoor ? 'bg-emerald-500' : isMemoria ? 'bg-stone-600' : isRitual ? 'bg-indigo-500' : 'bg-rose-500') : 'bg-stone-200'}`}></div>
+                    </div>
 
-                <div className="bg-white shadow rounded-2xl p-8 border border-stone-100">
+                    <div className="bg-white shadow rounded-2xl p-8 border border-stone-100">
 
-                    {/* ---------- STEP 1: DETAILS (Formerly Step 2) ---------- */}
-                    {step === 1 && (
-                        <div className="space-y-8">
-                            <h2 className="text-2xl font-bold text-stone-900">1. Inhalte erfassen</h2>
+                        {/* ---------- STEP 1: DETAILS (Formerly Step 2) ---------- */}
+                        {step === 1 && (
+                            <div className="space-y-8">
+                                <h2 className="text-2xl font-bold text-stone-900">1. Inhalte erfassen</h2>
 
-                            {/* DUA FORM */}
-                            {isDua ? (
-                                <div className="space-y-6">
-                                    <div>
-                                        <label className={styles.label}>Titel des Bittgebets (z.B. Für Erfolg)</label>
-                                        <input type="text" name="title" value={formData.title} onChange={handleInputChange} className={styles.input} placeholder="Titel..." />
-                                    </div>
-
-                                    {/* AUDIO 1: RECITATION */}
-                                    <div className="bg-emerald-50 p-6 rounded-xl border border-emerald-100">
-                                        <label className={styles.label}>1. Audio: Rezitation (Arabisch)</label>
-                                        <div className="mt-2 flex items-center space-x-4">
-                                            <label className="cursor-pointer flex items-center px-4 py-2 border border-emerald-300 rounded-lg shadow-sm text-sm font-medium text-emerald-700 bg-white hover:bg-emerald-50">
-                                                {uploadingRecitation ? <Loader className="animate-spin h-5 w-5" /> : <UploadCloud className="h-5 w-5 mr-2" />}
-                                                {uploadingRecitation ? 'Lädt hoch...' : 'Datei wählen'}
-                                                <input type="file" accept="audio/*" className="hidden" onChange={(e) => handleAudioUpload(e, 'recitation')} />
-                                            </label>
-
-                                            {formData.audioUrl ? (
-                                                <div className="flex items-center text-emerald-700 text-sm">
-                                                    <FileAudio className="h-5 w-5 mr-2" />
-                                                    <span>Vorhanden ✅</span>
-                                                    <audio src={formData.audioUrl} controls className="ml-4 h-8" />
-                                                </div>
-                                            ) : (
-                                                <span className="text-sm text-stone-400">Keine Datei ausgewählt</span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* ARABIC TEXT INPUT REMOVED PER USER REQUEST */}
-
-                                    {/* AUDIO 2: MEANING */}
-                                    <div className="bg-stone-50 p-6 rounded-xl border border-stone-200">
-                                        <label className={styles.label}>2. Audio: Bedeutung/Story (Deutsch)</label>
-                                        <p className="text-xs text-stone-500 mb-2">Optional: Läuft im Abschnitt der Bedeutung.</p>
-                                        <div className="mt-2 flex items-center space-x-4">
-                                            <label className="cursor-pointer flex items-center px-4 py-2 border border-stone-300 rounded-lg shadow-sm text-sm font-medium text-stone-700 bg-white hover:bg-stone-50">
-                                                {uploadingMeaning ? <Loader className="animate-spin h-5 w-5" /> : <UploadCloud className="h-5 w-5 mr-2" />}
-                                                {uploadingMeaning ? 'Lädt hoch...' : 'Datei wählen'}
-                                                <input type="file" accept="audio/*" className="hidden" onChange={(e) => handleAudioUpload(e, 'meaning')} />
-                                            </label>
-
-                                            {formData.meaningAudioUrl ? (
-                                                <div className="flex items-center text-stone-700 text-sm">
-                                                    <FileAudio className="h-5 w-5 mr-2" />
-                                                    <span>Vorhanden ✅</span>
-                                                    <audio src={formData.meaningAudioUrl} controls className="ml-4 h-8" />
-                                                </div>
-                                            ) : (
-                                                <span className="text-sm text-stone-400">Keine Datei ausgewählt</span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className={styles.label}>Bedeutung Text (Markdown)</label>
-                                        <textarea
-                                            name="meaningText"
-                                            value={formData.meaningText}
-                                            onChange={handleInputChange}
-                                            rows="5"
-                                            className={styles.input}
-                                            placeholder="Erklärung hier..."
-                                        />
-                                    </div>
-
-                                    {/* Basic Metadata needed for DB */}
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-stone-100">
+                                {/* NOOR FORM */}
+                                {isNoor ? (
+                                    <div className="space-y-6">
                                         <div>
+                                            <label className={styles.label}>Titel des Bittgebets (z.B. Für Erfolg)</label>
+                                            <input type="text" name="title" value={formData.title} onChange={handleInputChange} className={styles.input} placeholder="Titel..." />
+                                        </div>
+
+                                        {/* AUDIO 1: RECITATION */}
+                                        <div className="bg-emerald-50 p-6 rounded-xl border border-emerald-100">
+                                            <label className={styles.label}>1. Audio: Rezitation (Arabisch)</label>
+                                            <div className="mt-2 flex items-center space-x-4">
+                                                <label className="cursor-pointer flex items-center px-4 py-2 border border-emerald-300 rounded-lg shadow-sm text-sm font-medium text-emerald-700 bg-white hover:bg-emerald-50">
+                                                    {uploadingRecitation ? <Loader className="animate-spin h-5 w-5" /> : <UploadCloud className="h-5 w-5 mr-2" />}
+                                                    {uploadingRecitation ? 'Lädt hoch...' : 'Datei wählen'}
+                                                    <input type="file" accept="audio/*" className="hidden" onChange={(e) => handleAudioUpload(e, 'recitation')} />
+                                                </label>
+
+                                                {formData.audioUrl ? (
+                                                    <div className="flex items-center text-emerald-700 text-sm">
+                                                        <FileAudio className="h-5 w-5 mr-2" />
+                                                        <span>Vorhanden ✅</span>
+                                                        <audio src={formData.audioUrl} controls className="ml-4 h-8" />
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-sm text-stone-400">Keine Datei ausgewählt</span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* ARABIC TEXT INPUT REMOVED PER USER REQUEST */}
+
+                                        {/* AUDIO 2: MEANING */}
+                                        <div className="bg-stone-50 p-6 rounded-xl border border-stone-200">
+                                            <label className={styles.label}>2. Audio: Bedeutung/Story (Deutsch)</label>
+                                            <p className="text-xs text-stone-500 mb-2">Optional: Läuft im Abschnitt der Bedeutung.</p>
+                                            <div className="mt-2 flex items-center space-x-4">
+                                                <label className="cursor-pointer flex items-center px-4 py-2 border border-stone-300 rounded-lg shadow-sm text-sm font-medium text-stone-700 bg-white hover:bg-stone-50">
+                                                    {uploadingMeaning ? <Loader className="animate-spin h-5 w-5" /> : <UploadCloud className="h-5 w-5 mr-2" />}
+                                                    {uploadingMeaning ? 'Lädt hoch...' : 'Datei wählen'}
+                                                    <input type="file" accept="audio/*" className="hidden" onChange={(e) => handleAudioUpload(e, 'meaning')} />
+                                                </label>
+
+                                                {formData.meaningAudioUrl ? (
+                                                    <div className="flex items-center text-stone-700 text-sm">
+                                                        <FileAudio className="h-5 w-5 mr-2" />
+                                                        <span>Vorhanden ✅</span>
+                                                        <audio src={formData.meaningAudioUrl} controls className="ml-4 h-8" />
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-sm text-stone-400">Keine Datei ausgewählt</span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className={styles.label}>Bedeutung Text (Markdown)</label>
+                                            <textarea
+                                                name="meaningText"
+                                                value={formData.meaningText}
+                                                onChange={handleInputChange}
+                                                rows="5"
+                                                className={styles.input}
+                                                placeholder="Erklärung hier..."
+                                            />
+                                        </div>
+
+                                        {/* Basic Metadata needed for DB */}
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-stone-100">
+                                            <div>
+                                                <label className={styles.label}>Bestellnummer (Shopify/Etsy)</label>
+                                                <input type="text" name="orderId" value={formData.orderId} onChange={handleInputChange} className={styles.input} placeholder="#1001" />
+                                            </div>
+                                            <div>
+                                                <label className={styles.label}>Kunden Name</label>
+                                                <input type="text" name="customerName" value={formData.customerName} onChange={handleInputChange} className={styles.input} />
+                                            </div>
+                                            <div>
+                                                <label className={styles.label}>Kunden Email</label>
+                                                <input type="text" name="customerEmail" value={formData.customerEmail} onChange={handleInputChange} className={styles.input} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : isMemoria ? (
+                                    /* MEMORIA FORM */
+                                    <div className="space-y-6">
+                                        <div className="grid grid-cols-2 gap-6">
+                                            <div>
+                                                <label className={styles.label}>Name des Verstorbenen</label>
+                                                <input type="text" name="deceasedName" value={formData.deceasedName} onChange={handleInputChange} className={styles.input} placeholder="z.B. Opa Hans" />
+                                            </div>
+                                            <div>
+                                                <label className={styles.label}>Lebensdaten (Jahr - Jahr)</label>
+                                                <input type="text" name="lifeDates" value={formData.lifeDates} onChange={handleInputChange} className={styles.input} placeholder="1950 - 2024" />
+                                            </div>
+                                        </div>
+
+                                        {/* AUDIO (Recitation slot reused as Main Audio) */}
+                                        <div className="bg-stone-50 p-6 rounded-xl border border-stone-200">
+                                            <label className={styles.label}>Audio Geschichte/Musik (Suno)</label>
+                                            <div className="mt-2 flex items-center space-x-4">
+                                                <label className="cursor-pointer flex items-center px-4 py-2 border border-stone-300 rounded-lg shadow-sm text-sm font-medium text-stone-700 bg-white hover:bg-stone-50">
+                                                    {uploadingRecitation ? <Loader className="animate-spin h-5 w-5" /> : <UploadCloud className="h-5 w-5 mr-2" />}
+                                                    {uploadingRecitation ? 'Lädt hoch...' : 'Audio wählen'}
+                                                    <input type="file" accept="audio/*" className="hidden" onChange={(e) => handleAudioUpload(e, 'recitation')} />
+                                                </label>
+
+                                                {formData.audioUrl ? (
+                                                    <div className="flex items-center text-stone-700 text-sm">
+                                                        <FileAudio className="h-5 w-5 mr-2" />
+                                                        <span>Vorhanden ✅</span>
+                                                        <audio src={formData.audioUrl} controls className="ml-4 h-8" />
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-sm text-stone-400">Keine Datei ausgewählt</span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className={styles.label}>Geschichte / Text (Markdown)</label>
+                                            <textarea
+                                                name="meaningText"
+                                                value={formData.meaningText}
+                                                onChange={handleInputChange}
+                                                rows="8"
+                                                className={styles.input}
+                                                placeholder="Hier die Geschichte des Verstorbenen schreiben..."
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-stone-100">
+                                            <div>
+                                                <label className={styles.label}>Bestellnummer</label>
+                                                <input type="text" name="orderId" value={formData.orderId} onChange={handleInputChange} className={styles.input} placeholder="#1001" />
+                                            </div>
+                                            <div>
+                                                <label className={styles.label}>Kunden Name</label>
+                                                <input type="text" name="customerName" value={formData.customerName} onChange={handleInputChange} className={styles.input} />
+                                            </div>
+                                            <div>
+                                                <label className={styles.label}>Kunden Email</label>
+                                                <input type="text" name="customerEmail" value={formData.customerEmail} onChange={handleInputChange} className={styles.input} />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    /* KAMLIMOS FORM (Standard) */
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="md:col-span-2">
                                             <label className={styles.label}>Bestellnummer (Shopify/Etsy)</label>
                                             <input type="text" name="orderId" value={formData.orderId} onChange={handleInputChange} className={styles.input} placeholder="#1001" />
                                         </div>
                                         <div>
-                                            <label className={styles.label}>Kunden Name</label>
-                                            <input type="text" name="customerName" value={formData.customerName} onChange={handleInputChange} className={styles.input} />
+                                            <label className={styles.label}>Empfänger</label>
+                                            <input type="text" name="recipientName" value={formData.recipientName} onChange={handleInputChange} className={styles.input} />
                                         </div>
                                         <div>
-                                            <label className={styles.label}>Kunden Email</label>
-                                            <input type="text" name="customerEmail" value={formData.customerEmail} onChange={handleInputChange} className={styles.input} />
+                                            <label className={styles.label}>Absender</label>
+                                            <input type="text" name="senderName" value={formData.senderName} onChange={handleInputChange} className={styles.input} />
                                         </div>
-                                    </div>
-                                </div>
-                            ) : isMemoria ? (
-                                /* MEMORIA FORM */
-                                <div className="space-y-6">
-                                    <div className="grid grid-cols-2 gap-6">
-                                        <div>
-                                            <label className={styles.label}>Name des Verstorbenen</label>
-                                            <input type="text" name="deceasedName" value={formData.deceasedName} onChange={handleInputChange} className={styles.input} placeholder="z.B. Opa Hans" />
-                                        </div>
-                                        <div>
-                                            <label className={styles.label}>Lebensdaten (Jahr - Jahr)</label>
-                                            <input type="text" name="lifeDates" value={formData.lifeDates} onChange={handleInputChange} className={styles.input} placeholder="1950 - 2024" />
-                                        </div>
-                                    </div>
-
-                                    {/* AUDIO (Recitation slot reused as Main Audio) */}
-                                    <div className="bg-stone-50 p-6 rounded-xl border border-stone-200">
-                                        <label className={styles.label}>Audio Geschichte/Musik (Suno)</label>
-                                        <div className="mt-2 flex items-center space-x-4">
-                                            <label className="cursor-pointer flex items-center px-4 py-2 border border-stone-300 rounded-lg shadow-sm text-sm font-medium text-stone-700 bg-white hover:bg-stone-50">
-                                                {uploadingRecitation ? <Loader className="animate-spin h-5 w-5" /> : <UploadCloud className="h-5 w-5 mr-2" />}
-                                                {uploadingRecitation ? 'Lädt hoch...' : 'Audio wählen'}
-                                                <input type="file" accept="audio/*" className="hidden" onChange={(e) => handleAudioUpload(e, 'recitation')} />
-                                            </label>
-
-                                            {formData.audioUrl ? (
-                                                <div className="flex items-center text-stone-700 text-sm">
-                                                    <FileAudio className="h-5 w-5 mr-2" />
-                                                    <span>Vorhanden ✅</span>
-                                                    <audio src={formData.audioUrl} controls className="ml-4 h-8" />
+                                        {/* ... other standard fields ... */}
+                                        {isBracelet ? (
+                                            <div className="md:col-span-2 space-y-4">
+                                                <div>
+                                                    <label className={styles.label}>Gravur Text</label>
+                                                    <input type="text" name="engravingText" value={formData.engravingText} onChange={handleInputChange} className={styles.input} />
                                                 </div>
-                                            ) : (
-                                                <span className="text-sm text-stone-400">Keine Datei ausgewählt</span>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className={styles.label}>Geschichte / Text (Markdown)</label>
-                                        <textarea
-                                            name="meaningText"
-                                            value={formData.meaningText}
-                                            onChange={handleInputChange}
-                                            rows="8"
-                                            className={styles.input}
-                                            placeholder="Hier die Geschichte des Verstorbenen schreiben..."
-                                        />
-                                    </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-stone-100">
-                                        <div>
-                                            <label className={styles.label}>Bestellnummer</label>
-                                            <input type="text" name="orderId" value={formData.orderId} onChange={handleInputChange} className={styles.input} placeholder="#1001" />
-                                        </div>
-                                        <div>
-                                            <label className={styles.label}>Kunden Name</label>
-                                            <input type="text" name="customerName" value={formData.customerName} onChange={handleInputChange} className={styles.input} />
-                                        </div>
-                                        <div>
-                                            <label className={styles.label}>Kunden Email</label>
-                                            <input type="text" name="customerEmail" value={formData.customerEmail} onChange={handleInputChange} className={styles.input} />
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : (
-                                /* KAMLIMOS FORM (Standard) */
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="md:col-span-2">
-                                        <label className={styles.label}>Bestellnummer (Shopify/Etsy)</label>
-                                        <input type="text" name="orderId" value={formData.orderId} onChange={handleInputChange} className={styles.input} placeholder="#1001" />
-                                    </div>
-                                    <div>
-                                        <label className={styles.label}>Empfänger</label>
-                                        <input type="text" name="recipientName" value={formData.recipientName} onChange={handleInputChange} className={styles.input} />
-                                    </div>
-                                    <div>
-                                        <label className={styles.label}>Absender</label>
-                                        <input type="text" name="senderName" value={formData.senderName} onChange={handleInputChange} className={styles.input} />
-                                    </div>
-                                    {/* ... other standard fields ... */}
-                                    {isBracelet ? (
-                                        <div className="md:col-span-2 space-y-4">
-                                            <div>
-                                                <label className={styles.label}>Gravur Text</label>
-                                                <input type="text" name="engravingText" value={formData.engravingText} onChange={handleInputChange} className={styles.input} />
+                                                <div>
+                                                    <label className={styles.label}>Bedeutung (Markdown)</label>
+                                                    <textarea name="meaningText" value={formData.meaningText} onChange={handleInputChange} rows="5" className={styles.input} />
+                                                </div>
                                             </div>
-                                            <div>
-                                                <label className={styles.label}>Bedeutung (Markdown)</label>
-                                                <textarea name="meaningText" value={formData.meaningText} onChange={handleInputChange} rows="5" className={styles.input} />
+                                        ) : (
+                                            // Mug fields
+                                            <div className="md:col-span-2 space-y-4">
+                                                <label className={styles.label}>PIN Code</label>
+                                                <input type="text" name="accessCode" value={formData.accessCode} onChange={handleInputChange} className={styles.input} />
                                             </div>
-                                        </div>
-                                    ) : (
-                                        // Mug fields
-                                        <div className="md:col-span-2 space-y-4">
-                                            <label className={styles.label}>PIN Code</label>
-                                            <input type="text" name="accessCode" value={formData.accessCode} onChange={handleInputChange} className={styles.input} />
-                                        </div>
-                                    )}
+                                        )}
+                                    </div>
+                                )}
+
+                                <div className="flex justify-between pt-4">
+                                    <button onClick={() => navigate(`/admin/dashboard?tab=${getDashboardTab()}`)} className={styles.btnSecondary}>Zurück</button>
+                                    <div className="flex-1"></div>
+                                    <button onClick={() => setStep(2)} className={styles.btnPrimary}>
+                                        Weiter <ArrowRight className="ml-2 h-4 w-4 inline" />
+                                    </button>
                                 </div>
-                            )}
-
-                            <div className="flex justify-between pt-4">
-                                <button onClick={() => navigate(`/admin/dashboard?tab=${getDashboardTab()}`)} className={styles.btnSecondary}>Zurück</button>
-                                <div className="flex-1"></div>
-                                <button onClick={() => setStep(2)} className={styles.btnPrimary}>
-                                    Weiter <ArrowRight className="ml-2 h-4 w-4 inline" />
-                                </button>
                             </div>
-                        </div>
-                    )}
+                        )}
 
-                    {/* ---------- STEP 2: SUMMARY (Formerly Step 3/Messages) ---------- */}
-                    {step === 2 && (
-                        <div className="space-y-6">
-                            {/* Standard Mug Messages flow would go here if needed, but for MVP we merge messages into Step 2 or skip if not needed for Dua */}
-                            {!isDua && !isBracelet ? (
-                                // MUG MESSAGES LOGIC (Skipped details for brevity, assumed standard)
-                                // MUG MESSAGES LOGIC
-                                <WizardMessageEditor
-                                    messages={formData.messages}
-                                    onAdd={addMessage}
-                                    onRemove={removeMessage}
-                                    onUpdate={updateMessage}
-                                />
-                            ) : (
+                        {/* ---------- STEP 2: SUMMARY (Formerly Step 3/Messages) ---------- */}
+                        {step === 2 && (
+                            <div className="space-y-6">
+                                {/* Standard Mug Messages flow would go here if needed, but for MVP we merge messages into Step 2 or skip if not needed for Noor */}
+                                {!isNoor && !isBracelet ? (
+                                    // MUG MESSAGES LOGIC (Skipped details for brevity, assumed standard)
+                                    // MUG MESSAGES LOGIC
+                                    <WizardMessageEditor
+                                        messages={formData.messages}
+                                        onAdd={addMessage}
+                                        onRemove={removeMessage}
+                                        onUpdate={updateMessage}
+                                    />
+                                ) : (
 
-                                <h2 className="text-2xl font-bold text-stone-900">Zusammenfassung</h2>
-                            )}
+                                    <h2 className="text-2xl font-bold text-stone-900">Zusammenfassung</h2>
+                                )}
 
-                            {(isMemoria || isDua) && (
-                                <div className="bg-stone-50 p-6 rounded-xl space-y-4">
-                                    {isMemoria && (
-                                        <>
-                                            <p><strong>Name:</strong> {formData.deceasedName}</p>
-                                            <p><strong>Daten:</strong> {formData.lifeDates}</p>
-                                            <p><strong>Audio:</strong> {formData.audioUrl ? 'Vorhanden ✅' : 'Fehlt ❌'}</p>
-                                        </>
-                                    )}
-                                    {isDua && (
-                                        <>
-                                            <p><strong>Titel:</strong> {formData.title}</p>
-                                            <p><strong>Audio (Rezitation):</strong> {formData.audioUrl ? 'Vorhanden ✅' : 'Fehlt ❌'}</p>
-                                            <p><strong>Audio (Bedeutung):</strong> {formData.meaningAudioUrl ? 'Vorhanden ✅' : 'Fehlt ❌'}</p>
-                                        </>
-                                    )}
+                                {(isMemoria || isNoor) && (
+                                    <div className="bg-stone-50 p-6 rounded-xl space-y-4">
+                                        {isMemoria && (
+                                            <>
+                                                <p><strong>Name:</strong> {formData.deceasedName}</p>
+                                                <p><strong>Daten:</strong> {formData.lifeDates}</p>
+                                                <p><strong>Audio:</strong> {formData.audioUrl ? 'Vorhanden ✅' : 'Fehlt ❌'}</p>
+                                            </>
+                                        )}
+                                        {isNoor && (
+                                            <>
+                                                <p><strong>Titel:</strong> {formData.title}</p>
+                                                <p><strong>Audio (Rezitation):</strong> {formData.audioUrl ? 'Vorhanden ✅' : 'Fehlt ❌'}</p>
+                                                <p><strong>Audio (Bedeutung):</strong> {formData.meaningAudioUrl ? 'Vorhanden ✅' : 'Fehlt ❌'}</p>
+                                            </>
+                                        )}
+                                    </div>
+                                )}
+
+                                <div className="flex justify-between pt-4">
+                                    <button onClick={() => setStep(1)} className={styles.btnSecondary}>Zurück</button>
+                                    <div className="w-4"></div>
+                                    <button onClick={handleSubmit} disabled={loading} className={`${styles.btnPrimary} flex-1`}>
+                                        {loading ? <Loader className="animate-spin h-5 w-5 mx-auto" /> : 'Speichern'}
+                                    </button>
                                 </div>
-                            )}
-
-                            <div className="flex justify-between pt-4">
-                                <button onClick={() => setStep(1)} className={styles.btnSecondary}>Zurück</button>
-                                <div className="w-4"></div>
-                                <button onClick={handleSubmit} disabled={loading} className={`${styles.btnPrimary} flex-1`}>
-                                    {loading ? <Loader className="animate-spin h-5 w-5 mx-auto" /> : 'Speichern'}
-                                </button>
                             </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
-            </div>
+            </main>
         </div >
     );
 }

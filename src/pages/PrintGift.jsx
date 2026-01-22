@@ -39,7 +39,7 @@ export default function PrintGift() {
     // Determine Domain based on Project
     let baseUrl = 'https://scan.kamlimos.com'; // Default for Mugs
 
-    if (gift.project === 'dua') {
+    if (gift.project === 'noor' || gift.project === 'dua') {
         baseUrl = 'https://noor.kamlimos.com';
     } else if (gift.project === 'memoria') {
         baseUrl = 'https://memoria.kamlimos.com';

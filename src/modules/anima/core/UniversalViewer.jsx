@@ -5,7 +5,7 @@ import { Loader } from 'lucide-react';
 
 // Import Specific Experiences
 import MugViewer from '../experiences/multimedia-gift/pages/Viewer';
-import DuaViewer from '../experiences/dua/pages/DuaViewer';
+import NoorViewer from '../experiences/noor/pages/NoorViewer';
 import MemoryViewer from '../experiences/memoria/pages/MemoryViewer';
 
 
@@ -59,8 +59,8 @@ export default function UniversalViewer() {
         return <MemoryViewer />;
     }
 
-    if (gift.project === 'dua' || gift.productType === 'dua-audio') {
-        return <DuaViewer />;
+    if (gift.project === 'noor' || gift.project === 'dua' || gift.productType === 'dua-audio' || gift.productType === 'noor-audio') {
+        return <NoorViewer />;
     }
 
     // Default Fallback (Mug/Multimedia/Bracelet)
