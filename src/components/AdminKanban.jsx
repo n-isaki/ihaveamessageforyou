@@ -1,7 +1,7 @@
 import React from 'react';
 import { MoreHorizontal, Clock, CheckCircle, Lock, Eye, EyeOff, Coffee, Watch, Heart, Zap, AlertTriangle } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const timeAgo = (date) => {
     if (!date) return '';
@@ -20,6 +20,7 @@ const timeAgo = (date) => {
 };
 
 export default function AdminKanban({ gifts }) {
+    const navigate = useNavigate();
 
     // Sort logic: Newest first
     const sortedGifts = [...gifts].sort((a, b) => b.createdAt?.toMillis() - a.createdAt?.toMillis());
@@ -82,6 +83,7 @@ export default function AdminKanban({ gifts }) {
                             <motion.div
                                 key={gift.id}
                                 layoutId={gift.id}
+                                onClick={() => navigate(`/admin/dashboard?select=${gift.id}`)}
                                 className="bg-white p-4 rounded-xl shadow-sm border border-stone-100 hover:shadow-md transition-all cursor-pointer group relative"
                             >
                                 <div className="flex justify-between items-start mb-2">

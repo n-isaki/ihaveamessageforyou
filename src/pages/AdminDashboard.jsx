@@ -29,6 +29,31 @@ export default function AdminDashboard() {
         fetchGifts();
     }, []);
 
+    // Auto-select from URL (e.g. from Kanban click)
+    useEffect(() => {
+        const selectId = searchParams.get('select');
+        if (selectId && gifts.length > 0) {
+            const gift = gifts.find(g => g.id === selectId);
+            if (gift) {
+                setExpandedId(selectId);
+
+                // Switch Tab if needed
+                let targetTab = 'kamlimos';
+                if (gift.project === 'noor' || gift.project === 'dua') targetTab = 'noor';
+                else if (gift.project === 'memoria') targetTab = 'memoria';
+                else if (gift.project === 'ritual' || gift.productType === 'bracelet') targetTab = 'ritual';
+
+                if (activeTab !== targetTab) {
+                    setActiveTab(targetTab);
+                    // Note: changing state won't update 'activeTab' in this render cycle immediately used by filter, 
+                    // but next render will show it.
+                }
+
+                // Optional: Scroll into view? (Requires ref)
+            }
+        }
+    }, [searchParams, gifts]);
+
     const fetchGifts = async () => {
         try {
             const data = await getGifts();
@@ -200,16 +225,16 @@ export default function AdminDashboard() {
                                     </div>
                                 ) : (
                                     <>
-                                        <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden">
-                                            <div className="overflow-x-auto">
+                                        <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-stone-200 overflow-hidden flex flex-col max-h-[calc(100vh-16rem)]">
+                                            <div className="overflow-auto">
                                                 <table className="w-full text-left border-collapse">
-                                                    <thead className="bg-stone-50 border-b border-stone-200 text-xs font-bold uppercase text-stone-500 tracking-wider">
+                                                    <thead className="bg-stone-50 border-b border-stone-200 text-xs font-bold uppercase text-stone-500 tracking-wider sticky top-0 z-10">
                                                         <tr>
-                                                            <th className="p-4 pl-6">Status</th>
-                                                            <th className="p-4">Produkt</th>
-                                                            <th className="p-4">Kunde</th>
-                                                            <th className="p-4 hidden md:table-cell">Bestell-Nr.</th>
-                                                            <th className="p-4 text-right pr-6">Aktionen</th>
+                                                            <th className="p-2 pl-4">Status</th>
+                                                            <th className="p-2">Produkt</th>
+                                                            <th className="p-2">Kunde</th>
+                                                            <th className="p-2 hidden md:table-cell">Bestell-Nr.</th>
+                                                            <th className="p-2 text-right pr-4">Aktionen</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y divide-stone-100 bg-white">
@@ -217,10 +242,10 @@ export default function AdminDashboard() {
                                                             <React.Fragment key={gift.id}>
                                                                 <tr
                                                                     onClick={() => toggleExpand(gift.id)}
-                                                                    className={`cursor-pointer hover:bg-stone-50 transition-colors ${expandedId === gift.id ? 'bg-stone-50/80' : ''}`}
+                                                                    className={`cursor-pointer hover:bg-stone-50 transition-colors ${expandedId === gift.id ? 'bg-emerald-50/60 ring-1 ring-inset ring-emerald-100' : ''}`}
                                                                 >
                                                                     {/* Column 1: Status */}
-                                                                    <td className="p-4 pl-6 align-middle">
+                                                                    <td className="p-2 pl-4 align-middle">
                                                                         <div className="flex flex-col items-start gap-1">
                                                                             {gift.locked ? (
                                                                                 <span className="inline-flex items-center space-x-1 bg-stone-800 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
@@ -240,7 +265,7 @@ export default function AdminDashboard() {
                                                                     </td>
 
                                                                     {/* Column 2: Product */}
-                                                                    <td className="p-4 align-middle">
+                                                                    <td className="p-2 align-middle">
                                                                         <div className="flex items-center space-x-3">
                                                                             <div className={`p-2 rounded-lg shrink-0 ${gift.project === 'noor' || gift.project === 'dua' ? 'bg-emerald-100 text-emerald-600' : gift.project === 'memoria' ? 'bg-stone-100 text-stone-600' : gift.productType === 'bracelet' ? 'bg-indigo-100 text-indigo-600' : 'bg-orange-100 text-orange-600'}`}>
                                                                                 {gift.project === 'noor' || gift.project === 'dua' ? <Zap className="h-4 w-4" /> :
@@ -262,7 +287,7 @@ export default function AdminDashboard() {
 
 
                                                                     {/* Column 4: Customer */}
-                                                                    <td className="p-4 align-middle">
+                                                                    <td className="p-2 align-middle">
                                                                         <div className="text-sm font-medium text-stone-900">{gift.customerName || gift.recipientName || 'Unbekannt'}</div>
                                                                         <div className="text-xs text-stone-400 truncate max-w-[150px]" title={gift.customerEmail}>
                                                                             {gift.customerEmail || '-'}
@@ -270,15 +295,15 @@ export default function AdminDashboard() {
                                                                     </td>
 
                                                                     {/* Column 5: Order ID */}
-                                                                    <td className="p-4 align-middle hidden md:table-cell">
+                                                                    <td className="p-2 align-middle hidden md:table-cell">
                                                                         <span className="font-mono text-xs text-stone-500">{gift.orderId || 'MANUAL'}</span>
                                                                     </td>
 
                                                                     {/* Column 6: Actions */}
-                                                                    <td className="p-4 align-middle text-right pr-6">
+                                                                    <td className="p-2 align-middle text-right pr-4">
                                                                         <div className="flex justify-end items-center space-x-1" onClick={e => e.stopPropagation()}>
-                                                                            {/* Link Copy */}
-                                                                            {gift.platform === 'etsy' && (
+                                                                            {/* Link Copy (For Customers) */}
+                                                                            {!gift.locked && (
                                                                                 <button
                                                                                     onClick={e => {
                                                                                         e.stopPropagation();
@@ -399,6 +424,14 @@ export default function AdminDashboard() {
                                                                                                         )}
                                                                                                     </>
                                                                                                 )}
+                                                                                            </div>
+
+                                                                                            {/* Meta Info Footer */}
+                                                                                            <div className="mt-6 pt-4 border-t border-stone-100 flex justify-between items-center text-xs text-stone-400">
+                                                                                                <div className="flex flex-col gap-1">
+                                                                                                    <span>Erstellt: {gift.createdAt?.toDate ? gift.createdAt.toDate().toLocaleString('de-DE') : 'Unbekannt'}</span>
+                                                                                                    <span>ID: <span className="font-mono select-all text-stone-500">{gift.id}</span></span>
+                                                                                                </div>
                                                                                             </div>
                                                                                         </div>
                                                                                     </div>

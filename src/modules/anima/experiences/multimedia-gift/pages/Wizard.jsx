@@ -462,9 +462,20 @@ export default function GiftWizard() {
                                             </div>
                                         ) : (
                                             // Mug fields
-                                            <div className="md:col-span-2 space-y-4">
-                                                <label className={styles.label}>PIN Code</label>
-                                                <input type="text" name="accessCode" value={formData.accessCode} onChange={handleInputChange} className={styles.input} />
+                                            <div className="md:col-span-2 grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className={styles.label}>PIN Code</label>
+                                                    <input type="text" name="accessCode" value={formData.accessCode} onChange={handleInputChange} className={styles.input} />
+                                                </div>
+                                                <div>
+                                                    <label className={styles.label}>Öffnungs-Animation</label>
+                                                    <select name="openingAnimation" value={formData.openingAnimation} onChange={handleInputChange} className={styles.input}>
+                                                        <option value="none">Keine</option>
+                                                        <option value="hearts">Herzen ❤️</option>
+                                                        <option value="stars">Sterne ⭐</option>
+                                                        <option value="confetti">Konfetti 🎉</option>
+                                                    </select>
+                                                </div>
                                             </div>
                                         )}
                                     </div>

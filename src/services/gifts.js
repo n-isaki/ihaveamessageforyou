@@ -38,6 +38,7 @@ export const createEtsyOrder = async (data) => {
 export const createGift = async (giftData) => {
     try {
         const docRef = await addDoc(collection(db, COLLECTION_NAME), {
+            securityToken: self.crypto.randomUUID(), // Ensure every gift has a token for setup
             ...giftData,
             createdAt: serverTimestamp(),
             viewed: false,
