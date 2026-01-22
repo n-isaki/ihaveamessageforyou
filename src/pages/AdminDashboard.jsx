@@ -107,6 +107,20 @@ export default function AdminDashboard() {
         }
     };
 
+    const activities = React.useMemo(() => {
+        const list = [];
+        // Use all gifts for global activity feed
+        gifts.forEach(g => {
+            if (g.createdAt) list.push({ type: 'created', date: g.createdAt.toDate(), gift: g });
+            if (g.viewedAt) list.push({ type: 'viewed', date: g.viewedAt.toDate(), gift: g });
+            if (g.locked) list.push({ type: 'locked', date: g.updatedAt?.toDate() || new Date(), gift: g }); // Approximation
+        });
+        return list
+            .filter(a => a.date && !isNaN(a.date.getTime())) // Filter invalid dates
+            .sort((a, b) => b.date - a.date)
+            .slice(0, 5);
+    }, [gifts]);
+
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-stone-50">
@@ -134,19 +148,7 @@ export default function AdminDashboard() {
         return `${domain}/v/${gift.id}`;
     };
 
-    const activities = React.useMemo(() => {
-        const list = [];
-        // Use all gifts for global activity feed
-        gifts.forEach(g => {
-            if (g.createdAt) list.push({ type: 'created', date: g.createdAt.toDate(), gift: g });
-            if (g.viewedAt) list.push({ type: 'viewed', date: g.viewedAt.toDate(), gift: g });
-            if (g.locked) list.push({ type: 'locked', date: g.updatedAt?.toDate() || new Date(), gift: g }); // Approximation
-        });
-        return list
-            .filter(a => a.date && !isNaN(a.date.getTime())) // Filter invalid dates
-            .sort((a, b) => b.date - a.date)
-            .slice(0, 5);
-    }, [gifts]);
+
 
     return (
         <div className="flex bg-stone-50 min-h-screen font-sans">
