@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { getGifts, deleteGift, createEtsyOrder, updateGift } from '../services/gifts'; // updateGift added
-import { Plus, Gift, Eye, EyeOff, Loader, Printer, ChevronDown, ChevronUp, Edit2, Video, MessageSquare, Trash2, AlertTriangle, X, Watch, Coffee, Zap, ExternalLink, Heart, Lock, Unlock, ShoppingBag, Copy, Check, Menu } from 'lucide-react';
+import { Plus, Gift, Eye, EyeOff, Loader, Printer, ChevronDown, ChevronUp, Edit2, Video, MessageSquare, Trash2, AlertTriangle, X, Watch, Coffee, Zap, ExternalLink, Heart, Lock, Unlock, ShoppingBag, Copy, Check, Menu, Package } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import AdminSidebar from '../components/AdminSidebar';
 import AdminKanban from '../components/AdminKanban';
@@ -217,6 +217,46 @@ export default function AdminDashboard() {
                             </div>
 
                             <div className="space-y-4">
+                                {/* Stats Cards */}
+                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                                    <div className="bg-white p-4 rounded-2xl border border-stone-100 shadow-sm flex items-center justify-between">
+                                        <div>
+                                            <p className="text-stone-500 text-[10px] font-bold uppercase tracking-wider">Gesamt</p>
+                                            <p className="text-2xl font-bold text-stone-900 mt-1">{filteredGifts.length}</p>
+                                        </div>
+                                        <div className="p-3 bg-stone-100 rounded-xl text-stone-600">
+                                            <Package className="h-5 w-5" />
+                                        </div>
+                                    </div>
+                                    <div className="bg-white p-4 rounded-2xl border border-stone-100 shadow-sm flex items-center justify-between">
+                                        <div>
+                                            <p className="text-stone-500 text-[10px] font-bold uppercase tracking-wider">Offen</p>
+                                            <p className="text-2xl font-bold text-amber-600 mt-1">{filteredGifts.filter(g => !g.locked).length}</p>
+                                        </div>
+                                        <div className="p-3 bg-amber-100 rounded-xl text-amber-600">
+                                            <Unlock className="h-5 w-5" />
+                                        </div>
+                                    </div>
+                                    <div className="bg-white p-4 rounded-2xl border border-stone-100 shadow-sm flex items-center justify-between">
+                                        <div>
+                                            <p className="text-stone-500 text-[10px] font-bold uppercase tracking-wider">Bereit</p>
+                                            <p className="text-2xl font-bold text-emerald-600 mt-1">{filteredGifts.filter(g => g.locked && !g.viewed).length}</p>
+                                        </div>
+                                        <div className="p-3 bg-emerald-100 rounded-xl text-emerald-600">
+                                            <Gift className="h-5 w-5" />
+                                        </div>
+                                    </div>
+                                    <div className="bg-white p-4 rounded-2xl border border-stone-100 shadow-sm flex items-center justify-between">
+                                        <div>
+                                            <p className="text-stone-500 text-[10px] font-bold uppercase tracking-wider">Gesehen</p>
+                                            <p className="text-2xl font-bold text-indigo-600 mt-1">{filteredGifts.filter(g => g.viewed).length}</p>
+                                        </div>
+                                        <div className="p-3 bg-indigo-100 rounded-xl text-indigo-600">
+                                            <Eye className="h-5 w-5" />
+                                        </div>
+                                    </div>
+                                </div>
+
                                 {filteredGifts.length === 0 ? (
                                     <div className="text-center py-20 bg-white rounded-3xl shadow-sm">
                                         <Gift className="h-12 w-12 mx-auto text-stone-300 mb-4" />
@@ -383,6 +423,53 @@ export default function AdminDashboard() {
                                                                                                     gift.project === 'memoria' ? 'Memoria Details' :
                                                                                                         gift.productType === 'bracelet' ? 'Armband Details' : 'Tasse Details'}
                                                                                             </h4>
+
+                                                                                            {/* Timeline */}
+                                                                                            <div className="mt-4 mb-8 px-2">
+                                                                                                <div className="relative">
+                                                                                                    <div className="absolute top-1/2 left-0 w-full h-0.5 bg-stone-100 -translate-y-1/2 rounded-full"></div>
+                                                                                                    <div className="relative flex justify-between">
+                                                                                                        {/* Step 1: Created */}
+                                                                                                        <div className="flex flex-col items-center w-1/4">
+                                                                                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 bg-emerald-500 border-emerald-500 text-white z-10 shadow-sm`}>
+                                                                                                                <Package className="h-3.5 w-3.5" />
+                                                                                                            </div>
+                                                                                                            <div className="mt-2 text-center">
+                                                                                                                <p className="text-[10px] font-bold text-stone-900 uppercase tracking-wide">Erstellt</p>
+                                                                                                                <p className="text-[10px] text-stone-400 font-mono mt-0.5">{gift.createdAt?.toDate ? gift.createdAt.toDate().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }) : '-'}</p>
+                                                                                                            </div>
+                                                                                                        </div>
+                                                                                                        {/* Step 2: Setup (Started) */}
+                                                                                                        <div className="flex flex-col items-center w-1/4">
+                                                                                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 z-10 shadow-sm transition-colors ${gift.setupStarted || gift.locked ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-stone-200 text-stone-300'}`}>
+                                                                                                                <Edit2 className="h-3.5 w-3.5" />
+                                                                                                            </div>
+                                                                                                            <div className="mt-2 text-center">
+                                                                                                                <p className={`text-[10px] font-bold uppercase tracking-wide ${gift.setupStarted || gift.locked ? 'text-stone-900' : 'text-stone-300'}`}>Bearbeitet</p>
+                                                                                                            </div>
+                                                                                                        </div>
+                                                                                                        {/* Step 3: Locked (Ready) */}
+                                                                                                        <div className="flex flex-col items-center w-1/4">
+                                                                                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 z-10 shadow-sm transition-colors ${gift.locked ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-stone-200 text-stone-300'}`}>
+                                                                                                                <Lock className="h-3.5 w-3.5" />
+                                                                                                            </div>
+                                                                                                            <div className="mt-2 text-center">
+                                                                                                                <p className={`text-[10px] font-bold uppercase tracking-wide ${gift.locked ? 'text-stone-900' : 'text-stone-300'}`}>Fertig</p>
+                                                                                                            </div>
+                                                                                                        </div>
+                                                                                                        {/* Step 4: Viewed */}
+                                                                                                        <div className="flex flex-col items-center w-1/4">
+                                                                                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 z-10 shadow-sm transition-colors ${gift.viewed ? 'bg-indigo-500 border-indigo-500 text-white' : 'bg-white border-stone-200 text-stone-300'}`}>
+                                                                                                                <Eye className="h-3.5 w-3.5" />
+                                                                                                            </div>
+                                                                                                            <div className="mt-2 text-center">
+                                                                                                                <p className={`text-[10px] font-bold uppercase tracking-wide ${gift.viewed ? 'text-indigo-600' : 'text-stone-300'}`}>Gesehen</p>
+                                                                                                                <p className="text-[10px] text-stone-400 font-mono mt-0.5">{gift.viewedAt?.toDate ? gift.viewedAt.toDate().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }) : '-'}</p>
+                                                                                                            </div>
+                                                                                                        </div>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            </div>
 
                                                                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8 text-sm">
                                                                                                 {/* NOOR */}
