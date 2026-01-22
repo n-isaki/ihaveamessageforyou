@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { getGifts, deleteGift, createEtsyOrder, updateGift } from '../services/gifts'; // updateGift added
-import { Plus, Gift, Eye, EyeOff, Loader, Printer, ChevronDown, ChevronUp, Edit2, Video, MessageSquare, Trash2, AlertTriangle, X, Watch, Coffee, Zap, ExternalLink, Heart, Lock, Unlock, ShoppingBag, Copy, Check, Menu, Package } from 'lucide-react';
+import { Plus, Gift, Eye, EyeOff, Loader, Printer, ChevronDown, ChevronUp, Edit2, Video, MessageSquare, Trash2, AlertTriangle, X, Watch, Coffee, Zap, ExternalLink, Heart, Lock, Unlock, ShoppingBag, Copy, Check, Menu, Package, Activity, Clock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import AdminSidebar from '../components/AdminSidebar';
 import AdminKanban from '../components/AdminKanban';
 
 export default function AdminDashboard() {
     const [gifts, setGifts] = useState([]);
+    const [hoveredGift, setHoveredGift] = useState(null);
     const [loading, setLoading] = useState(true);
     const [expandedId, setExpandedId] = useState(null);
     const [viewMode, setViewMode] = useState('list');
@@ -133,6 +134,20 @@ export default function AdminDashboard() {
         return `${domain}/v/${gift.id}`;
     };
 
+    const activities = React.useMemo(() => {
+        const list = [];
+        // Use all gifts for global activity feed
+        gifts.forEach(g => {
+            if (g.createdAt) list.push({ type: 'created', date: g.createdAt.toDate(), gift: g });
+            if (g.viewedAt) list.push({ type: 'viewed', date: g.viewedAt.toDate(), gift: g });
+            if (g.locked) list.push({ type: 'locked', date: g.updatedAt?.toDate() || new Date(), gift: g }); // Approximation
+        });
+        return list
+            .filter(a => a.date && !isNaN(a.date.getTime())) // Filter invalid dates
+            .sort((a, b) => b.date - a.date)
+            .slice(0, 5);
+    }, [gifts]);
+
     return (
         <div className="flex bg-stone-50 min-h-screen font-sans">
             <AdminSidebar
@@ -218,41 +233,77 @@ export default function AdminDashboard() {
 
                             <div className="space-y-4">
                                 {/* Stats Cards */}
-                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                                    <div className="bg-white p-4 rounded-2xl border border-stone-100 shadow-sm flex items-center justify-between">
-                                        <div>
-                                            <p className="text-stone-500 text-[10px] font-bold uppercase tracking-wider">Gesamt</p>
-                                            <p className="text-2xl font-bold text-stone-900 mt-1">{filteredGifts.length}</p>
+                                {/* Stats & Activity Feed */}
+                                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+                                    {/* Left: Stats Cards (3 Cols) */}
+                                    <div className="lg:col-span-3 grid grid-cols-2 sm:grid-cols-4 gap-4 h-full">
+                                        <div className="bg-white p-4 rounded-2xl border border-stone-100 shadow-sm flex flex-col justify-between h-full">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <p className="text-stone-500 text-[10px] font-bold uppercase tracking-wider">Gesamt</p>
+                                                <div className="p-2 bg-stone-100 rounded-lg text-stone-600">
+                                                    <Package className="h-4 w-4" />
+                                                </div>
+                                            </div>
+                                            <p className="text-3xl font-bold text-stone-900">{filteredGifts.length}</p>
                                         </div>
-                                        <div className="p-3 bg-stone-100 rounded-xl text-stone-600">
-                                            <Package className="h-5 w-5" />
+                                        <div className="bg-white p-4 rounded-2xl border border-stone-100 shadow-sm flex flex-col justify-between h-full">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <p className="text-stone-500 text-[10px] font-bold uppercase tracking-wider">Offen</p>
+                                                <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
+                                                    <Unlock className="h-4 w-4" />
+                                                </div>
+                                            </div>
+                                            <p className="text-3xl font-bold text-amber-600">{filteredGifts.filter(g => !g.locked).length}</p>
+                                        </div>
+                                        <div className="bg-white p-4 rounded-2xl border border-stone-100 shadow-sm flex flex-col justify-between h-full">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <p className="text-stone-500 text-[10px] font-bold uppercase tracking-wider">Bereit</p>
+                                                <div className="p-2 bg-emerald-100 rounded-lg text-emerald-600">
+                                                    <Gift className="h-4 w-4" />
+                                                </div>
+                                            </div>
+                                            <p className="text-3xl font-bold text-emerald-600">{filteredGifts.filter(g => g.locked && !g.viewed).length}</p>
+                                        </div>
+                                        <div className="bg-white p-4 rounded-2xl border border-stone-100 shadow-sm flex flex-col justify-between h-full">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <p className="text-stone-500 text-[10px] font-bold uppercase tracking-wider">Gesehen</p>
+                                                <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600">
+                                                    <Eye className="h-4 w-4" />
+                                                </div>
+                                            </div>
+                                            <p className="text-3xl font-bold text-indigo-600">{filteredGifts.filter(g => g.viewed).length}</p>
                                         </div>
                                     </div>
-                                    <div className="bg-white p-4 rounded-2xl border border-stone-100 shadow-sm flex items-center justify-between">
-                                        <div>
-                                            <p className="text-stone-500 text-[10px] font-bold uppercase tracking-wider">Offen</p>
-                                            <p className="text-2xl font-bold text-amber-600 mt-1">{filteredGifts.filter(g => !g.locked).length}</p>
+
+                                    {/* Right: Activity Feed (1 Col) */}
+                                    <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-4 h-full flex flex-col">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h3 className="text-xs font-bold text-stone-900 uppercase tracking-wider flex items-center">
+                                                <Activity className="h-3 w-3 mr-2" /> Live Aktivität
+                                            </h3>
+                                            <span className="block h-2 w-2 rounded-full bg-rose-500 animate-pulse"></span>
                                         </div>
-                                        <div className="p-3 bg-amber-100 rounded-xl text-amber-600">
-                                            <Unlock className="h-5 w-5" />
-                                        </div>
-                                    </div>
-                                    <div className="bg-white p-4 rounded-2xl border border-stone-100 shadow-sm flex items-center justify-between">
-                                        <div>
-                                            <p className="text-stone-500 text-[10px] font-bold uppercase tracking-wider">Bereit</p>
-                                            <p className="text-2xl font-bold text-emerald-600 mt-1">{filteredGifts.filter(g => g.locked && !g.viewed).length}</p>
-                                        </div>
-                                        <div className="p-3 bg-emerald-100 rounded-xl text-emerald-600">
-                                            <Gift className="h-5 w-5" />
-                                        </div>
-                                    </div>
-                                    <div className="bg-white p-4 rounded-2xl border border-stone-100 shadow-sm flex items-center justify-between">
-                                        <div>
-                                            <p className="text-stone-500 text-[10px] font-bold uppercase tracking-wider">Gesehen</p>
-                                            <p className="text-2xl font-bold text-indigo-600 mt-1">{filteredGifts.filter(g => g.viewed).length}</p>
-                                        </div>
-                                        <div className="p-3 bg-indigo-100 rounded-xl text-indigo-600">
-                                            <Eye className="h-5 w-5" />
+                                        <div className="space-y-4 overflow-y-auto max-h-[160px] pr-2 custom-scrollbar">
+                                            {activities.length === 0 ? (
+                                                <p className="text-xs text-stone-400">Keine Aktivitäten</p>
+                                            ) : (
+                                                activities.map((act, i) => (
+                                                    <div key={i} className="flex gap-3 items-start group">
+                                                        <div className={`mt-0.5 w-1.5 h-1.5 rounded-full shrink-0 ${act.type === 'viewed' ? 'bg-indigo-500' : act.type === 'locked' ? 'bg-emerald-500' : 'bg-stone-300'}`}></div>
+                                                        <div>
+                                                            <p className="text-xs font-medium text-stone-800 leading-tight">
+                                                                {act.type === 'created' && <>Neuer Auftrag für <span className="font-bold">{act.gift.customerName || act.gift.senderName || 'Kunde'}</span></>}
+                                                                {act.type === 'viewed' && <><span className="font-bold">{act.gift.recipientName || 'Empfänger'}</span> hat das Geschenk angesehen!</>}
+                                                                {act.type === 'locked' && <>Geschenk für <span className="font-bold">{act.gift.recipientName}</span> ist jetzt fertig.</>}
+                                                            </p>
+                                                            <p className="text-[10px] text-stone-400 mt-0.5 flex items-center">
+                                                                <Clock className="h-2.5 w-2.5 mr-1" />
+                                                                {act.date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -282,6 +333,8 @@ export default function AdminDashboard() {
                                                             <React.Fragment key={gift.id}>
                                                                 <tr
                                                                     onClick={() => toggleExpand(gift.id)}
+                                                                    onMouseEnter={() => setHoveredGift(gift)}
+                                                                    onMouseLeave={() => setHoveredGift(null)}
                                                                     className={`cursor-pointer hover:bg-stone-100 transition-colors ${expandedId === gift.id ? 'bg-emerald-50/60 ring-1 ring-inset ring-emerald-100' : index % 2 === 0 ? 'bg-white' : 'bg-stone-50/50'}`}
                                                                 >
                                                                     {/* Column 1: Status */}
@@ -747,6 +800,51 @@ export default function AdminDashboard() {
                     </>
                 )}
             </main>
+
+            {/* Magic Live Preview Overlay */}
+            <AnimatePresence>
+                {hoveredGift && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 20, scale: 0.9 }}
+                        transition={{ duration: 0.2 }}
+                        className="fixed bottom-8 right-8 w-60 z-50 pointer-events-none"
+                    >
+                        <div className="relative bg-stone-900 rounded-[2rem] border-4 border-stone-800 shadow-2xl overflow-hidden aspect-[9/16] flex flex-col">
+                            {/* iPhone Notch */}
+                            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 h-4 bg-stone-800 rounded-b-lg z-20"></div>
+
+                            {/* Content */}
+                            <div className="flex-1 bg-stone-50 relative flex flex-col">
+                                {(hoveredGift.designImage || hoveredGift.photoUrl) ? (
+                                    <img src={hoveredGift.designImage || hoveredGift.photoUrl} className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className={`w-full h-full flex items-center justify-center ${hoveredGift.project === 'noor' || hoveredGift.project === 'dua' ? 'bg-emerald-50' : 'bg-rose-50'}`}>
+                                        {hoveredGift.project === 'noor' || hoveredGift.project === 'dua' ? (
+                                            <div className="text-center p-4">
+                                                <Zap className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
+                                                <p className="text-xs font-bold text-emerald-900">{hoveredGift.title}</p>
+                                            </div>
+                                        ) : (
+                                            <div className="text-center p-4">
+                                                <Coffee className="h-8 w-8 text-rose-500 mx-auto mb-2" />
+                                                <p className="text-xs font-bold text-rose-900">{hoveredGift.headline || 'Deine Botschaft'}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Overlay Text */}
+                                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-4 text-white">
+                                    <p className="text-[10px] opacity-80 uppercase tracking-widest mb-1">Vorschau</p>
+                                    <p className="text-xs font-bold line-clamp-2">{hoveredGift.headline || hoveredGift.title || hoveredGift.recipientName}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
