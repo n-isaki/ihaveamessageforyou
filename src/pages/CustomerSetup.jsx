@@ -37,9 +37,11 @@ export default function CustomerSetup() {
     });
 
     useEffect(() => {
+        // Authenticate in background for Storage access
+        signInAnonymously(auth).catch(err => console.error("Anonymous Auth Failed:", err));
+
         const init = async () => {
             try {
-                await signInAnonymously(auth); // Auth needed for Storage
                 const data = await getGiftById(id);
                 if (data) {
                     if (data.productType !== 'bracelet' && data.securityToken && data.securityToken !== token) {
