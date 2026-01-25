@@ -8,7 +8,8 @@ import MugViewer from '../modules/anima/experiences/multimedia-gift/pages/Viewer
 import { v4 as uuidv4 } from 'uuid';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "../firebase";
+import { storage, auth } from "../firebase";
+import { signInAnonymously } from "firebase/auth";
 
 export default function CustomerSetup() {
     const { id } = useParams();
@@ -38,6 +39,7 @@ export default function CustomerSetup() {
     useEffect(() => {
         const init = async () => {
             try {
+                await signInAnonymously(auth); // Auth needed for Storage
                 const data = await getGiftById(id);
                 if (data) {
                     if (data.productType !== 'bracelet' && data.securityToken && data.securityToken !== token) {
