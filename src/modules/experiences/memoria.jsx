@@ -7,7 +7,7 @@ export const MemoriaExperience = {
     label: 'Memoria',
     icon: Heart,
     colors: { bg: 'bg-stone-100', text: 'text-stone-600' },
-    isSetupRequired: false,
+    isSetupRequired: true,
 
     getViewerUrl: (gift) => {
         const isDev = window.location.hostname.includes('localhost') ||

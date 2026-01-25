@@ -1,18 +1,20 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { getGiftById, updateGift, markSetupAsStarted } from '../services/gifts';
 import WizardMessageEditor from '../modules/anima/experiences/multimedia-gift/components/WizardMessageEditor';
-import { Loader, Lock, CheckCircle, Save, Info, ShieldAlert, X, HelpCircle, AlertTriangle, Eye, Edit2 } from 'lucide-react';
+import { Loader, Lock, CheckCircle, Save, Info, ShieldAlert, X, HelpCircle, Eye, Edit2, Upload, User, Calendar, FileText } from 'lucide-react';
 import MugViewer from '../modules/anima/experiences/multimedia-gift/pages/Viewer';
 import { v4 as uuidv4 } from 'uuid';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "../firebase";
 
 export default function CustomerSetup() {
     const { id } = useParams();
     const [searchParams] = useSearchParams();
     const token = searchParams.get('token');
 
-    const navigate = useNavigate();
     const [gift, setGift] = useState(null);
     const [loading, setLoading] = useState(true);
     const [messages, setMessages] = useState([]);
@@ -24,12 +26,20 @@ export default function CustomerSetup() {
     const [subheadline, setSubheadline] = useState('');
     const [showPreview, setShowPreview] = useState(false);
 
+    // Memoria Specific State
+    const [memoriaData, setMemoriaData] = useState({
+        deceasedName: '',
+        lifeDates: '',
+        meaningText: '',
+        imageFile: null,
+        imagePreview: null
+    });
+
     useEffect(() => {
         const init = async () => {
             try {
                 const data = await getGiftById(id);
                 if (data) {
-                    // Security Check
                     if (data.productType !== 'bracelet' && data.securityToken && data.securityToken !== token) {
                         setAccessDenied(true);
                         setLoading(false);
@@ -42,7 +52,17 @@ export default function CustomerSetup() {
                     setHeadline(data.headline || '');
                     setSubheadline(data.subheadline || '');
 
-                    // Track that customer opened the link
+                    // Memoria Init
+                    if (data.project === 'memoria') {
+                        setMemoriaData({
+                            deceasedName: data.deceasedName || '',
+                            lifeDates: data.lifeDates || '',
+                            meaningText: data.meaningText || '',
+                            imagePreview: data.deceasedImage || null,
+                            imageFile: null
+                        });
+                    }
+
                     if (!data.setupStarted && !data.locked) {
                         markSetupAsStarted(id);
                     }
@@ -76,80 +96,195 @@ export default function CustomerSetup() {
         setMessages(messages.map(m => m.id === msgId ? { ...m, [field]: value } : m));
     };
 
+    const handleMemoriaImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setMemoriaData({
+                ...memoriaData,
+                imageFile: file,
+                imagePreview: URL.createObjectURL(file)
+            });
+        }
+    };
+
     const handleSaveAndLockClick = () => {
         setShowConfirmModal(true);
     };
 
     const confirmSave = async () => {
         setSaving(true);
-        setShowConfirmModal(false); // Close modal, start saving spinner
+        setShowConfirmModal(false);
         try {
-            await updateGift(id, {
-                messages,
-                headline,
-                subheadline,
+            const updates = {
                 locked: true,
                 setupCompletedAt: new Date()
-            });
+            };
+
+            if (gift.project === 'memoria') {
+                updates.deceasedName = memoriaData.deceasedName;
+                updates.lifeDates = memoriaData.lifeDates;
+                updates.meaningText = memoriaData.meaningText;
+
+                if (memoriaData.imageFile) {
+                    const storageRef = ref(storage, `memoria/${id}/${Date.now()}_${memoriaData.imageFile.name}`);
+                    await uploadBytes(storageRef, memoriaData.imageFile);
+                    updates.deceasedImage = await getDownloadURL(storageRef);
+                }
+            } else {
+                updates.messages = messages;
+                updates.headline = headline;
+                updates.subheadline = subheadline;
+            }
+
+            await updateGift(id, updates);
             setLocked(true);
             setGift(prev => ({ ...prev, locked: true }));
         } catch (err) {
             console.error("Failed to save", err);
-            // Permissions error handling improved by rules update
             alert("Fehler beim Speichern. Bitte überprüfe deine Internetverbindung.");
         } finally {
             setSaving(false);
         }
     };
 
-    if (loading) {
-        return <div className="min-h-screen flex items-center justify-center bg-stone-950"><Loader className="animate-spin text-stone-500" /></div>;
-    }
+    if (loading) return <div className="min-h-screen flex items-center justify-center bg-stone-950"><Loader className="animate-spin text-stone-500" /></div>;
 
     if (accessDenied) {
         return (
             <div className="min-h-screen bg-stone-950 flex items-center justify-center p-6">
                 <div className="max-w-md w-full bg-stone-900 rounded-3xl shadow-2xl p-8 text-center space-y-6 border border-red-900/50">
-                    <div className="w-16 h-16 bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <ShieldAlert className="h-8 w-8 text-red-500" />
-                    </div>
+                    <ShieldAlert className="h-12 w-12 text-red-500 mx-auto" />
                     <h1 className="text-xl font-serif font-bold text-stone-100">Zugriff verweigert</h1>
-                    <p className="text-stone-400">
-                        Der Link ist ungültig oder unvollständig.
-                    </p>
+                    <p className="text-stone-400">Der Link ist ungültig.</p>
                 </div>
             </div>
         );
     }
 
-    if (!gift) {
-        return <div className="min-h-screen flex items-center justify-center p-8 bg-stone-950 text-stone-500">Geschenk nicht gefunden.</div>;
-    }
+    if (!gift) return <div className="min-h-screen bg-stone-950 flex items-center justify-center text-stone-500">Geschenk nicht gefunden.</div>;
 
-    // LOCKED VIEW
     if (locked) {
         return (
             <div className="min-h-screen bg-stone-950 flex items-center justify-center p-6">
                 <div className="max-w-md w-full bg-stone-900/50 backdrop-blur-md rounded-3xl shadow-2xl p-8 text-center space-y-6 border border-stone-800">
-                    <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-500/20">
-                        <CheckCircle className="h-8 w-8 text-green-500" />
-                    </div>
+                    <CheckCircle className="h-16 w-16 text-green-500 mx-auto" />
                     <div>
                         <h1 className="text-3xl font-serif font-bold text-white mb-2">Vielen Dank!</h1>
-                        <p className="text-stone-400 leading-relaxed">
-                            Deine Inhalte wurden erfolgreich gespeichert.<br />
-                            Wir beginnen nun mit der Veredelung deines Geschenks.
-                        </p>
-                    </div>
-                    <div className="bg-stone-950/50 p-4 rounded-xl border border-stone-800 text-sm text-stone-500">
-                        <p>Status: <span className="font-bold text-stone-300">In Produktion</span></p>
+                        <p className="text-stone-400 leading-relaxed">Wir beginnen nun mit der Veredelung deines Geschenks.</p>
                     </div>
                 </div>
             </div>
         );
     }
 
-    // EDITING VIEW - DARK LUXURY MODE
+    // MEMORIA SETUP
+    if (gift.project === 'memoria') {
+        return (
+            <div className="min-h-screen bg-stone-950 text-stone-200 pb-32 font-sans">
+                <div className="bg-stone-950/80 backdrop-blur-md border-b border-stone-800 sticky top-0 z-20 px-6 py-4">
+                    <span className="font-serif text-2xl tracking-widest text-white uppercase">Memoria</span>
+                </div>
+
+                <div className="max-w-xl mx-auto p-6 space-y-8 mt-4">
+                    <div className="bg-stone-900 p-6 rounded-3xl border border-stone-800 space-y-6">
+                        <h2 className="text-xl font-bold font-serif text-white mb-4">Erinnerung teilen</h2>
+
+                        <div>
+                            <label className="block text-xs uppercase font-bold text-stone-500 mb-2 flex items-center"><User className="w-4 h-4 mr-2" /> Name des Verstorbenen</label>
+                            <input
+                                type="text"
+                                value={memoriaData.deceasedName}
+                                onChange={e => setMemoriaData({ ...memoriaData, deceasedName: e.target.value })}
+                                className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-white focus:ring-2 focus:ring-stone-600 outline-none"
+                                placeholder="Vorname Nachname"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-xs uppercase font-bold text-stone-500 mb-2 flex items-center"><Calendar className="w-4 h-4 mr-2" /> Lebensdaten</label>
+                            <input
+                                type="text"
+                                value={memoriaData.lifeDates}
+                                onChange={e => setMemoriaData({ ...memoriaData, lifeDates: e.target.value })}
+                                className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-white focus:ring-2 focus:ring-stone-600 outline-none"
+                                placeholder="geb. 01.01.1950 - gest. 10.12.2024"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-xs uppercase font-bold text-stone-500 mb-2 flex items-center"><FileText className="w-4 h-4 mr-2" /> Deine Geschichte (für Audio & Text)</label>
+                            <textarea
+                                rows={6}
+                                value={memoriaData.meaningText}
+                                onChange={e => setMemoriaData({ ...memoriaData, meaningText: e.target.value })}
+                                className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-white focus:ring-2 focus:ring-stone-600 outline-none"
+                                placeholder="Erzähle uns etwas über die Person..."
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-xs uppercase font-bold text-stone-500 mb-2 flex items-center"><Upload className="w-4 h-4 mr-2" /> Foto (für Gravur)</label>
+                            <div className="border-2 border-dashed border-stone-800 rounded-xl p-6 text-center hover:border-stone-600 transition-colors cursor-pointer relative">
+                                <input type="file" onChange={handleMemoriaImageChange} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" />
+                                {memoriaData.imagePreview ? (
+                                    <div className="relative h-40 w-full">
+                                        <img src={memoriaData.imagePreview} className="h-full w-full object-contain rounded-lg" />
+                                        <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition-opacity rounded-lg">
+                                            <span className="text-white text-sm font-bold">Ändern</span>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2">
+                                        <div className="bg-stone-800 w-12 h-12 rounded-full flex items-center justify-center mx-auto">
+                                            <Upload className="w-6 h-6 text-stone-400" />
+                                        </div>
+                                        <p className="text-sm text-stone-400">Bild hochladen</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="fixed bottom-0 left-0 right-0 p-6 bg-stone-950/90 backdrop-blur-xl border-t border-stone-800 flex justify-center z-30">
+                    <button
+                        onClick={handleSaveAndLockClick}
+                        disabled={saving}
+                        className="w-full max-w-md flex items-center justify-center space-x-3 px-8 py-4 rounded-2xl font-bold text-lg bg-stone-100 text-stone-900 hover:bg-white transition-colors"
+                    >
+                        {saving ? <Loader className="animate-spin" /> : <span>Absenden & Versiegeln</span>}
+                    </button>
+                </div>
+
+                <AnimatePresence>
+                    {showConfirmModal && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm">
+                            <motion.div
+                                initial={{ scale: 0.95, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.95, opacity: 0 }}
+                                className="bg-stone-900 rounded-3xl shadow-2xl max-w-sm w-full p-8 border border-stone-800 relative overflow-hidden"
+                            >
+                                <button onClick={() => setShowConfirmModal(false)} className="absolute top-4 right-4 text-stone-600 hover:text-white transition-colors">
+                                    <X className="h-6 w-6" />
+                                </button>
+                                <div className="text-center space-y-6">
+                                    <Lock className="h-10 w-10 text-stone-100 mx-auto" />
+                                    <div>
+                                        <h3 className="text-2xl font-serif font-bold text-white mb-2">Versiegeln?</h3>
+                                        <p className="text-stone-400 text-sm">Änderungen sind danach nicht mehr möglich.</p>
+                                    </div>
+                                    <button onClick={confirmSave} className="w-full py-3.5 bg-stone-100 text-stone-900 font-bold rounded-xl hover:bg-white">Ja, Versiegeln</button>
+                                </div>
+                            </motion.div>
+                        </div>
+                    )}
+                </AnimatePresence>
+            </div>
+        );
+    }
+
+    // ORIGINAL MUG SETUP VIEW (Fallback)
     return (
         <div className="min-h-screen bg-stone-950 text-stone-200 pb-32 font-sans selection:bg-rose-500/30">
             {/* Header */}
@@ -322,15 +457,15 @@ export default function CustomerSetup() {
             <AnimatePresence>
                 {showPreview && (
                     <div className="fixed inset-0 z-[100] bg-black">
-                         <button 
+                        <button
                             onClick={() => setShowPreview(false)}
                             className="fixed top-6 right-6 z-[110] bg-stone-900/80 backdrop-blur text-white p-3 rounded-full hover:bg-rose-600 transition-colors border border-stone-700 hover:scale-110 shadow-xl"
-                         >
+                        >
                             <X className="h-6 w-6" />
-                         </button>
-                         <div className="h-full w-full overflow-y-auto">
-                             <MugViewer initialData={{ ...gift, headline, subheadline, messages }} />
-                         </div>
+                        </button>
+                        <div className="h-full w-full overflow-y-auto">
+                            <MugViewer initialData={{ ...gift, headline, subheadline, messages }} />
+                        </div>
                     </div>
                 )}
             </AnimatePresence>
