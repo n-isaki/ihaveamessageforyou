@@ -3,13 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { getGiftById, updateGift, markSetupAsStarted } from '../services/gifts';
 import WizardMessageEditor from '../modules/anima/experiences/multimedia-gift/components/WizardMessageEditor';
-import { Loader, Lock, CheckCircle, Save, Info, ShieldAlert, X, HelpCircle, Eye, Edit2, Upload, User, Calendar, FileText } from 'lucide-react';
+import { Loader, Lock, CheckCircle, Save, Info, ShieldAlert, X, HelpCircle, Eye, Edit2, User, Calendar, FileText } from 'lucide-react';
 import MugViewer from '../modules/anima/experiences/multimedia-gift/pages/Viewer';
 import { v4 as uuidv4 } from 'uuid';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage, auth } from "../firebase";
-import { signInAnonymously } from "firebase/auth";
 
 export default function CustomerSetup() {
     const { id } = useParams();
@@ -27,19 +24,14 @@ export default function CustomerSetup() {
     const [subheadline, setSubheadline] = useState('');
     const [showPreview, setShowPreview] = useState(false);
 
-    // Memoria Specific State
+    // Memoria Specific State (Text Only)
     const [memoriaData, setMemoriaData] = useState({
         deceasedName: '',
         lifeDates: '',
-        meaningText: '',
-        imageFile: null,
-        imagePreview: null
+        meaningText: ''
     });
 
     useEffect(() => {
-        // Authenticate in background for Storage access
-        signInAnonymously(auth).catch(err => console.error("Anonymous Auth Failed:", err));
-
         const init = async () => {
             try {
                 const data = await getGiftById(id);
@@ -61,9 +53,7 @@ export default function CustomerSetup() {
                         setMemoriaData({
                             deceasedName: data.deceasedName || '',
                             lifeDates: data.lifeDates || '',
-                            meaningText: data.meaningText || '',
-                            imagePreview: data.deceasedImage || null,
-                            imageFile: null
+                            meaningText: data.meaningText || ''
                         });
                     }
 
@@ -100,17 +90,6 @@ export default function CustomerSetup() {
         setMessages(messages.map(m => m.id === msgId ? { ...m, [field]: value } : m));
     };
 
-    const handleMemoriaImageChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setMemoriaData({
-                ...memoriaData,
-                imageFile: file,
-                imagePreview: URL.createObjectURL(file)
-            });
-        }
-    };
-
     const handleSaveAndLockClick = () => {
         setShowConfirmModal(true);
     };
@@ -128,12 +107,6 @@ export default function CustomerSetup() {
                 updates.deceasedName = memoriaData.deceasedName;
                 updates.lifeDates = memoriaData.lifeDates;
                 updates.meaningText = memoriaData.meaningText;
-
-                if (memoriaData.imageFile) {
-                    const storageRef = ref(storage, `memoria/${id}/${Date.now()}_${memoriaData.imageFile.name}`);
-                    await uploadBytes(storageRef, memoriaData.imageFile);
-                    updates.deceasedImage = await getDownloadURL(storageRef);
-                }
             } else {
                 updates.messages = messages;
                 updates.headline = headline;
@@ -181,7 +154,7 @@ export default function CustomerSetup() {
         );
     }
 
-    // MEMORIA SETUP
+    // MEMORIA SETUP (No Image Upload)
     if (gift.project === 'memoria') {
         return (
             <div className="min-h-screen bg-stone-950 text-stone-200 pb-32 font-sans">
@@ -225,28 +198,6 @@ export default function CustomerSetup() {
                                 placeholder="Erzähle uns etwas über die Person..."
                             />
                         </div>
-
-                        <div>
-                            <label className="block text-xs uppercase font-bold text-stone-500 mb-2 flex items-center"><Upload className="w-4 h-4 mr-2" /> Foto (für Gravur)</label>
-                            <div className="border-2 border-dashed border-stone-800 rounded-xl p-6 text-center hover:border-stone-600 transition-colors cursor-pointer relative">
-                                <input type="file" onChange={handleMemoriaImageChange} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" />
-                                {memoriaData.imagePreview ? (
-                                    <div className="relative h-40 w-full">
-                                        <img src={memoriaData.imagePreview} className="h-full w-full object-contain rounded-lg" />
-                                        <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 hover:opacity-100 transition-opacity rounded-lg">
-                                            <span className="text-white text-sm font-bold">Ändern</span>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-2">
-                                        <div className="bg-stone-800 w-12 h-12 rounded-full flex items-center justify-center mx-auto">
-                                            <Upload className="w-6 h-6 text-stone-400" />
-                                        </div>
-                                        <p className="text-sm text-stone-400">Bild hochladen</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -288,7 +239,7 @@ export default function CustomerSetup() {
         );
     }
 
-    // ORIGINAL MUG SETUP VIEW (Fallback)
+    // ORIGINAL MUG SETUP VIEW (Fallback) - Same as before
     return (
         <div className="min-h-screen bg-stone-950 text-stone-200 pb-32 font-sans selection:bg-rose-500/30">
             {/* Header */}
