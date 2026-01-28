@@ -234,9 +234,10 @@
                        !field.classList.contains('anima-hidden');
             });
             
-            // Entferne margin-bottom von allen Feldern
+            // Entferne margin-bottom und Klasse von allen Feldern
             allFields.forEach(field => {
                 field.style.marginBottom = '';
+                field.classList.remove('anima-last-field');
             });
             
             // Setze margin-bottom auf das letzte sichtbare Feld (größerer Wert)
@@ -244,6 +245,8 @@
                 const lastField = visibleFields[visibleFields.length - 1];
                 // Verwende sowohl style als auch !important über setProperty
                 lastField.style.setProperty('margin-bottom', '6rem', 'important');
+                // Füge auch eine Klasse hinzu für CSS-Selektor
+                lastField.classList.add('anima-last-field');
             }
         }, 100);
     }
