@@ -237,6 +237,7 @@
             // Entferne margin-bottom und Klasse von allen Feldern
             allFields.forEach(field => {
                 field.style.marginBottom = '';
+                field.style.paddingBottom = '';
                 field.classList.remove('anima-last-field');
             });
             
@@ -244,11 +245,12 @@
             if (visibleFields.length > 0) {
                 const lastField = visibleFields[visibleFields.length - 1];
                 // Verwende sowohl style als auch !important über setProperty
-                lastField.style.setProperty('margin-bottom', '6rem', 'important');
+                lastField.style.setProperty('margin-bottom', '8rem', 'important');
+                lastField.style.setProperty('padding-bottom', '2rem', 'important');
                 // Füge auch eine Klasse hinzu für CSS-Selektor
                 lastField.classList.add('anima-last-field');
             }
-        }, 100);
+        }, 200);
     }
 
     function findFieldByPropertyKey(propertyKey) {
