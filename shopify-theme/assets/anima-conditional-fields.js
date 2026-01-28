@@ -208,6 +208,37 @@
             
             toggleField(container, shouldShow);
         });
+        
+        // Nach dem Aktualisieren aller Felder: Setze margin-bottom auf das letzte sichtbare Feld im Modal
+        updateLastFieldMargin(container);
+    }
+    
+    // Funktion zum Setzen des margin-bottom auf das letzte sichtbare Feld im Modal
+    function updateLastFieldMargin(searchContainer) {
+        // Nur im Modal
+        const modalContent = searchContainer 
+            ? (searchContainer.querySelector('#quick-add-modal-content') || searchContainer.closest('#quick-add-modal-content'))
+            : document.querySelector('#quick-add-modal-content');
+        
+        if (!modalContent) return;
+        
+        // Finde alle sichtbaren Felder im Modal
+        const allFields = Array.from(modalContent.querySelectorAll('.spacing-style'));
+        const visibleFields = allFields.filter(field => {
+            const style = window.getComputedStyle(field);
+            return style.display !== 'none' && !field.hasAttribute('hidden') && !field.classList.contains('anima-hidden');
+        });
+        
+        // Entferne margin-bottom von allen Feldern
+        allFields.forEach(field => {
+            field.style.marginBottom = '';
+        });
+        
+        // Setze margin-bottom auf das letzte sichtbare Feld
+        if (visibleFields.length > 0) {
+            const lastField = visibleFields[visibleFields.length - 1];
+            lastField.style.marginBottom = '5rem';
+        }
     }
 
     function findFieldByPropertyKey(propertyKey) {
@@ -363,26 +394,7 @@
                 }
             }
             
-            // Stelle sicher, dass genug Abstand nach unten ist (verhindert, dass es am Quantity Selector klebt)
-            // NUR im Quick-Add-Modal, nicht auf der Standard-Produktseite
-            const isInModal = fieldContainer.closest('#quick-add-modal-content, .quick-add-modal');
-            
-            if (isInModal && fieldContainer.classList.contains('spacing-style')) {
-                // Finde alle sichtbaren Felder im Modal und prüfe ob dieses das letzte ist
-                const modalContent = fieldContainer.closest('#quick-add-modal-content') || fieldContainer.closest('.quick-add-modal');
-                if (modalContent) {
-                    const allFields = Array.from(modalContent.querySelectorAll('.spacing-style:not(.anima-hidden):not([hidden])'));
-                    const isLastField = allFields.length > 0 && allFields[allFields.length - 1] === fieldContainer;
-                    
-                    if (isLastField) {
-                        // Das letzte sichtbare Feld bekommt extra margin-bottom im Modal
-                        fieldContainer.style.marginBottom = '5rem';
-                    } else {
-                        // Andere Felder: Entferne margin-bottom falls gesetzt
-                        fieldContainer.style.marginBottom = '';
-                    }
-                }
-            }
+            // margin-bottom wird jetzt in updateLastFieldMargin() gesetzt, nicht hier
             
             // Stelle auch sicher, dass das Input/Textarea selbst sichtbar ist
             const input = fieldContainer.querySelector('input, textarea');
