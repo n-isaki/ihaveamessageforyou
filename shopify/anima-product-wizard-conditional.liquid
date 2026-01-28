@@ -1,0 +1,277 @@
+<!-- 
+  ANIMA SMART WIZARD - CONDITIONAL DISPLAY
+  Zeigt Felder basierend auf Produktvarianten:
+  - Nur Gravur: Zeigt nur Gravur-Feld
+  - Gravur + Digitale Botschaft: Zeigt Gravur + Multimedia-Felder
+-->
+{% comment %}
+  Bestimme den Modus basierend auf:
+  1. Produkt-Tags (z.B. "nur-gravur", "gravur-plus-digital")
+  2. Produktvarianten-Titel
+  3. Produkt-Metafelder
+{% endcomment %}
+{% assign product_mode = 'full' %}
+{% if product.tags contains 'nur-gravur' or product.tags contains 'only-engraving' %}
+  {% assign product_mode = 'engraving' %}
+{% elsif product.tags contains 'gravur-plus-digital' or product.tags contains 'engraving-plus-digital' %}
+  {% assign product_mode = 'full' %}
+{% elsif product.tags contains 'nur-digital' or product.tags contains 'only-digital' %}
+  {% assign product_mode = 'multimedia' %}
+{% endif %}
+
+{% comment %} Fallback: Prüfe Varianten-Titel {% endcomment %}
+{% if product_mode == 'full' %}
+  {% for variant in product.variants %}
+    {% if variant.title contains 'Gravur' and variant.title contains 'Digital' %}
+      {% assign product_mode = 'full' %}
+      {% break %}
+    {% elsif variant.title contains 'Gravur' %}
+      {% assign product_mode = 'engraving' %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+<div class="anima-wizard-container page-width">
+  <div class="anima-wizard-card">
+    <div class="wizard-header">
+      <h1 class="h2">{{ product.title }}</h1>
+      <p class="price-large">{{ product.price | money }}</p>
+    </div>
+
+    <!-- PRODUCT FORM -->
+    <product-form class="product-form">
+      {%- form 'product', product, id: 'product-form-anima', class: 'anima-form' -%}
+        <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}">
+        <input type="hidden" name="properties[_Digital_Typ]" value="mug">
+        <input type="hidden" name="properties[_Anima_Mode]" value="{{ product_mode }}">
+
+        <!-- React Widget Container -->
+        <div id="anima-configurator" 
+             data-product-id="{{ product.id }}"
+             data-mode="{{ product_mode }}"
+             style="width: 100%; display: block;">
+        </div>
+
+        <!-- Fallback: Native Shopify Fields (wenn Widget nicht lädt) -->
+        <noscript>
+          <div class="anima-fallback-fields">
+            
+            {% comment %} GRAVUR SECTION - Zeigt wenn engraving oder full {% endcomment %}
+            {% if product_mode == 'engraving' or product_mode == 'full' %}
+              <div class="input-group engraving-section">
+                <label>Deine Gravur (Tassenboden) <span class="req">*</span></label>
+                <p class="field-hint">Max. 30 Zeichen</p>
+                <input type="text" 
+                       name="properties[Gravur]" 
+                       maxlength="30"
+                       class="anima-input" 
+                       placeholder="z.B. Für Mama, 2024" 
+                       required>
+              </div>
+            {% endif %}
+
+            {% comment %} MULTIMEDIA SECTION - Zeigt nur wenn multimedia oder full {% endcomment %}
+            {% if product_mode == 'multimedia' or product_mode == 'full' %}
+              <div class="input-group multimedia-section">
+                <div class="info-box">
+                  <p><strong>Dein Multimedia-Geschenk gestalten:</strong><br>Hinterlege hier deine persönlichen Nachrichten, Videolinks oder andere Inhalte.</p>
+                </div>
+
+                <div class="input-group">
+                  <label>Deine Nachricht(en) <span class="req">*</span></label>
+                  <p class="field-hint">Du kannst mehrere Nachrichten schreiben. Format: "Von [Name]: [Text]"</p>
+                  <textarea name="properties[Nachrichten]" rows="6" class="anima-input" placeholder="Von Saskia: Alles Gute zum Geburtstag!&#10;Von Oma: Wir haben dich lieb!" required></textarea>
+                </div>
+
+                <div class="input-group">
+                  <label>Video Link (YouTube/Vimeo) <span class="opt">(Optional)</span></label>
+                  <p class="field-hint">Kopiere hier den Link zu deinem Video rein.</p>
+                  <input type="text" name="properties[Video Link]" placeholder="https://youtube.com/watch?v=..." class="anima-input">
+                </div>
+
+                <div class="input-group">
+                  <label>Sonstiger Link <span class="opt">(Optional)</span></label>
+                  <input type="text" name="properties[Link]" placeholder="https://..." class="anima-input">
+                </div>
+              </div>
+            {% endif %}
+
+          </div>
+        </noscript>
+
+        <!-- SUBMIT -->
+        <div class="wizard-footer">
+          <button type="submit" class="anima-btn-primary full-width">In den Warenkorb</button>
+        </div>
+
+      {%- endform -%}
+    </product-form>
+  </div>
+</div>
+
+<!-- React Widget Scripts -->
+<link rel="stylesheet" href="https://admin.kamlimos.com/widget/widget.css?v=14">
+<script src="https://admin.kamlimos.com/widget/widget.js?v=14" async></script>
+
+<style>
+  /* MODERN CSS VARIABLES */
+  :root {
+    --anima-primary: #1c1917;
+    --anima-accent: #be123c;
+    --anima-bg: #fafaf9;
+    --anima-border: #e7e5e4;
+  }
+
+  /* LAYOUT */
+  .anima-wizard-container { 
+    max-width: 600px; 
+    margin: 40px auto; 
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+  }
+  .anima-wizard-card { 
+    background: white; 
+    border: 1px solid var(--anima-border); 
+    border-radius: 24px; 
+    padding: 40px; 
+    box-shadow: 0 20px 40px -10px rgba(0,0,0,0.05); 
+  }
+  .wizard-header { 
+    text-align: center; 
+    margin-bottom: 32px; 
+  }
+  .wizard-header h1 { 
+    font-size: 1.8rem; 
+    margin-bottom: 0.5rem; 
+    letter-spacing: -0.02em; 
+  }
+  .price-large { 
+    font-size: 1.25rem; 
+    color: var(--anima-accent); 
+    font-weight: 600; 
+  }
+
+  /* INFO BOX */
+  .info-box { 
+    background: var(--anima-bg); 
+    border-left: 4px solid var(--anima-accent); 
+    padding: 16px; 
+    border-radius: 8px; 
+    margin-bottom: 24px; 
+    font-size: 0.9rem; 
+    line-height: 1.5; 
+    color: #44403c; 
+  }
+  
+  /* INPUTS */
+  .input-group { 
+    margin-bottom: 24px; 
+  }
+  .input-group label { 
+    display: block; 
+    font-weight: 600; 
+    font-size: 0.95rem; 
+    margin-bottom: 6px; 
+    color: var(--anima-primary); 
+  }
+  .field-hint { 
+    font-size: 0.85rem; 
+    color: #78716c; 
+    margin-top: 0; 
+    margin-bottom: 8px; 
+    line-height: 1.4; 
+  }
+  .req { 
+    color: var(--anima-accent); 
+  }
+  .opt { 
+    color: #a8a29e; 
+    font-weight: normal; 
+    font-size: 0.8em; 
+  }
+  
+  .anima-input { 
+    width: 100%; 
+    padding: 14px; 
+    border: 1px solid #d6d3d1; 
+    border-radius: 12px; 
+    font-size: 1rem; 
+    transition: all 0.2s; 
+    background: #fff;
+    color: #1c1917;
+  }
+  .anima-input:focus { 
+    border-color: var(--anima-accent); 
+    outline: none; 
+    box-shadow: 0 0 0 3px rgba(190, 18, 60, 0.1); 
+  }
+  textarea.anima-input { 
+    resize: vertical; 
+    min-height: 120px; 
+    line-height: 1.5; 
+  }
+
+  /* SECTION SEPARATORS */
+  .engraving-section {
+    border-bottom: 1px solid var(--anima-border);
+    padding-bottom: 24px;
+    margin-bottom: 24px;
+  }
+  .multimedia-section {
+    padding-top: 24px;
+  }
+
+  /* UTILS */
+  .full-width { 
+    width: 100%; 
+  }
+
+  /* BUTTON */
+  .anima-btn-primary {
+    background: var(--anima-primary);
+    color: white;
+    border: none;
+    padding: 16px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.2s;
+    margin-top: 10px;
+  }
+  .anima-btn-primary:hover { 
+    background: #000; 
+    transform: translateY(-1px); 
+  }
+  .anima-btn-primary:active { 
+    transform: translateY(1px); 
+  }
+
+  /* Fallback Fields (wenn JS deaktiviert) */
+  .anima-fallback-fields {
+    margin: 24px 0;
+  }
+</style>
+
+{% schema %}
+{
+  "name": "Anima Product Wizard (Conditional)",
+  "settings": [
+    {
+      "type": "text",
+      "id": "product_tag_engraving",
+      "label": "Tag für 'Nur Gravur'",
+      "default": "nur-gravur",
+      "info": "Produkte mit diesem Tag zeigen nur Gravur-Feld"
+    },
+    {
+      "type": "text",
+      "id": "product_tag_full",
+      "label": "Tag für 'Gravur + Digital'",
+      "default": "gravur-plus-digital",
+      "info": "Produkte mit diesem Tag zeigen beide Optionen"
+    }
+  ],
+  "presets": [{ "name": "Anima Product Wizard (Conditional)" }]
+}
+{% endschema %}

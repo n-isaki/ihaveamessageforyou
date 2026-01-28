@@ -118,19 +118,22 @@ export default function Configurator({ productId, mode = 'multimedia', onSave })
                     />
                 </div>
 
-                <div className="pt-2 border-t border-stone-100">
-                    <label className="block text-xs font-bold text-stone-500 uppercase mb-1">PIN Code (von der Karte)</label>
-                    <input
-                        type="text"
-                        value={formData.accessCode}
-                        onChange={(e) => setFormData(p => ({ ...p, accessCode: e.target.value }))}
-                        className="w-full p-3 rounded-lg border border-stone-200 bg-stone-50 focus:bg-white focus:ring-2 focus:ring-stone-200 outline-none text-sm font-mono tracking-wider text-center uppercase transition-all"
-                        placeholder="1234AB"
-                    />
-                    <p className="text-xs text-stone-400 mt-1 text-center">
-                        Bitte gib den Code ein, der auf deiner Karte aufgedruckt ist.
-                    </p>
-                </div>
+                {/* PIN Code nur zeigen wenn Multimedia-Modus aktiv ist */}
+                {showMultimedia && (
+                    <div className="pt-2 border-t border-stone-100">
+                        <label className="block text-xs font-bold text-stone-500 uppercase mb-1">PIN Code (von der Karte)</label>
+                        <input
+                            type="text"
+                            value={formData.accessCode}
+                            onChange={(e) => setFormData(p => ({ ...p, accessCode: e.target.value }))}
+                            className="w-full p-3 rounded-lg border border-stone-200 bg-stone-50 focus:bg-white focus:ring-2 focus:ring-stone-200 outline-none text-sm font-mono tracking-wider text-center uppercase transition-all"
+                            placeholder="1234AB"
+                        />
+                        <p className="text-xs text-stone-400 mt-1 text-center">
+                            Bitte gib den Code ein, der auf deiner Karte aufgedruckt ist.
+                        </p>
+                    </div>
+                )}
             </div>
 
             {/* Engraving Section */}
