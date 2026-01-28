@@ -417,5 +417,120 @@
         childList: true,
         subtree: true
     });
+    
+    // Initialisierung für Quick-Add-Modal
+    function initModal() {
+        const modalContent = document.getElementById('quick-add-modal-content');
+        if (!modalContent) return;
+        
+        // Prüfe ob Personalisierungs-Select im Modal vorhanden ist
+        const personalizationSelect = findPersonalizationSelect();
+        if (!personalizationSelect) return;
+        
+        // Prüfe ob Select im Modal ist
+        if (!modalContent.contains(personalizationSelect)) return;
+        
+        // Prüfe ob bereits initialisiert
+        if (personalizationSelect.dataset.animaModalInitialized) return;
+        
+        personalizationSelect.dataset.animaModalInitialized = 'true';
+        
+        // Verstecke Felder zuerst
+        const fieldsInModal = modalContent.querySelectorAll('input[name^="properties["], textarea[name^="properties["]');
+        fieldsInModal.forEach(field => {
+            let container = field.closest('.spacing-style');
+            if (!container) container = field.closest('product-custom-property-component');
+            if (!container) container = field.closest('[class*="custom-property"]');
+            if (!container) container = field.parentElement;
+            
+            if (container && container !== document.body) {
+                container.style.display = 'none';
+                container.style.visibility = 'hidden';
+                container.style.height = '0';
+                container.style.margin = '0';
+                container.style.padding = '0';
+                container.classList.add('anima-initially-hidden');
+            }
+        });
+        
+        // Initiale Anzeige basierend auf aktueller Auswahl
+        const initialValue = personalizationSelect.value || personalizationSelect.options[0]?.value;
+        updateFields(initialValue);
+        
+        // Auf Änderungen hören
+        personalizationSelect.addEventListener('change', function() {
+            updateFields(this.value);
+        });
+        
+        // Auch auf Varianten-Änderungen hören
+        const variantSelects = modalContent.querySelectorAll('select[name="id"], select[data-variant-select]');
+        variantSelects.forEach(select => {
+            select.addEventListener('change', function() {
+                setTimeout(() => {
+                    const personalization = findPersonalizationSelect();
+                    if (personalization && modalContent.contains(personalization)) {
+                        updateFields(personalization.value);
+                    }
+                }, 100);
+            });
+        });
+    }
+    
+    // Prüfe Modal alle 300ms wenn es geöffnet ist
+    setInterval(function() {
+        const modal = document.querySelector('.quick-add-modal[open], dialog.quick-add-modal[open]');
+        if (modal) {
+            initModal();
+        }
+    }, 300);
+    
+    // Auch direkt beim Öffnen des Dialogs
+    const dialogObserver = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'open') {
+                const dialog = mutation.target;
+                if (dialog.hasAttribute('open') && dialog.classList.contains('quick-add-modal')) {
+                    // Warte bis Inhalt geladen ist (nach morph())
+                    setTimeout(() => {
+                        initModal();
+                    }, 800);
+                }
+            }
+        });
+    });
+    
+    // Beobachte alle Dialog-Elemente
+    const dialogs = document.querySelectorAll('dialog, .quick-add-modal');
+    dialogs.forEach(dialog => {
+        dialogObserver.observe(dialog, {
+            attributes: true,
+            attributeFilter: ['open']
+        });
+    });
+    
+    // Beobachte auch neue Dialog-Elemente
+    const dialogContainerObserver = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            mutation.addedNodes.forEach(function(node) {
+                if (node.nodeType === 1) {
+                    const dialogs = node.querySelectorAll ? node.querySelectorAll('dialog, .quick-add-modal') : [];
+                    if (node.tagName === 'DIALOG' || node.classList.contains('quick-add-modal')) {
+                        dialogs.push(node);
+                    }
+                    dialogs.forEach(dialog => {
+                        dialogObserver.observe(dialog, {
+                            attributes: true,
+                            attributeFilter: ['open']
+                        });
+                    });
+                }
+            });
+        });
+    });
+    
+    dialogContainerObserver.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
 
 })();
