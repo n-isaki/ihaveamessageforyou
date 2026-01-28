@@ -42,6 +42,7 @@
 <div
   class="spacing-style"
   style="{% render 'spacing-style', settings: block_settings %}"
+  {% if block.settings.show_when != blank %}data-show-when="{{ block.settings.show_when }}"{% endif %}
   {{ block.shopify_attributes }}
 >
   {% if block_settings.property_heading != blank %}
@@ -334,6 +335,17 @@
       "step": 1,
       "unit": "px",
       "default": 0
+    },
+    {
+      "type": "header",
+      "content": "Conditional Display"
+    },
+    {
+      "type": "text",
+      "id": "show_when",
+      "label": "Show when variant contains",
+      "info": "Enter text that must be in the selected variant. Use | for OR (e.g. 'gravur|engraving'), use + for AND (e.g. 'gravur+digital'). Leave empty to always show.",
+      "default": ""
     }
   ],
   "presets": [

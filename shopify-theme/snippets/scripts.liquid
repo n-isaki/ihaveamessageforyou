@@ -312,7 +312,6 @@
 {% comment %} Anima Conditional Fields Script - nur auf Produktseiten {% endcomment %}
 {% if template.name == 'product' %}
   <script>
-    console.log('[Anima] Script wird geladen für Produktseite');
     // Verstecke Personalisierungsfelder SOFORT mit visibility (behält Layout bei)
     (function() {
       function hidePersonalizationFields() {
@@ -332,7 +331,8 @@
               if (!container) container = el.parentElement;
               
               if (container && container !== document.body) {
-                // Verwende visibility statt display, damit CSS-Layout erhalten bleibt
+                // Verstecke komplett mit display: none (kein Platz mehr)
+                container.style.display = 'none';
                 container.style.visibility = 'hidden';
                 container.style.height = '0';
                 container.style.overflow = 'hidden';

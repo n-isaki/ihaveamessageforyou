@@ -1,35 +1,44 @@
 /**
  * Anima Conditional Fields
  * Zeigt/versteckt Felder basierend auf der Personalisierungs-Auswahl
+ * 
+ * Verwendung:
+ * 1. Für jedes Custom Property Feld: Füge data-show-when="variant-text" hinzu
+ *    z.B. data-show-when="gravur" zeigt das Feld nur wenn "gravur" in der Variante enthalten ist
+ *    z.B. data-show-when="ohne gravur" zeigt das Feld nur wenn "ohne gravur" ausgewählt ist
+ * 
+ * 2. Mehrere Bedingungen: data-show-when="gravur|digital" (ODER) oder data-show-when="gravur+digital" (UND)
+ * 
+ * 3. Ohne data-show-when: Feld wird immer angezeigt (außer initial versteckt)
  */
-
-console.log('[Anima] Script-Datei geladen!');
 
 (function() {
     'use strict';
     
-    console.log('[Anima] IIFE gestartet');
-    
     // Verstecke alle Personalisierungsfelder SOFORT beim Laden (verhindert FOUC)
     function hideFieldsImmediately() {
-        const fieldsToHide = [
-            'input[name*="Physische Gravur"]',
-            'textarea[name*="text"]',
-            'textarea[name*="Link"]',
-            'input[name*="pin"]'
-        ];
+        // Finde ALLE Custom Property Felder (nicht mehr hardcoded)
+        const allCustomPropertyFields = document.querySelectorAll(
+            'input[name^="properties["], textarea[name^="properties["]'
+        );
         
-        fieldsToHide.forEach(selector => {
-            const fields = document.querySelectorAll(selector);
-            fields.forEach(field => {
-                const container = field.closest('.spacing-style, product-custom-property-component, [class*="custom-property"]') || field.parentElement;
-                if (container && container.style.display !== 'none') {
-                    container.style.display = 'none';
-                    container.classList.add('anima-initially-hidden');
-                }
-            });
+        allCustomPropertyFields.forEach(field => {
+            // Finde den Container
+            let container = field.closest('.spacing-style');
+            if (!container) container = field.closest('product-custom-property-component');
+            if (!container) container = field.closest('[class*="custom-property"]');
+            if (!container) container = field.parentElement;
+            
+            if (container && container !== document.body) {
+                // Verstecke komplett - kein Platz mehr
+                container.style.display = 'none';
+                container.style.visibility = 'hidden';
+                container.style.height = '0';
+                container.style.margin = '0';
+                container.style.padding = '0';
+                container.classList.add('anima-initially-hidden');
+            }
         });
-        console.log('[Anima] Felder initial versteckt (FOUC-Schutz)');
     }
     
     // Führe sofort aus, auch wenn DOM noch nicht vollständig geladen ist
@@ -37,8 +46,6 @@ console.log('[Anima] Script-Datei geladen!');
 
     // Warte bis DOM geladen ist
     function init() {
-        console.log('[Anima] Script geladen, starte Initialisierung...');
-        
         // Verstecke Felder nochmal (falls neue geladen wurden)
         hideFieldsImmediately();
         
@@ -47,19 +54,10 @@ console.log('[Anima] Script-Datei geladen!');
             const personalizationSelect = findPersonalizationSelect();
             
             if (!personalizationSelect) {
-                console.warn('[Anima] Personalisierungs-Dropdown nicht gefunden');
-                console.log('[Anima] Verfügbare Selects:', Array.from(document.querySelectorAll('select')).map(s => ({
-                    id: s.id,
-                    name: s.name,
-                    options: Array.from(s.options).slice(0, 3).map(o => o.text)
-                })));
                 // Retry nach 1 Sekunde
                 setTimeout(init, 1000);
                 return;
             }
-
-            console.log('[Anima] Personalisierungs-Dropdown gefunden:', personalizationSelect);
-            console.log('[Anima] Aktuelle Auswahl:', personalizationSelect.value, personalizationSelect.options[personalizationSelect.selectedIndex]?.text);
 
             // Initiale Anzeige
             const initialValue = personalizationSelect.value || personalizationSelect.options[0]?.value;
@@ -67,7 +65,6 @@ console.log('[Anima] Script-Datei geladen!');
 
             // Auf Änderungen hören
             personalizationSelect.addEventListener('change', function() {
-                console.log('[Anima] Dropdown geändert zu:', this.value, this.options[this.selectedIndex]?.text);
                 updateFields(this.value);
             });
             
@@ -91,9 +88,7 @@ console.log('[Anima] Script-Datei geladen!');
     }
 
     function findPersonalizationSelect() {
-        console.log('[Anima] Suche Personalisierungs-Dropdown...');
         const allSelects = document.querySelectorAll('select');
-        console.log('[Anima] Gefundene Selects:', allSelects.length);
         
         // Methode 1: Suche nach Select mit "Personalisierung" im Label/Name
         for (const select of allSelects) {
@@ -102,14 +97,12 @@ console.log('[Anima] Script-Datei geladen!');
             const labelText = (label?.textContent?.toLowerCase() || '') + (select.getAttribute('aria-label')?.toLowerCase() || '');
             
             if (labelText.includes('personalisierung') || labelText.includes('personalization')) {
-                console.log('[Anima] Gefunden via Label:', labelText);
                 return select;
             }
             
             // Prüfe auch das name-Attribut
             const name = select.name?.toLowerCase() || '';
             if (name.includes('personal') || name.includes('personalisierung')) {
-                console.log('[Anima] Gefunden via name:', name);
                 return select;
             }
         }
@@ -120,7 +113,6 @@ console.log('[Anima] Script-Datei geladen!');
             const hasGravur = options.some(text => text.includes('gravur') || text.includes('ohne gravur'));
             
             if (hasGravur) {
-                console.log('[Anima] Gefunden via Optionen mit "gravur":', options);
                 return select;
             }
         }
@@ -131,12 +123,10 @@ console.log('[Anima] Script-Datei geladen!');
         for (const select of variantPickers) {
             const options = Array.from(select.options).map(opt => opt.text.toLowerCase());
             if (options.some(text => text.includes('gravur') || text.includes('ohne'))) {
-                console.log('[Anima] Gefunden via Variant-Picker:', options);
                 return select;
             }
         }
 
-        console.warn('[Anima] Kein Personalisierungs-Dropdown gefunden');
         return null;
     }
 
@@ -152,68 +142,72 @@ console.log('[Anima] Script-Datei geladen!');
             }
         }
         
-        console.log('[Anima] Aktualisiere Felder für:', selectedValue, '→ Text:', selectedText);
-
-        // Finde die Custom Property Felder
-        const engravingField = findFieldByPropertyKey('Physische Gravur');
-        const greetingField = findFieldByPropertyKey('text');
-        const linkField = findFieldByPropertyKey('Link');
-        const pinField = findFieldByPropertyKey('pin');
-
-        // Bestimme welche Felder angezeigt werden sollen
-        let showEngraving = false;
-        let showDigital = false;
-
-        // Prüfe zuerst auf "ohne gravur" (muss exakt sein)
-        if (selectedText.includes('ohne gravur') || selectedText === 'ohne gravur' || selectedText.includes('without engraving')) {
-            // Ohne Gravur → KEINE Personalisierungsfelder anzeigen
-            showEngraving = false;
-            showDigital = false;
-            console.log('[Anima] Modus: Ohne Gravur → keine Felder');
-        } 
-        // Dann prüfe auf "gravur + digital" oder "gravur + botschaft"
-        else if ((selectedText.includes('gravur') && selectedText.includes('digital')) || 
-                 (selectedText.includes('gravur') && selectedText.includes('botschaft')) ||
-                 (selectedText.includes('engraving') && selectedText.includes('digital'))) {
-            // Mit Gravur + digital → alle Felder
-            showEngraving = true;
-            showDigital = true;
-            console.log('[Anima] Modus: Mit Gravur + Digital → alle Felder');
-        } 
-        // Dann prüfe auf nur "gravur" (ohne digital/botschaft)
-        else if (selectedText.includes('gravur') || selectedText.includes('engraving')) {
-            // Nur Gravur → nur Gravur-Feld
-            showEngraving = true;
-            showDigital = false;
-            console.log('[Anima] Modus: Nur Gravur → nur Gravur-Feld');
-        } 
-        else {
-            // Default: keine Felder (falls nichts erkannt wird)
-            showEngraving = false;
-            showDigital = false;
-            console.log('[Anima] Modus: Default → keine Felder');
-        }
-
-        console.log('[Anima] showEngraving:', showEngraving, 'showDigital:', showDigital);
-        console.log('[Anima] Gefundene Felder:', {
-            engraving: engravingField?.tagName || 'nicht gefunden',
-            greeting: greetingField?.tagName || 'nicht gefunden',
-            link: linkField?.tagName || 'nicht gefunden',
-            pin: pinField?.tagName || 'nicht gefunden'
-        });
-
-        // Zeige/Verstecke Felder
-        toggleField(engravingField, showEngraving);
-        toggleField(greetingField, showDigital);
-        toggleField(linkField, showDigital);
-        toggleField(pinField, showDigital);
+        // Finde ALLE Custom Property Felder auf der Seite
+        const allCustomPropertyFields = document.querySelectorAll(
+            'input[name^="properties["], textarea[name^="properties["]'
+        );
         
-        console.log('[Anima] Felder aktualisiert');
+        // Für jedes Feld prüfe, ob es angezeigt werden soll
+        allCustomPropertyFields.forEach(field => {
+            // Finde den Container
+            let container = field.closest('.spacing-style');
+            if (!container) container = field.closest('product-custom-property-component');
+            if (!container) container = field.closest('[class*="custom-property"]');
+            if (!container) container = field.parentElement;
+            
+            if (!container) return;
+            
+            // Prüfe data-show-when Attribut
+            const showWhen = container.getAttribute('data-show-when') || 
+                           field.getAttribute('data-show-when') ||
+                           container.closest('[data-show-when]')?.getAttribute('data-show-when');
+            
+            let shouldShow = false;
+            
+            if (showWhen) {
+                // Parse die Bedingung
+                // Format: "gravur" oder "gravur|digital" (ODER) oder "gravur+digital" (UND)
+                if (showWhen.includes('|')) {
+                    // ODER-Bedingung: mindestens eine muss passen
+                    const conditions = showWhen.split('|').map(c => c.trim().toLowerCase());
+                    shouldShow = conditions.some(condition => selectedText.includes(condition));
+                } else if (showWhen.includes('+')) {
+                    // UND-Bedingung: alle müssen passen
+                    const conditions = showWhen.split('+').map(c => c.trim().toLowerCase());
+                    shouldShow = conditions.every(condition => selectedText.includes(condition));
+                } else {
+                    // Einfache Bedingung
+                    shouldShow = selectedText.includes(showWhen.toLowerCase());
+                }
+            } else {
+                // Fallback: Alte Logik für Tassen-Produkte (für Rückwärtskompatibilität)
+                const propertyKey = field.name.match(/properties\[(.+)\]/)?.[1] || '';
+                
+                if (propertyKey === 'Physische Gravur') {
+                    shouldShow = selectedText.includes('gravur') && !selectedText.includes('ohne gravur');
+                } else if (propertyKey === 'text' || propertyKey === 'Link' || propertyKey === 'pin') {
+                    // Digitale Felder: nur wenn nicht "ohne gravur" UND (gravur+digital ODER nur digital)
+                    if (selectedText.includes('ohne gravur')) {
+                        shouldShow = false;
+                    } else if (selectedText.includes('gravur') && (selectedText.includes('digital') || selectedText.includes('botschaft'))) {
+                        shouldShow = true;
+                    } else if (!selectedText.includes('gravur')) {
+                        // Wenn keine Gravur-Variante ausgewählt, zeige digitale Felder
+                        shouldShow = true;
+                    } else {
+                        shouldShow = false;
+                    }
+                } else {
+                    // Unbekanntes Feld: Standardmäßig versteckt
+                    shouldShow = false;
+                }
+            }
+            
+            toggleField(container, shouldShow);
+        });
     }
 
     function findFieldByPropertyKey(propertyKey) {
-        console.log('[Anima] Suche Feld für:', propertyKey);
-        
         // Methode 1: Suche nach name-Attribut mit dem property_key
         // Die Felder haben name="properties[property_key]"
         const nameSelectors = [
@@ -226,8 +220,6 @@ console.log('[Anima] Script-Datei geladen!');
         for (const selector of nameSelectors) {
             const field = document.querySelector(selector);
             if (field) {
-                console.log('[Anima] Feld gefunden via name:', selector, field);
-                
                 // Versuche verschiedene Container-Selektoren
                 let container = field.closest('.spacing-style');
                 if (!container) container = field.closest('product-custom-property-component');
@@ -253,12 +245,10 @@ console.log('[Anima] Script-Datei geladen!');
                 }
                 
                 if (container) {
-                    console.log('[Anima] Container gefunden:', container);
                     return container;
                 }
                 
                 // Letzter Fallback: Parent-Element
-                console.warn('[Anima] Kein Container gefunden, verwende Parent:', field.parentElement);
                 return field.parentElement || field;
             }
         }
@@ -280,8 +270,6 @@ console.log('[Anima] Script-Datei geladen!');
             }
             
             if (matches) {
-                console.log('[Anima] Label gefunden:', label.textContent);
-                
                 // Finde das zugehörige Input/Textarea
                 const field = label.parentElement?.querySelector('input, textarea') || 
                              label.closest('.spacing-style, product-custom-property-component')?.querySelector('input, textarea');
@@ -310,7 +298,6 @@ console.log('[Anima] Script-Datei geladen!');
                     }
                     
                     if (container) {
-                        console.log('[Anima] Container via Label gefunden:', container);
                         return container;
                     }
                     
@@ -333,22 +320,17 @@ console.log('[Anima] Script-Datei geladen!');
             // Suche nach Element mit dieser ID oder data-Attribut
             const byId = document.querySelector(`[id*="${blockId}"]`);
             if (byId) {
-                console.log('[Anima] Feld gefunden via Block-ID:', blockId);
                 return byId.closest('.spacing-style, .product-form__input, .field') || byId.parentElement;
             }
         }
 
-        console.warn('[Anima] Feld nicht gefunden für:', propertyKey);
         return null;
     }
 
     function toggleField(fieldContainer, show) {
         if (!fieldContainer) {
-            console.warn('[Anima] Feld-Container ist null');
             return;
         }
-
-        console.log('[Anima] Toggle Feld:', fieldContainer, 'show:', show);
 
         if (show) {
             // Entferne alle versteckenden Styles und Attribute
@@ -384,11 +366,28 @@ console.log('[Anima] Script-Datei geladen!');
                 input.style.visibility = '';
                 input.removeAttribute('hidden');
             }
+            
+            // Prüfe auch das parent product-custom-property-component (falls vorhanden)
+            const webComponent = fieldContainer.closest('product-custom-property-component');
+            if (webComponent && webComponent.style.display === 'none') {
+                webComponent.style.display = '';
+                webComponent.style.visibility = '';
+                webComponent.removeAttribute('hidden');
+            }
         } else {
-            // Verwende display: none für sauberes Verstecken
+            // Verwende display: none für sauberes Verstecken (kein Platz mehr)
             fieldContainer.style.display = 'none';
+            fieldContainer.style.visibility = 'hidden';
             fieldContainer.setAttribute('hidden', 'true');
             fieldContainer.classList.add('anima-hidden');
+            
+            // Verstecke auch das parent product-custom-property-component (falls vorhanden)
+            const webComponent = fieldContainer.closest('product-custom-property-component');
+            if (webComponent && webComponent !== fieldContainer) {
+                webComponent.style.display = 'none';
+                webComponent.style.visibility = 'hidden';
+                webComponent.setAttribute('hidden', 'true');
+            }
         }
     }
 
@@ -410,7 +409,6 @@ console.log('[Anima] Script-Datei geladen!');
         if (personalizationSelect && !personalizationSelect.dataset.animaInitialized) {
             isInitialized = true;
             personalizationSelect.dataset.animaInitialized = 'true';
-            console.log('[Anima] Re-Initialisierung durch MutationObserver');
             init();
         }
     });
