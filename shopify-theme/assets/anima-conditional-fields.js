@@ -208,49 +208,6 @@
             
             toggleField(container, shouldShow);
         });
-        
-        // Nach dem Aktualisieren aller Felder: Setze margin-bottom auf das letzte sichtbare Feld im Modal
-        updateLastFieldMargin(container);
-    }
-    
-    // Funktion zum Setzen des margin-bottom auf das letzte sichtbare Feld im Modal
-    function updateLastFieldMargin(searchContainer) {
-        // Prüfe ob wir im Modal sind
-        const modalContent = searchContainer 
-            ? (searchContainer.querySelector('#quick-add-modal-content') || searchContainer.closest('#quick-add-modal-content'))
-            : document.querySelector('#quick-add-modal-content');
-        
-        if (!modalContent) return;
-        
-        // Warte kurz, damit DOM-Updates abgeschlossen sind
-        setTimeout(() => {
-            // Finde alle sichtbaren Felder im Modal
-            const allFields = Array.from(modalContent.querySelectorAll('.spacing-style'));
-            const visibleFields = allFields.filter(field => {
-                const style = window.getComputedStyle(field);
-                return style.display !== 'none' && 
-                       style.visibility !== 'hidden' &&
-                       !field.hasAttribute('hidden') && 
-                       !field.classList.contains('anima-hidden');
-            });
-            
-            // Entferne margin-bottom und Klasse von allen Feldern
-            allFields.forEach(field => {
-                field.style.marginBottom = '';
-                field.style.paddingBottom = '';
-                field.classList.remove('anima-last-field');
-            });
-            
-            // Setze margin-bottom auf das letzte sichtbare Feld (größerer Wert)
-            if (visibleFields.length > 0) {
-                const lastField = visibleFields[visibleFields.length - 1];
-                // Verwende sowohl style als auch !important über setProperty
-                lastField.style.setProperty('margin-bottom', '8rem', 'important');
-                lastField.style.setProperty('padding-bottom', '5rem', 'important');
-                // Füge auch eine Klasse hinzu für CSS-Selektor
-                lastField.classList.add('anima-last-field');
-            }
-        }, 200);
     }
 
     function findFieldByPropertyKey(propertyKey) {
@@ -387,7 +344,6 @@
             fieldContainer.style.overflow = '';
             fieldContainer.style.margin = '';
             fieldContainer.style.padding = '';
-            fieldContainer.style.marginBottom = ''; // Stelle sicher, dass margin-bottom zurückgesetzt wird
             fieldContainer.removeAttribute('hidden');
             fieldContainer.classList.remove('anima-hidden', 'anima-initially-hidden');
             
@@ -405,8 +361,6 @@
                     fieldContainer.style.display = '';
                 }
             }
-            
-            // margin-bottom wird jetzt in updateLastFieldMargin() gesetzt, nicht hier
             
             // Stelle auch sicher, dass das Input/Textarea selbst sichtbar ist
             const input = fieldContainer.querySelector('input, textarea');
@@ -540,11 +494,6 @@
         personalizationSelect.addEventListener('change', function() {
             updateFields(this.value, modalContent);
         });
-        
-        // Stelle sicher, dass margin-bottom auch nach Modal-Initialisierung gesetzt wird
-        setTimeout(() => {
-            updateLastFieldMargin(modalContent);
-        }, 500);
         
         // Auch auf Varianten-Änderungen hören
         const variantSelects = modalContent.querySelectorAll('select[name="id"], select[data-variant-select]');
