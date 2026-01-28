@@ -364,20 +364,24 @@
             }
             
             // Stelle sicher, dass genug Abstand nach unten ist (verhindert, dass es am Quantity Selector klebt)
-            // Prüfe ob es ein PIN-Feld ist (immer das letzte Feld)
-            const pinField = fieldContainer.querySelector('input[name*="pin"], input[name*="PIN"]');
-            if (pinField) {
-                // PIN-Feld bekommt immer extra margin-bottom
-                fieldContainer.style.marginBottom = '5rem';
-            } else if (fieldContainer.classList.contains('spacing-style')) {
-                // Für andere Felder: Prüfe ob es das letzte sichtbare Feld ist
-                // Suche im gleichen Container wie das Feld (Form oder Modal)
-                const formContainer = fieldContainer.closest('form, #quick-add-modal-content, .product-details') || document;
-                const allFields = Array.from(formContainer.querySelectorAll('.spacing-style:not(.anima-hidden):not([hidden])'));
-                const isLastField = allFields.length > 0 && allFields[allFields.length - 1] === fieldContainer;
-                
-                if (isLastField) {
+            // NUR im Quick-Add-Modal, nicht auf der Standard-Produktseite
+            const isInModal = fieldContainer.closest('#quick-add-modal-content, .quick-add-modal');
+            
+            if (isInModal) {
+                // Prüfe ob es ein PIN-Feld ist (immer das letzte Feld)
+                const pinField = fieldContainer.querySelector('input[name*="pin"], input[name*="PIN"]');
+                if (pinField) {
+                    // PIN-Feld bekommt immer extra margin-bottom im Modal
                     fieldContainer.style.marginBottom = '5rem';
+                } else if (fieldContainer.classList.contains('spacing-style')) {
+                    // Für andere Felder: Prüfe ob es das letzte sichtbare Feld ist
+                    const formContainer = fieldContainer.closest('form, #quick-add-modal-content, .product-details') || document;
+                    const allFields = Array.from(formContainer.querySelectorAll('.spacing-style:not(.anima-hidden):not([hidden])'));
+                    const isLastField = allFields.length > 0 && allFields[allFields.length - 1] === fieldContainer;
+                    
+                    if (isLastField) {
+                        fieldContainer.style.marginBottom = '5rem';
+                    }
                 }
             }
             
