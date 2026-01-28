@@ -87,10 +87,12 @@ export default function AdminDashboard() {
 
                 {/* Header & Tabs */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                    <div>
-                        <h1 className="text-3xl font-bold text-stone-900">Dashboard</h1>
-                        <p className="text-stone-500 mt-1">Verwalte deine Connected Produkte</p>
-                    </div>
+                                    <div>
+                                        <h1 className="text-3xl font-bold text-stone-900">
+                                            {window.location.hostname.includes('staging') ? '🚧 STAGING Dashboard' : 'Dashboard'}
+                                        </h1>
+                                        <p className="text-stone-500 mt-1">Verwalte deine Connected Produkte</p>
+                                    </div>
 
                     {/* TABS */}
                     <div className="flex p-1 bg-stone-200 rounded-xl overflow-x-auto">
