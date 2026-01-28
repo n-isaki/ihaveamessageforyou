@@ -208,6 +208,49 @@
             
             toggleField(container, shouldShow);
         });
+        
+        // Füge Trennlinie nach dem letzten sichtbaren Feld im Modal hinzu
+        updateDivider(container);
+    }
+    
+    // Funktion zum Hinzufügen/Entfernen der Trennlinie nach dem letzten sichtbaren Feld im Modal
+    function updateDivider(searchContainer) {
+        const modalContent = searchContainer 
+            ? (searchContainer.querySelector('#quick-add-modal-content') || searchContainer.closest('#quick-add-modal-content'))
+            : document.querySelector('#quick-add-modal-content');
+        
+        if (!modalContent) return;
+        
+        setTimeout(() => {
+            // Entferne alle vorhandenen Divider
+            const existingDividers = modalContent.querySelectorAll('.anima-field-divider');
+            existingDividers.forEach(div => div.remove());
+            
+            // Finde alle sichtbaren Custom Property Felder im Modal
+            const allFields = Array.from(modalContent.querySelectorAll('.spacing-style, product-custom-property-component'));
+            const visibleFields = allFields.filter(field => {
+                const style = window.getComputedStyle(field);
+                return style.display !== 'none' && 
+                       style.visibility !== 'hidden' &&
+                       !field.hasAttribute('hidden') && 
+                       !field.classList.contains('anima-hidden');
+            });
+            
+            // Füge Divider nach dem letzten sichtbaren Feld hinzu
+            if (visibleFields.length > 0) {
+                const lastField = visibleFields[visibleFields.length - 1];
+                const divider = document.createElement('div');
+                divider.className = 'anima-field-divider';
+                divider.style.cssText = 'width: 100%; height: 1px; background-color: rgba(var(--color-foreground), 0.1); margin-top: var(--padding-xl); margin-bottom: var(--padding-xl);';
+                
+                // Füge nach dem letzten Feld ein
+                if (lastField.nextSibling) {
+                    lastField.parentNode.insertBefore(divider, lastField.nextSibling);
+                } else {
+                    lastField.parentNode.appendChild(divider);
+                }
+            }
+        }, 100);
     }
 
     function findFieldByPropertyKey(propertyKey) {

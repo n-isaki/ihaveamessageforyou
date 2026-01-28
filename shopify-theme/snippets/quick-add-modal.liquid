@@ -290,6 +290,18 @@
     align-items: flex-start;
   }
 
+  /* Trennlinie nach dem letzten sichtbaren Custom Property Feld im Modal */
+  .quick-add-modal__content .product-details product-custom-property-component:last-of-type:not([hidden])::after,
+  .quick-add-modal__content .product-details .spacing-style:last-of-type:not([hidden]):not(.anima-hidden)::after {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 1px;
+    background-color: rgba(var(--color-foreground), 0.1);
+    margin-top: var(--padding-xl);
+    margin-bottom: var(--padding-xl);
+  }
+
   .quick-add-modal__content
     .group-block:not(
       :has(
