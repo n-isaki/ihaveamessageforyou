@@ -371,7 +371,7 @@
                 
                 if (isLastField) {
                     // Füge extra margin-bottom hinzu für das letzte Feld
-                    fieldContainer.style.marginBottom = 'var(--padding-md, 1.5rem)';
+                    fieldContainer.style.marginBottom = 'var(--padding-xl, 3rem)';
                 }
             }
             
