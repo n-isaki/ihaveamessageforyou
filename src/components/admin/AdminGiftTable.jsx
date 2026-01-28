@@ -193,9 +193,9 @@ export default function AdminGiftTable({ gifts, expandedId, onToggleExpand, onDe
                                                                     <div className="mt-4 mb-8 px-2">
                                                                         <div className="relative">
                                                                             <div className="absolute top-1/2 left-0 w-full h-0.5 bg-stone-100 -translate-y-1/2 rounded-full"></div>
-                                                                            <div className="relative flex justify-between">
+                                                                            <div className={`relative flex ${exp.isSetupRequired ? 'justify-between' : 'justify-around'}`}>
                                                                                 {/* Step 1: Created */}
-                                                                                <div className="flex flex-col items-center w-1/4">
+                                                                                <div className={`flex flex-col items-center ${exp.isSetupRequired ? 'w-1/4' : 'w-1/3'}`}>
                                                                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 bg-emerald-500 border-emerald-500 text-white z-10 shadow-sm`}>
                                                                                         <Package className="h-3.5 w-3.5" />
                                                                                     </div>
@@ -204,26 +204,30 @@ export default function AdminGiftTable({ gifts, expandedId, onToggleExpand, onDe
                                                                                         <p className="text-[10px] text-stone-400 font-mono mt-0.5">{gift.createdAt?.toDate ? gift.createdAt.toDate().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }) : '-'}</p>
                                                                                     </div>
                                                                                 </div>
-                                                                                {/* Step 2: Setup (Started) */}
-                                                                                <div className="flex flex-col items-center w-1/4">
-                                                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 z-10 shadow-sm transition-colors ${gift.setupStarted || gift.locked ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-stone-200 text-stone-300'}`}>
-                                                                                        <Edit2 className="h-3.5 w-3.5" />
+                                                                                {/* Step 2: Setup (Started) - Only for products that require setup */}
+                                                                                {exp.isSetupRequired && (
+                                                                                    <div className="flex flex-col items-center w-1/4">
+                                                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 z-10 shadow-sm transition-colors ${gift.setupStarted || gift.locked ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-stone-200 text-stone-300'}`}>
+                                                                                            <Edit2 className="h-3.5 w-3.5" />
+                                                                                        </div>
+                                                                                        <div className="mt-2 text-center">
+                                                                                            <p className={`text-[10px] font-bold uppercase tracking-wide ${gift.setupStarted || gift.locked ? 'text-stone-900' : 'text-stone-300'}`}>Bearbeitet</p>
+                                                                                        </div>
                                                                                     </div>
-                                                                                    <div className="mt-2 text-center">
-                                                                                        <p className={`text-[10px] font-bold uppercase tracking-wide ${gift.setupStarted || gift.locked ? 'text-stone-900' : 'text-stone-300'}`}>Bearbeitet</p>
+                                                                                )}
+                                                                                {/* Step 3: Locked (Ready) - Only for products that require setup */}
+                                                                                {exp.isSetupRequired && (
+                                                                                    <div className="flex flex-col items-center w-1/4">
+                                                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 z-10 shadow-sm transition-colors ${gift.locked ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-stone-200 text-stone-300'}`}>
+                                                                                            <Lock className="h-3.5 w-3.5" />
+                                                                                        </div>
+                                                                                        <div className="mt-2 text-center">
+                                                                                            <p className={`text-[10px] font-bold uppercase tracking-wide ${gift.locked ? 'text-stone-900' : 'text-stone-300'}`}>Fertig</p>
+                                                                                        </div>
                                                                                     </div>
-                                                                                </div>
-                                                                                {/* Step 3: Locked (Ready) */}
-                                                                                <div className="flex flex-col items-center w-1/4">
-                                                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 z-10 shadow-sm transition-colors ${gift.locked ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white border-stone-200 text-stone-300'}`}>
-                                                                                        <Lock className="h-3.5 w-3.5" />
-                                                                                    </div>
-                                                                                    <div className="mt-2 text-center">
-                                                                                        <p className={`text-[10px] font-bold uppercase tracking-wide ${gift.locked ? 'text-stone-900' : 'text-stone-300'}`}>Fertig</p>
-                                                                                    </div>
-                                                                                </div>
+                                                                                )}
                                                                                 {/* Step 4: Viewed */}
-                                                                                <div className="flex flex-col items-center w-1/4">
+                                                                                <div className={`flex flex-col items-center ${exp.isSetupRequired ? 'w-1/4' : 'w-1/3'}`}>
                                                                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 z-10 shadow-sm transition-colors ${gift.viewed ? 'bg-indigo-500 border-indigo-500 text-white' : 'bg-white border-stone-200 text-stone-300'}`}>
                                                                                         <Eye className="h-3.5 w-3.5" />
                                                                                     </div>

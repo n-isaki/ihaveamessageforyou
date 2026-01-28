@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { getGiftById, updateGift, markSetupAsStarted } from '../services/gifts';
 import WizardMessageEditor from '../modules/anima/experiences/multimedia-gift/components/WizardMessageEditor';
 import { Loader, Lock, CheckCircle, Save, Info, ShieldAlert, X, HelpCircle, Eye, Edit2, User, Calendar, FileText } from 'lucide-react';
@@ -8,10 +8,12 @@ import MugViewer from '../modules/anima/experiences/multimedia-gift/pages/Viewer
 import { v4 as uuidv4 } from 'uuid';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
+import { getExperience } from '../modules/registry';
 
 export default function CustomerSetup() {
     const { id } = useParams();
     const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
     const token = searchParams.get('token');
 
     const [gift, setGift] = useState(null);
@@ -37,7 +39,15 @@ export default function CustomerSetup() {
             try {
                 const data = await getGiftById(id);
                 if (data) {
-                    if (data.productType !== 'bracelet' && data.securityToken && data.securityToken !== token) {
+                    // Check if this product type requires setup
+                    const exp = getExperience(data);
+                    if (!exp.isSetupRequired) {
+                        // Noor/Bracelet products don't need setup - redirect to viewer
+                        navigate(`/v/${id}`, { replace: true });
+                        return;
+                    }
+
+                    if (data.securityToken && data.securityToken !== token) {
                         setAccessDenied(true);
                         setLoading(false);
                         return;
@@ -69,7 +79,7 @@ export default function CustomerSetup() {
             }
         };
         init();
-    }, [id, token]);
+    }, [id, token, navigate]);
 
     const handleAddMessage = (type) => {
         if (locked) return;

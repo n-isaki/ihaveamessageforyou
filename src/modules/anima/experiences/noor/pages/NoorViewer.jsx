@@ -60,10 +60,10 @@ const InlinePlayer = ({ url, label, isActive, onToggle }) => {
 };
 
 
-export default function NoorViewer() {
+export default function NoorViewer({ gift: giftProp }) {
     const { id } = useParams();
-    const [gift, setGift] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [gift, setGift] = useState(giftProp || null);
+    const [loading, setLoading] = useState(!giftProp);
 
     // State for which audio is playing: 'recitation' | 'meaning' | null
     const [playingState, setPlayingState] = useState(null);
@@ -73,6 +73,15 @@ export default function NoorViewer() {
     const meaningRef = useRef(new Audio());
 
     useEffect(() => {
+        // If gift prop is provided, use it; otherwise fetch
+        if (giftProp) {
+            setGift(giftProp);
+            setLoading(false);
+            if (giftProp?.audioUrl) recitationRef.current.src = giftProp.audioUrl;
+            if (giftProp?.meaningAudioUrl) meaningRef.current.src = giftProp.meaningAudioUrl;
+            return;
+        }
+
         const fetchGift = async () => {
             try {
                 const data = await getGiftById(id);
@@ -94,7 +103,7 @@ export default function NoorViewer() {
             recitationRef.current.pause();
             meaningRef.current.pause();
         };
-    }, [id]);
+    }, [id, giftProp]);
 
     useEffect(() => {
         // Event Listeners for ending
