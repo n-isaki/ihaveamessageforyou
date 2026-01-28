@@ -309,56 +309,54 @@
   };
 </script>
 
-{% comment %} Anima Conditional Fields Script - nur auf Produktseiten {% endcomment %}
-{% if template.name == 'product' %}
-  <script>
-    // Verstecke Personalisierungsfelder SOFORT mit visibility (behält Layout bei)
-    (function() {
-      function hidePersonalizationFields() {
-        const selectors = [
-          'input[name*="Physische Gravur"]',
-          'textarea[name*="properties[text]"]',
-          'textarea[name*="properties[Link]"]',
-          'input[name*="properties[pin]"]'
-        ];
-        selectors.forEach(sel => {
-          try {
-            document.querySelectorAll(sel).forEach(el => {
-              // Finde den Container
-              let container = el.closest('.spacing-style');
-              if (!container) container = el.closest('product-custom-property-component');
-              if (!container) container = el.closest('[class*="custom-property"]');
-              if (!container) container = el.parentElement;
-              
-              if (container && container !== document.body) {
-                // Verstecke komplett mit display: none (kein Platz mehr)
-                container.style.display = 'none';
-                container.style.visibility = 'hidden';
-                container.style.height = '0';
-                container.style.overflow = 'hidden';
-                container.style.margin = '0';
-                container.style.padding = '0';
-                container.classList.add('anima-initially-hidden');
-              }
-            });
-          } catch(e) {
-            console.warn('[Anima] Fehler beim Verstecken:', e);
-          }
-        });
-      }
-      
-      // Führe sofort aus
-      hidePersonalizationFields();
-      
-      // Wiederhole bei DOMContentLoaded
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', hidePersonalizationFields);
-      }
-      
-      // Wiederhole nach kurzer Verzögerung (für dynamisch geladene Inhalte)
-      setTimeout(hidePersonalizationFields, 100);
-      setTimeout(hidePersonalizationFields, 300);
-    })();
-  </script>
-  <script src="{{ 'anima-conditional-fields.js' | asset_url }}" defer></script>
-{% endif %}
+{% comment %} Anima Conditional Fields Script - auf allen Seiten (für Quick-Add-Modal) {% endcomment %}
+<script>
+  // Verstecke Personalisierungsfelder SOFORT mit visibility (behält Layout bei)
+  (function() {
+    function hidePersonalizationFields() {
+      const selectors = [
+        'input[name*="Physische Gravur"]',
+        'textarea[name*="properties[text]"]',
+        'textarea[name*="properties[Link]"]',
+        'input[name*="properties[pin]"]'
+      ];
+      selectors.forEach(sel => {
+        try {
+          document.querySelectorAll(sel).forEach(el => {
+            // Finde den Container
+            let container = el.closest('.spacing-style');
+            if (!container) container = el.closest('product-custom-property-component');
+            if (!container) container = el.closest('[class*="custom-property"]');
+            if (!container) container = el.parentElement;
+            
+            if (container && container !== document.body) {
+              // Verstecke komplett mit display: none (kein Platz mehr)
+              container.style.display = 'none';
+              container.style.visibility = 'hidden';
+              container.style.height = '0';
+              container.style.overflow = 'hidden';
+              container.style.margin = '0';
+              container.style.padding = '0';
+              container.classList.add('anima-initially-hidden');
+            }
+          });
+        } catch(e) {
+          console.warn('[Anima] Fehler beim Verstecken:', e);
+        }
+      });
+    }
+    
+    // Führe sofort aus
+    hidePersonalizationFields();
+    
+    // Wiederhole bei DOMContentLoaded
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', hidePersonalizationFields);
+    }
+    
+    // Wiederhole nach kurzer Verzögerung (für dynamisch geladene Inhalte)
+    setTimeout(hidePersonalizationFields, 100);
+    setTimeout(hidePersonalizationFields, 300);
+  })();
+</script>
+<script src="{{ 'anima-conditional-fields.js' | asset_url }}" defer></script>
