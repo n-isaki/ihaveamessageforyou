@@ -367,20 +367,19 @@
             // NUR im Quick-Add-Modal, nicht auf der Standard-Produktseite
             const isInModal = fieldContainer.closest('#quick-add-modal-content, .quick-add-modal');
             
-            if (isInModal) {
-                // Prüfe ob es ein PIN-Feld ist (immer das letzte Feld)
-                const pinField = fieldContainer.querySelector('input[name*="pin"], input[name*="PIN"]');
-                if (pinField) {
-                    // PIN-Feld bekommt immer extra margin-bottom im Modal
-                    fieldContainer.style.marginBottom = '5rem';
-                } else if (fieldContainer.classList.contains('spacing-style')) {
-                    // Für andere Felder: Prüfe ob es das letzte sichtbare Feld ist
-                    const formContainer = fieldContainer.closest('form, #quick-add-modal-content, .product-details') || document;
-                    const allFields = Array.from(formContainer.querySelectorAll('.spacing-style:not(.anima-hidden):not([hidden])'));
+            if (isInModal && fieldContainer.classList.contains('spacing-style')) {
+                // Finde alle sichtbaren Felder im Modal und prüfe ob dieses das letzte ist
+                const modalContent = fieldContainer.closest('#quick-add-modal-content') || fieldContainer.closest('.quick-add-modal');
+                if (modalContent) {
+                    const allFields = Array.from(modalContent.querySelectorAll('.spacing-style:not(.anima-hidden):not([hidden])'));
                     const isLastField = allFields.length > 0 && allFields[allFields.length - 1] === fieldContainer;
                     
                     if (isLastField) {
+                        // Das letzte sichtbare Feld bekommt extra margin-bottom im Modal
                         fieldContainer.style.marginBottom = '5rem';
+                    } else {
+                        // Andere Felder: Entferne margin-bottom falls gesetzt
+                        fieldContainer.style.marginBottom = '';
                     }
                 }
             }
