@@ -1,0 +1,123 @@
+<!-- 
+  ANIMA SMART WIZARD V7 - MUG ONLY EDITION
+  Dieses Template sollte im Shopify Admin nur dem Produkt "Multimedia Tasse" zugewiesen werden.
+-->
+
+<div class="anima-wizard-container page-width">
+  
+  <div class="anima-wizard-card">
+    <div class="wizard-header">
+      <h1 class="h2">{{ product.title }}</h1>
+      <p class="price-large">{{ product.price | money }}</p>
+    </div>
+
+    <!-- PRODUCT FORM -->
+    <product-form class="product-form">
+      {%- form 'product', product, id: 'product-form-installment', class: 'installment caption-large' -%}
+        <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}">
+        
+        <!-- Fix product type to mug for our backend logic -->
+        <input type="hidden" name="properties[_Digital_Typ]" value="mug">
+
+        <!-- SECTION: MUG FIELDS -->
+        <div class="mm-fields">
+          <div class="info-box">
+            <p><strong>Dein Multimedia-Geschenk gestalten:</strong><br>Hinterlege hier deine persönlichen Nachrichten, Videolinks oder andere Inhalte, die beim Scannen der Tasse erscheinen sollen.</p>
+          </div>
+
+          <div class="input-group">
+            <label>Deine Nachricht(en) <span class="req">*</span></label>
+            <p class="field-hint">Du kannst mehrere Nachrichten schreiben. <br>Format: "Von [Name]: [Text]"</p>
+            <textarea name="properties[Nachrichten]" rows="6" class="anima-input" placeholder="Von Saskia: Alles Gute zum Geburtstag!&#10;Von Oma: Wir haben dich lieb!" required></textarea>
+          </div>
+
+          <div class="input-group">
+            <label>Video Link (YouTube/Vimeo) <span class="opt">(Optional)</span></label>
+            <p class="field-hint">Kopiere hier den Link zu deinem Video rein.</p>
+            <input type="text" name="properties[Video Link]" placeholder="https://youtube.com/watch?v=..." class="anima-input">
+          </div>
+
+          <div class="input-group">
+            <label>Sonstiger Link <span class="opt">(Optional)</span></label>
+            <input type="text" name="properties[Link]" placeholder="https://..." class="anima-input">
+          </div>
+        </div>
+
+        <!-- SUBMIT -->
+        <div class="wizard-footer">
+          <button type="submit" class="anima-btn-primary full-width">In den Warenkorb</button>
+        </div>
+
+      {%- endform -%}
+    </product-form>
+  </div>
+</div>
+
+<style>
+  /* MODERN CSS VARIABLES */
+  :root {
+    --anima-primary: #1c1917;
+    --anima-accent: #be123c;
+    --anima-bg: #fafaf9;
+    --anima-border: #e7e5e4;
+  }
+
+  /* LAYOUT */
+  .anima-wizard-container { max-width: 600px; margin: 40px auto; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  .anima-wizard-card { background: white; border: 1px solid var(--anima-border); border-radius: 24px; padding: 40px; box-shadow: 0 20px 40px -10px rgba(0,0,0,0.05); }
+  .wizard-header { text-align: center; margin-bottom: 32px; }
+  .wizard-header h1 { font-size: 1.8rem; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
+  .price-large { font-size: 1.25rem; color: var(--anima-accent); font-weight: 600; }
+
+  
+  /* INFO BOX */
+  .info-box { background: var(--anima-bg); border-left: 4px solid var(--anima-accent); padding: 16px; border-radius: 8px; margin-bottom: 24px; font-size: 0.9rem; line-height: 1.5; color: #44403c; }
+  
+  /* INPUTS */
+  .input-group { margin-bottom: 24px; }
+  .input-group label { display: block; font-weight: 600; font-size: 0.95rem; margin-bottom: 6px; color: var(--anima-primary); }
+  .field-hint { font-size: 0.85rem; color: #78716c; margin-top: 0; margin-bottom: 8px; line-height: 1.4; }
+  .req { color: var(--anima-accent); }
+  .opt { color: #a8a29e; font-weight: normal; font-size: 0.8em; }
+  
+  .anima-input { 
+    width: 100%; 
+    padding: 14px; 
+    border: 1px solid #d6d3d1; 
+    border-radius: 12px; 
+    font-size: 1rem; 
+    transition: all 0.2s; 
+    background: #fff;
+    color: #1c1917;
+  }
+  .anima-input:focus { border-color: var(--anima-accent); outline: none; box-shadow: 0 0 0 3px rgba(190, 18, 60, 0.1); }
+  textarea.anima-input { resize: vertical; min-height: 120px; line-height: 1.5; }
+
+  /* UTILS */
+  .full-width { width: 100%; }
+
+  /* BUTTON */
+  .anima-btn-primary {
+    background: var(--anima-primary);
+    color: white;
+    border: none;
+    padding: 16px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.2s;
+    margin-top: 10px;
+  }
+  .anima-btn-primary:hover { background: #000; transform: translateY(-1px); }
+  .anima-btn-primary:active { transform: translateY(1px); }
+
+</style>
+
+{% schema %}
+{
+  "name": "Anima Mug Wizard Only",
+  "settings": [],
+  "presets": [{ "name": "Anima Mug Wizard Only" }]
+}
+{% endschema %}
