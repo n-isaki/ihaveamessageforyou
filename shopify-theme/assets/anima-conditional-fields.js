@@ -15,6 +15,8 @@
 (function() {
     'use strict';
     
+    console.log('[Anima] Script geladen!');
+    
     // Verstecke alle Personalisierungsfelder SOFORT beim Laden (verhindert FOUC)
     function hideFieldsImmediately() {
         // Finde ALLE Custom Property Felder (nicht mehr hardcoded)
@@ -574,9 +576,12 @@
                 subtree: true
             });
         } else {
+            console.log('[Anima Modal] Modal-Content noch nicht gefunden, versuche erneut...');
             setTimeout(startModalContentObservation, 500);
         }
     }
+    
+    console.log('[Anima] Starte Modal-Content-Beobachtung...');
     startModalContentObservation();
     
     // Prüfe Modal alle 500ms wenn es geöffnet ist
@@ -610,14 +615,24 @@
     });
     
     // Beobachte alle Dialog-Elemente
-    const dialogs = document.querySelectorAll('dialog, .quick-add-modal, quick-add-dialog');
-    console.log('[Anima Modal] Gefundene Dialog-Elemente:', dialogs.length);
-    dialogs.forEach(dialog => {
-        dialogObserver.observe(dialog, {
-            attributes: true,
-            attributeFilter: ['open']
+    function observeDialogs() {
+        const dialogs = document.querySelectorAll('dialog, .quick-add-modal, quick-add-dialog');
+        console.log('[Anima Modal] Gefundene Dialog-Elemente:', dialogs.length);
+        dialogs.forEach(dialog => {
+            console.log('[Anima Modal] Beobachte Dialog:', dialog);
+            dialogObserver.observe(dialog, {
+                attributes: true,
+                attributeFilter: ['open']
+            });
         });
-    });
+        
+        // Wenn keine Dialogs gefunden, versuche später erneut
+        if (dialogs.length === 0) {
+            setTimeout(observeDialogs, 1000);
+        }
+    }
+    
+    observeDialogs();
     
     // Beobachte auch neue Dialog-Elemente
     const dialogContainerObserver = new MutationObserver(function(mutations) {
