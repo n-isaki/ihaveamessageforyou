@@ -48,8 +48,8 @@ export default function UniversalViewer() {
         </div>
     );
 
-    if (gift.project === 'memoria') return <MemoryViewer />;
-    if (gift.project === 'noor' || gift.project === 'dua' || gift.productType === 'dua-audio' || gift.productType === 'noor-audio') return <NoorViewer />;
+    if (gift.project === 'memoria') return <MemoryViewer gift={gift} />;
+    if (gift.project === 'noor' || gift.project === 'dua' || gift.productType === 'dua-audio' || gift.productType === 'noor-audio') return <NoorViewer gift={gift} />;
 
-    return <MugViewer />;
+    return <MugViewer gift={gift} />;
 }

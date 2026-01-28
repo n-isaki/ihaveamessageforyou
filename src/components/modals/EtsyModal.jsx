@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ShoppingBag } from 'lucide-react';
-import { createEtsyOrder } from '../../services/gifts';
+import { createEtsyOrder, createGift } from '../../services/gifts';
 
 export default function EtsyModal({ isOpen, onClose, onSuccess }) {
     const [etsyForm, setEtsyForm] = useState({ buyerName: '', personalizationText: '', productType: 'mug', buyerEmail: '' });
@@ -11,19 +11,51 @@ export default function EtsyModal({ isOpen, onClose, onSuccess }) {
     const handleSubmit = async () => {
         setIsSubmitting(true);
         try {
-            await createEtsyOrder({
-                ...etsyForm,
-                customerName: etsyForm.buyerName,
-                customerEmail: etsyForm.buyerEmail,
-                senderName: etsyForm.buyerName,
-                recipientName: '',
-                etsyOrderId: `MANUAL-${Math.floor(Math.random() * 10000)}`
-            });
+            let giftId;
+            // Memoria uses createGift instead of createEtsyOrder
+            if (etsyForm.productType === 'memory-card') {
+                giftId = await createGift({
+                    project: 'memoria',
+                    productType: 'memory-card',
+                    customerName: etsyForm.buyerName,
+                    customerEmail: etsyForm.buyerEmail,
+                    senderName: etsyForm.buyerName,
+                    recipientName: '',
+                    status: 'open',
+                    platform: 'manual',
+                    locked: false,
+                    setupStarted: false,
+                    viewed: false
+                });
+                
+                // Get the created gift to get securityToken
+                const { getGiftById } = await import('../../services/gifts');
+                const createdGift = await getGiftById(giftId);
+                
+                if (createdGift) {
+                    // Copy link to clipboard
+                    const tokenPart = createdGift.securityToken ? `?token=${createdGift.securityToken}` : '';
+                    const isStaging = window.location.hostname.includes('staging') || window.location.hostname.includes('localhost');
+                    const baseUrl = isStaging ? window.location.origin : 'https://memoria.kamlimos.com';
+                    const setupUrl = `${baseUrl}/setup/${giftId}${tokenPart}`;
+                    navigator.clipboard.writeText(setupUrl);
+                    alert(`Memoria-Auftrag erstellt!\n\nLink wurde kopiert:\n${setupUrl}`);
+                }
+            } else {
+                giftId = await createEtsyOrder({
+                    ...etsyForm,
+                    customerName: etsyForm.buyerName,
+                    customerEmail: etsyForm.buyerEmail,
+                    senderName: etsyForm.buyerName,
+                    recipientName: '',
+                    etsyOrderId: `MANUAL-${Math.floor(Math.random() * 10000)}`
+                });
+            }
             onSuccess();
             onClose();
             setEtsyForm({ buyerName: '', personalizationText: '', productType: 'mug', buyerEmail: '' }); // Reset
         } catch (error) {
-            console.error("Failed to create etsy order", error);
+            console.error("Failed to create order", error);
             alert("Fehler beim Erstellen.");
         } finally {
             setIsSubmitting(false);
@@ -63,6 +95,7 @@ export default function EtsyModal({ isOpen, onClose, onSuccess }) {
                                 >
                                     <option value="mug">Multimedia Tasse</option>
                                     <option value="bracelet">Armband (Gravur)</option>
+                                    <option value="memory-card">Memoria</option>
                                 </select>
                             </div>
                             <div>
@@ -85,16 +118,18 @@ export default function EtsyModal({ isOpen, onClose, onSuccess }) {
                                     onChange={e => setEtsyForm({ ...etsyForm, buyerEmail: e.target.value })}
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-stone-700 mb-1">Personalisierung (Etsy Text)</label>
-                                <textarea
-                                    className="w-full p-3 border border-stone-200 rounded-lg outline-none focus:ring-2 focus:ring-rose-500"
-                                    placeholder="Text den der Kunde bei Etsy eingegeben hat..."
-                                    rows={3}
-                                    value={etsyForm.personalizationText}
-                                    onChange={e => setEtsyForm({ ...etsyForm, personalizationText: e.target.value })}
-                                />
-                            </div>
+                            {etsyForm.productType !== 'memory-card' && (
+                                <div>
+                                    <label className="block text-sm font-medium text-stone-700 mb-1">Personalisierung (Etsy Text)</label>
+                                    <textarea
+                                        className="w-full p-3 border border-stone-200 rounded-lg outline-none focus:ring-2 focus:ring-rose-500"
+                                        placeholder="Text den der Kunde bei Etsy eingegeben hat..."
+                                        rows={3}
+                                        value={etsyForm.personalizationText}
+                                        onChange={e => setEtsyForm({ ...etsyForm, personalizationText: e.target.value })}
+                                    />
+                                </div>
+                            )}
 
                             <button
                                 onClick={handleSubmit}

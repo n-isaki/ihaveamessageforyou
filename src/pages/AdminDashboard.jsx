@@ -2,12 +2,13 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { getGifts, deleteGift, updateGift } from '../services/gifts';
-import { Plus, Loader, Menu, ShoppingBag } from 'lucide-react';
+import { Plus, Loader, Menu, ShoppingBag, Heart } from 'lucide-react';
 import AdminSidebar from '../components/AdminSidebar';
 import AdminKanban from '../components/AdminKanban';
 import AdminStats from '../components/admin/AdminStats';
 import AdminGiftTable from '../components/admin/AdminGiftTable';
 import EtsyModal from '../components/modals/EtsyModal';
+import MemoriaModal from '../components/modals/MemoriaModal';
 import DeleteModal from '../components/modals/DeleteModal';
 
 export default function AdminDashboard() {
@@ -19,6 +20,9 @@ export default function AdminDashboard() {
 
     // Etsy Modal State
     const [showEtsyModal, setShowEtsyModal] = useState(false);
+    
+    // Memoria Modal State
+    const [showMemoriaModal, setShowMemoriaModal] = useState(false);
 
     // Delete Modal State
     const [deleteId, setDeleteId] = useState(null);
@@ -162,13 +166,24 @@ export default function AdminDashboard() {
                                 </div>
 
                                 <div className="flex space-x-3">
-                                    <button
-                                        onClick={() => setShowEtsyModal(true)}
-                                        className="inline-flex items-center px-4 py-2 border border-stone-200 rounded-xl shadow-sm text-sm font-medium text-stone-700 bg-white hover:bg-stone-50 transition-colors shrink-0"
-                                    >
-                                        <ShoppingBag className="h-5 w-5 mr-2 text-rose-600" />
-                                        Etsy Simulieren
-                                    </button>
+                                    {activeTab === 'kamlimos' && (
+                                        <button
+                                            onClick={() => setShowEtsyModal(true)}
+                                            className="inline-flex items-center px-4 py-2 border border-stone-200 rounded-xl shadow-sm text-sm font-medium text-stone-700 bg-white hover:bg-stone-50 transition-colors shrink-0"
+                                        >
+                                            <ShoppingBag className="h-5 w-5 mr-2 text-rose-600" />
+                                            Etsy Simulieren
+                                        </button>
+                                    )}
+                                    {activeTab === 'memoria' && (
+                                        <button
+                                            onClick={() => setShowMemoriaModal(true)}
+                                            className="inline-flex items-center px-4 py-2 border border-stone-200 rounded-xl shadow-sm text-sm font-medium text-stone-700 bg-white hover:bg-stone-50 transition-colors shrink-0"
+                                        >
+                                            <Heart className="h-5 w-5 mr-2 text-rose-600" />
+                                            Memoria Auftrag
+                                        </button>
+                                    )}
                                     <Link
                                         to={activeTab === 'noor' ? "/admin/create?project=noor" :
                                             activeTab === 'dua' ? "/admin/create?project=noor" :
@@ -199,6 +214,12 @@ export default function AdminDashboard() {
                         <EtsyModal
                             isOpen={showEtsyModal}
                             onClose={() => setShowEtsyModal(false)}
+                            onSuccess={() => window.location.reload()}
+                        />
+
+                        <MemoriaModal
+                            isOpen={showMemoriaModal}
+                            onClose={() => setShowMemoriaModal(false)}
                             onSuccess={() => window.location.reload()}
                         />
 

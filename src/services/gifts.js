@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { ref, deleteObject } from "firebase/storage";
 import { db, storage } from "../firebase";
+import { getExperience } from "../modules/registry";
 
 const COLLECTION_NAME = "gift_orders";
 
@@ -37,9 +38,18 @@ export const createEtsyOrder = async (data) => {
 
 export const createGift = async (giftData) => {
     try {
+        // Determine if this product type requires setup
+        const exp = getExperience(giftData);
+        const requiresSetup = exp.isSetupRequired !== false; // Default to true if not specified
+        
+        // For products that don't require setup (Noor, Bracelet), set locked: true by default
+        // unless explicitly set to false
+        const shouldBeLocked = !requiresSetup && giftData.locked !== false;
+        
         const docRef = await addDoc(collection(db, COLLECTION_NAME), {
             securityToken: self.crypto.randomUUID(), // Ensure every gift has a token for setup
             ...giftData,
+            locked: shouldBeLocked ? true : (giftData.locked ?? false),
             createdAt: serverTimestamp(),
             viewed: false,
             viewedAt: null
