@@ -11,9 +11,10 @@ export default function EtsyModal({ isOpen, onClose, onSuccess }) {
     const handleSubmit = async () => {
         setIsSubmitting(true);
         try {
+            let giftId;
             // Memoria uses createGift instead of createEtsyOrder
             if (etsyForm.productType === 'memory-card') {
-                await createGift({
+                giftId = await createGift({
                     project: 'memoria',
                     productType: 'memory-card',
                     customerName: etsyForm.buyerName,
@@ -26,8 +27,22 @@ export default function EtsyModal({ isOpen, onClose, onSuccess }) {
                     setupStarted: false,
                     viewed: false
                 });
+                
+                // Get the created gift to get securityToken
+                const { getGiftById } = await import('../../services/gifts');
+                const createdGift = await getGiftById(giftId);
+                
+                if (createdGift) {
+                    // Copy link to clipboard
+                    const tokenPart = createdGift.securityToken ? `?token=${createdGift.securityToken}` : '';
+                    const isStaging = window.location.hostname.includes('staging') || window.location.hostname.includes('localhost');
+                    const baseUrl = isStaging ? window.location.origin : 'https://memoria.kamlimos.com';
+                    const setupUrl = `${baseUrl}/setup/${giftId}${tokenPart}`;
+                    navigator.clipboard.writeText(setupUrl);
+                    alert(`Memoria-Auftrag erstellt!\n\nLink wurde kopiert:\n${setupUrl}`);
+                }
             } else {
-                await createEtsyOrder({
+                giftId = await createEtsyOrder({
                     ...etsyForm,
                     customerName: etsyForm.buyerName,
                     customerEmail: etsyForm.buyerEmail,

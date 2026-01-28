@@ -16,7 +16,7 @@ export default function MemoriaModal({ isOpen, onClose, onSuccess }) {
     const handleSubmit = async () => {
         setIsSubmitting(true);
         try {
-            await createGift({
+            const giftId = await createGift({
                 project: 'memoria',
                 productType: 'memory-card',
                 customerName: memoriaForm.customerName,
@@ -29,6 +29,21 @@ export default function MemoriaModal({ isOpen, onClose, onSuccess }) {
                 setupStarted: false,
                 viewed: false
             });
+            
+            // Get the created gift to get securityToken
+            const { getGiftById } = await import('../../services/gifts');
+            const createdGift = await getGiftById(giftId);
+            
+            if (createdGift) {
+                // Copy link to clipboard
+                const tokenPart = createdGift.securityToken ? `?token=${createdGift.securityToken}` : '';
+                const isStaging = window.location.hostname.includes('staging') || window.location.hostname.includes('localhost');
+                const baseUrl = isStaging ? window.location.origin : 'https://memoria.kamlimos.com';
+                const setupUrl = `${baseUrl}/setup/${giftId}${tokenPart}`;
+                navigator.clipboard.writeText(setupUrl);
+                alert(`Memoria-Auftrag erstellt!\n\nLink wurde kopiert:\n${setupUrl}`);
+            }
+            
             onSuccess();
             onClose();
             setMemoriaForm({ customerName: '', customerEmail: '', recipientName: '', senderName: '' });

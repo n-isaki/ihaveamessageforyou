@@ -14,7 +14,24 @@ export default function AdminGiftTable({ gifts, expandedId, onToggleExpand, onDe
         e.stopPropagation();
         const tokenPart = gift.securityToken ? `?token=${gift.securityToken}` : '';
         const name = gift.customerName || gift.senderName || gift.recipientName || 'Kunde';
-        navigator.clipboard.writeText(`Hallo ${name}, bitte richte dein Geschenk hier ein: https://scan.kamlimos.com/setup/${gift.id}${tokenPart}`);
+        
+        // Determine base URL based on environment and project
+        let baseUrl = 'https://scan.kamlimos.com'; // Default for production
+        const isStaging = window.location.hostname.includes('staging') || window.location.hostname.includes('localhost');
+        
+        if (isStaging) {
+            // Use current domain for staging
+            baseUrl = window.location.origin;
+        } else if (gift.project === 'memoria') {
+            baseUrl = 'https://memoria.kamlimos.com';
+        } else if (gift.project === 'noor' || gift.project === 'dua') {
+            baseUrl = 'https://noor.kamlimos.com';
+        } else if (gift.project === 'ritual' || gift.productType === 'bracelet') {
+            baseUrl = 'https://ritual.kamlimos.com';
+        }
+        
+        const setupUrl = `${baseUrl}/setup/${gift.id}${tokenPart}`;
+        navigator.clipboard.writeText(`Hallo ${name}, bitte richte dein Geschenk hier ein: ${setupUrl}`);
         alert("Link kopiert!");
     };
 
