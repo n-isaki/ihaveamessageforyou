@@ -402,7 +402,63 @@
     function initForContainer(container) {
         if (!container) return;
         
-        // Verstecke Felder im Container
+        // Finde Personalisierungs-Dropdown im Container - verwende die gleiche Logik wie findPersonalizationSelect
+        const allSelects = container.querySelectorAll('select');
+        let personalizationSelect = null;
+        
+        // Methode 1: Suche nach Select mit "Personalisierung" im Label/Name
+        for (const select of allSelects) {
+            const label = select.closest('.field, .product-form__input, .variant-picker')?.querySelector('label');
+            const labelText = (label?.textContent?.toLowerCase() || '') + (select.getAttribute('aria-label')?.toLowerCase() || '');
+            const name = select.name?.toLowerCase() || '';
+            
+            if (labelText.includes('personalisierung') || labelText.includes('personalization') ||
+                name.includes('personal') || name.includes('personalisierung')) {
+                personalizationSelect = select;
+                break;
+            }
+        }
+        
+        // Methode 2: Suche nach Select mit Optionen die "gravur" enthalten
+        if (!personalizationSelect) {
+            for (const select of allSelects) {
+                const options = Array.from(select.options).map(opt => opt.text.toLowerCase());
+                const hasGravur = options.some(text => text.includes('gravur') || text.includes('ohne gravur'));
+                
+                if (hasGravur) {
+                    personalizationSelect = select;
+                    break;
+                }
+            }
+        }
+        
+        if (!personalizationSelect) {
+            // Kein Personalisierungs-Select gefunden - verstecke alle Felder trotzdem
+            const fieldsInContainer = container.querySelectorAll('input[name^="properties["], textarea[name^="properties["]');
+            fieldsInContainer.forEach(field => {
+                let containerEl = field.closest('.spacing-style');
+                if (!containerEl) containerEl = field.closest('product-custom-property-component');
+                if (!containerEl) containerEl = field.closest('[class*="custom-property"]');
+                if (!containerEl) containerEl = field.parentElement;
+                
+                if (containerEl && containerEl !== document.body) {
+                    containerEl.style.display = 'none';
+                    containerEl.style.visibility = 'hidden';
+                    containerEl.style.height = '0';
+                    containerEl.style.margin = '0';
+                    containerEl.style.padding = '0';
+                    containerEl.classList.add('anima-initially-hidden');
+                }
+            });
+            return;
+        }
+        
+        // Initialisiere für diesen Container
+        if (personalizationSelect.dataset.animaInitialized) return;
+        
+        personalizationSelect.dataset.animaInitialized = 'true';
+        
+        // Verstecke Felder zuerst
         const fieldsInContainer = container.querySelectorAll('input[name^="properties["], textarea[name^="properties["]');
         fieldsInContainer.forEach(field => {
             let containerEl = field.closest('.spacing-style');
@@ -420,33 +476,11 @@
             }
         });
         
-        // Finde Personalisierungs-Dropdown im Container
-        const personalizationSelect = container.querySelector('select');
-        if (!personalizationSelect) return;
-        
-        // Prüfe ob es das richtige Select ist
-        const label = personalizationSelect.closest('.field, .product-form__input, .variant-picker')?.querySelector('label');
-        const labelText = (label?.textContent?.toLowerCase() || '') + (personalizationSelect.getAttribute('aria-label')?.toLowerCase() || '');
-        const name = personalizationSelect.name?.toLowerCase() || '';
-        const options = Array.from(personalizationSelect.options).map(opt => opt.text.toLowerCase());
-        const hasGravur = options.some(text => text.includes('gravur') || text.includes('ohne gravur'));
-        
-        if (!labelText.includes('personalisierung') && 
-            !labelText.includes('personalization') &&
-            !name.includes('personal') &&
-            !name.includes('personalisierung') &&
-            !hasGravur) {
-            return; // Nicht das richtige Select
-        }
-        
-        // Initialisiere für diesen Container
-        if (personalizationSelect.dataset.animaInitialized) return;
-        
-        personalizationSelect.dataset.animaInitialized = 'true';
-        
         // Initiale Anzeige
         const initialValue = personalizationSelect.value || personalizationSelect.options[0]?.value;
-        updateFieldsInContainer(container, initialValue);
+        setTimeout(() => {
+            updateFieldsInContainer(container, initialValue);
+        }, 100);
         
         // Auf Änderungen hören
         personalizationSelect.addEventListener('change', function() {
@@ -458,8 +492,8 @@
         variantSelects.forEach(select => {
             select.addEventListener('change', function() {
                 setTimeout(() => {
-                    const personalization = container.querySelector('select');
-                    if (personalization && personalization.dataset.animaInitialized) {
+                    const personalization = container.querySelector('select[data-anima-initialized]');
+                    if (personalization) {
                         updateFieldsInContainer(container, personalization.value);
                     }
                 }, 100);
@@ -531,68 +565,73 @@
         });
     }
 
-    // Auch nach AJAX-Updates (falls Shopify das Theme dynamisch lädt)
-    // Beobachte auch Modals (Quick-View, etc.)
-    const observer = new MutationObserver(function(mutations) {
-        // Prüfe auf neue Modals oder dynamisch geladene Inhalte
-        const modals = document.querySelectorAll('.quick-add-modal, [id*="modal"], dialog[open]');
-        modals.forEach(modal => {
-            if (modal.dataset.animaInitialized) return;
-            modal.dataset.animaInitialized = 'true';
-            
-            // Warte kurz, damit der Inhalt geladen ist
-            setTimeout(() => {
-                const modalContent = modal.querySelector('#quick-add-modal-content, .quick-add-modal__content, .modal-content') || modal;
-                initForContainer(modalContent);
-            }, 300);
-        });
+    // Spezieller Observer für Quick-Add-Modal Content
+    // Beobachte Änderungen im #quick-add-modal-content Element (wird von morph() aktualisiert)
+    let modalContentObserver = null;
+    
+    function setupModalContentObserver() {
+        const modalContent = document.getElementById('quick-add-modal-content');
+        if (!modalContent || modalContent.dataset.animaObserved) return;
         
-        // Prüfe auch auf neue Select-Elemente im gesamten Dokument
-        const allSelects = document.querySelectorAll('select:not([data-anima-initialized])');
-        allSelects.forEach(select => {
-            const label = select.closest('.field, .product-form__input, .variant-picker')?.querySelector('label');
-            const labelText = (label?.textContent?.toLowerCase() || '') + (select.getAttribute('aria-label')?.toLowerCase() || '');
-            const name = select.name?.toLowerCase() || '';
-            const options = Array.from(select.options).map(opt => opt.text.toLowerCase());
-            const hasGravur = options.some(text => text.includes('gravur') || text.includes('ohne gravur'));
+        modalContent.dataset.animaObserved = 'true';
+        
+        modalContentObserver = new MutationObserver(function(mutations) {
+            let hasNewContent = false;
+            mutations.forEach(function(mutation) {
+                if (mutation.addedNodes.length > 0) {
+                    mutation.addedNodes.forEach(function(node) {
+                        if (node.nodeType === 1) {
+                            // Prüfe ob es ein Select oder Input/Textarea ist
+                            if (node.tagName === 'SELECT' || 
+                                node.querySelector && node.querySelector('select, input[name^="properties["], textarea[name^="properties["]')) {
+                                hasNewContent = true;
+                            }
+                        }
+                    });
+                }
+            });
             
-            if (labelText.includes('personalisierung') || 
-                labelText.includes('personalization') ||
-                name.includes('personal') ||
-                name.includes('personalisierung') ||
-                hasGravur) {
-                const container = select.closest('.quick-add-modal, [id*="modal"], dialog, .product-form, form') || document.body;
-                initForContainer(container);
+            if (hasNewContent) {
+                // Warte damit morph() fertig ist
+                setTimeout(() => {
+                    initForContainer(modalContent);
+                }, 300);
             }
         });
+        
+        modalContentObserver.observe(modalContent, {
+            childList: true,
+            subtree: true
+        });
+    }
+    
+    // Starte Observer sofort wenn bereits vorhanden
+    setupModalContentObserver();
+    
+    // Beobachte auch wenn Modal später hinzugefügt wird
+    const modalObserver = new MutationObserver(function() {
+        setupModalContentObserver();
     });
-
-    observer.observe(document.body, {
+    
+    modalObserver.observe(document.body, {
         childList: true,
         subtree: true
     });
     
-    // Initialisiere auch wenn Modal bereits geöffnet ist
-    setTimeout(() => {
-        const modals = document.querySelectorAll('.quick-add-modal[open], dialog[open]');
-        modals.forEach(modal => {
-            const modalContent = modal.querySelector('#quick-add-modal-content, .quick-add-modal__content, .modal-content') || modal;
-            initForContainer(modalContent);
-        });
-    }, 500);
-    
-    // Höre auf Modal-Öffnungs-Events
-    // Beobachte Dialog-Elemente für das 'open' Attribut
+    // Höre auf Dialog-Öffnung
     const dialogObserver = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {
             if (mutation.type === 'attributes' && mutation.attributeName === 'open') {
                 const dialog = mutation.target;
                 if (dialog.hasAttribute('open') && dialog.classList.contains('quick-add-modal')) {
-                    // Modal wurde geöffnet
+                    setupModalContentObserver();
+                    // Warte bis Inhalt geladen ist (nach morph())
                     setTimeout(() => {
-                        const modalContent = dialog.querySelector('#quick-add-modal-content, .quick-add-modal__content, .modal-content') || dialog;
-                        initForContainer(modalContent);
-                    }, 400);
+                        const modalContent = document.getElementById('quick-add-modal-content');
+                        if (modalContent) {
+                            initForContainer(modalContent);
+                        }
+                    }, 600);
                 }
             }
         });
@@ -607,11 +646,11 @@
         });
     });
     
-    // Beobachte auch neue Dialog-Elemente, die später hinzugefügt werden
+    // Beobachte auch neue Dialog-Elemente
     const dialogContainerObserver = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {
             mutation.addedNodes.forEach(function(node) {
-                if (node.nodeType === 1) { // Element node
+                if (node.nodeType === 1) {
                     const dialogs = node.querySelectorAll ? node.querySelectorAll('dialog, .quick-add-modal') : [];
                     if (node.tagName === 'DIALOG' || node.classList.contains('quick-add-modal')) {
                         dialogs.push(node);
@@ -636,14 +675,14 @@
     document.addEventListener('click', function(e) {
         const quickAddButton = e.target.closest('quick-add-component, [data-quick-add-button], .quick-add__button');
         if (quickAddButton) {
-            // Warte bis Modal geöffnet ist
+            setupModalContentObserver();
+            // Warte bis Modal geöffnet und Inhalt geladen ist
             setTimeout(() => {
-                const modal = document.querySelector('.quick-add-modal[open], dialog[open]');
-                if (modal) {
-                    const modalContent = modal.querySelector('#quick-add-modal-content, .quick-add-modal__content, .modal-content') || modal;
+                const modalContent = document.getElementById('quick-add-modal-content');
+                if (modalContent) {
                     initForContainer(modalContent);
                 }
-            }, 600);
+            }, 1000);
         }
     });
 
