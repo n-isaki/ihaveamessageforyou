@@ -565,73 +565,54 @@
         });
     }
 
-    // Spezieller Observer für Quick-Add-Modal Content
-    // Beobachte Änderungen im #quick-add-modal-content Element (wird von morph() aktualisiert)
-    let modalContentObserver = null;
+    // Aggressiver Ansatz: Kontinuierliche Prüfung für Modal-Inhalt
+    let lastModalCheck = 0;
+    let modalInitialized = false;
     
-    function setupModalContentObserver() {
+    function checkAndInitModal() {
+        const modal = document.querySelector('.quick-add-modal[open], dialog.quick-add-modal[open]');
+        if (!modal) {
+            modalInitialized = false;
+            return;
+        }
+        
         const modalContent = document.getElementById('quick-add-modal-content');
-        if (!modalContent || modalContent.dataset.animaObserved) return;
+        if (!modalContent) return;
         
-        modalContent.dataset.animaObserved = 'true';
+        // Prüfe ob Personalisierungs-Select vorhanden ist
+        const hasPersonalizationSelect = modalContent.querySelector('select') !== null;
+        const hasCustomFields = modalContent.querySelector('input[name^="properties["], textarea[name^="properties["]') !== null;
         
-        modalContentObserver = new MutationObserver(function(mutations) {
-            let hasNewContent = false;
-            mutations.forEach(function(mutation) {
-                if (mutation.addedNodes.length > 0) {
-                    mutation.addedNodes.forEach(function(node) {
-                        if (node.nodeType === 1) {
-                            // Prüfe ob es ein Select oder Input/Textarea ist
-                            if (node.tagName === 'SELECT' || 
-                                node.querySelector && node.querySelector('select, input[name^="properties["], textarea[name^="properties["]')) {
-                                hasNewContent = true;
-                            }
-                        }
-                    });
-                }
-            });
-            
-            if (hasNewContent) {
-                // Warte damit morph() fertig ist
-                setTimeout(() => {
-                    initForContainer(modalContent);
-                }, 300);
-            }
-        });
-        
-        modalContentObserver.observe(modalContent, {
-            childList: true,
-            subtree: true
-        });
+        if ((hasPersonalizationSelect || hasCustomFields) && !modalInitialized) {
+            modalInitialized = true;
+            // Warte kurz damit morph() fertig ist
+            setTimeout(() => {
+                initForContainer(modalContent);
+                modalInitialized = false; // Reset für nächste Öffnung
+            }, 500);
+        }
     }
     
-    // Starte Observer sofort wenn bereits vorhanden
-    setupModalContentObserver();
+    // Kontinuierliche Prüfung alle 200ms wenn Modal geöffnet ist
+    setInterval(function() {
+        const modal = document.querySelector('.quick-add-modal[open], dialog.quick-add-modal[open]');
+        if (modal) {
+            checkAndInitModal();
+        } else {
+            modalInitialized = false;
+        }
+    }, 200);
     
-    // Beobachte auch wenn Modal später hinzugefügt wird
-    const modalObserver = new MutationObserver(function() {
-        setupModalContentObserver();
-    });
-    
-    modalObserver.observe(document.body, {
-        childList: true,
-        subtree: true
-    });
-    
-    // Höre auf Dialog-Öffnung
+    // Auch direkt beim Öffnen des Dialogs
     const dialogObserver = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {
             if (mutation.type === 'attributes' && mutation.attributeName === 'open') {
                 const dialog = mutation.target;
                 if (dialog.hasAttribute('open') && dialog.classList.contains('quick-add-modal')) {
-                    setupModalContentObserver();
-                    // Warte bis Inhalt geladen ist (nach morph())
+                    modalInitialized = false;
                     setTimeout(() => {
-                        const modalContent = document.getElementById('quick-add-modal-content');
-                        if (modalContent) {
-                            initForContainer(modalContent);
-                        }
-                    }, 600);
+                        checkAndInitModal();
+                    }, 800);
                 }
             }
         });
@@ -675,14 +656,10 @@
     document.addEventListener('click', function(e) {
         const quickAddButton = e.target.closest('quick-add-component, [data-quick-add-button], .quick-add__button');
         if (quickAddButton) {
-            setupModalContentObserver();
-            // Warte bis Modal geöffnet und Inhalt geladen ist
+            modalInitialized = false;
             setTimeout(() => {
-                const modalContent = document.getElementById('quick-add-modal-content');
-                if (modalContent) {
-                    initForContainer(modalContent);
-                }
-            }, 1000);
+                checkAndInitModal();
+            }, 1200);
         }
     });
 
