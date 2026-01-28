@@ -246,7 +246,7 @@
                 const lastField = visibleFields[visibleFields.length - 1];
                 // Verwende sowohl style als auch !important über setProperty
                 lastField.style.setProperty('margin-bottom', '8rem', 'important');
-                lastField.style.setProperty('padding-bottom', '2rem', 'important');
+                lastField.style.setProperty('padding-bottom', '5rem', 'important');
                 // Füge auch eine Klasse hinzu für CSS-Selektor
                 lastField.classList.add('anima-last-field');
             }
