@@ -9,7 +9,9 @@
     "build:widget": "vite build --config vite.widget.config.js",
     "build:all": "npm run build && npm run build:widget",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy:staging": "./scripts/deploy-staging.sh",
+    "deploy:production": "./scripts/deploy-production.sh"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
