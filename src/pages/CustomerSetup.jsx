@@ -6,6 +6,7 @@ import WizardMessageEditor from '../modules/anima/experiences/multimedia-gift/co
 import { Loader, Lock, CheckCircle, Save, Info, ShieldAlert, X, HelpCircle, Eye, Edit2, User, Calendar, FileText } from 'lucide-react';
 import MugViewer from '../modules/anima/experiences/multimedia-gift/pages/Viewer';
 import { v4 as uuidv4 } from 'uuid';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function CustomerSetup() {
