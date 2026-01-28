@@ -130,9 +130,12 @@
         return null;
     }
 
-    function updateFields(selectedValue) {
+    function updateFields(selectedValue, container = null) {
         // Hole auch den Text der ausgewählten Option für bessere Erkennung
-        const personalizationSelect = findPersonalizationSelect();
+        const searchContainer = container || document;
+        const personalizationSelect = container 
+            ? container.querySelector('select') || findPersonalizationSelect()
+            : findPersonalizationSelect();
         let selectedText = (selectedValue || '').toLowerCase();
         
         if (personalizationSelect) {
@@ -142,8 +145,8 @@
             }
         }
         
-        // Finde ALLE Custom Property Felder auf der Seite
-        const allCustomPropertyFields = document.querySelectorAll(
+        // Finde Custom Property Felder im Container (oder im gesamten Dokument)
+        const allCustomPropertyFields = searchContainer.querySelectorAll(
             'input[name^="properties["], textarea[name^="properties["]'
         );
         
@@ -424,19 +427,54 @@
         if (!modalContent) return;
         
         // Prüfe ob Personalisierungs-Select im Modal vorhanden ist
-        const personalizationSelect = findPersonalizationSelect();
-        if (!personalizationSelect) return;
+        // Suche ZUERST im Modal, nicht im gesamten Dokument
+        const allSelectsInModal = modalContent.querySelectorAll('select');
+        let personalizationSelect = null;
         
-        // Prüfe ob Select im Modal ist
-        if (!modalContent.contains(personalizationSelect)) return;
+        // Suche nach Select mit "Personalisierung" im Label/Name
+        for (const select of allSelectsInModal) {
+            const label = select.closest('.field, .product-form__input, .variant-picker')?.querySelector('label');
+            const labelText = (label?.textContent?.toLowerCase() || '') + (select.getAttribute('aria-label')?.toLowerCase() || '');
+            
+            if (labelText.includes('personalisierung') || labelText.includes('personalization')) {
+                personalizationSelect = select;
+                break;
+            }
+            
+            const name = select.name?.toLowerCase() || '';
+            if (name.includes('personal') || name.includes('personalisierung')) {
+                personalizationSelect = select;
+                break;
+            }
+        }
+        
+        // Falls nicht gefunden, suche nach Optionen mit "gravur"
+        if (!personalizationSelect) {
+            for (const select of allSelectsInModal) {
+                const options = Array.from(select.options).map(opt => opt.text.toLowerCase());
+                const hasGravur = options.some(text => text.includes('gravur') || text.includes('ohne gravur'));
+                
+                if (hasGravur) {
+                    personalizationSelect = select;
+                    break;
+                }
+            }
+        }
+        
+        if (!personalizationSelect) {
+            console.log('[Anima Modal] Personalisierungs-Select nicht gefunden');
+            return;
+        }
         
         // Prüfe ob bereits initialisiert
         if (personalizationSelect.dataset.animaModalInitialized) return;
         
+        console.log('[Anima Modal] Initialisiere Modal mit Select:', personalizationSelect);
         personalizationSelect.dataset.animaModalInitialized = 'true';
         
         // Verstecke Felder zuerst
         const fieldsInModal = modalContent.querySelectorAll('input[name^="properties["], textarea[name^="properties["]');
+        console.log('[Anima Modal] Gefundene Felder:', fieldsInModal.length);
         fieldsInModal.forEach(field => {
             let container = field.closest('.spacing-style');
             if (!container) container = field.closest('product-custom-property-component');
@@ -453,13 +491,15 @@
             }
         });
         
-        // Initiale Anzeige basierend auf aktueller Auswahl
+        // Initiale Anzeige basierend auf aktueller Auswahl (NUR im Modal)
         const initialValue = personalizationSelect.value || personalizationSelect.options[0]?.value;
-        updateFields(initialValue);
+        console.log('[Anima Modal] Initiale Auswahl:', initialValue);
+        updateFields(initialValue, modalContent);
         
         // Auf Änderungen hören
         personalizationSelect.addEventListener('change', function() {
-            updateFields(this.value);
+            console.log('[Anima Modal] Select geändert:', this.value);
+            updateFields(this.value, modalContent);
         });
         
         // Auch auf Varianten-Änderungen hören
@@ -467,9 +507,13 @@
         variantSelects.forEach(select => {
             select.addEventListener('change', function() {
                 setTimeout(() => {
-                    const personalization = findPersonalizationSelect();
-                    if (personalization && modalContent.contains(personalization)) {
-                        updateFields(personalization.value);
+                    const personalization = modalContent.querySelector('select');
+                    if (personalization) {
+                        // Prüfe ob es das Personalisierungs-Select ist
+                        const options = Array.from(personalization.options).map(opt => opt.text.toLowerCase());
+                        if (options.some(text => text.includes('gravur') || text.includes('ohne gravur'))) {
+                            updateFields(personalization.value, modalContent);
+                        }
                     }
                 }, 100);
             });
