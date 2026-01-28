@@ -370,8 +370,8 @@
                 const isLastField = allFields.length > 0 && allFields[allFields.length - 1] === fieldContainer;
                 
                 if (isLastField) {
-                    // Füge extra margin-bottom hinzu für das letzte Feld
-                    fieldContainer.style.marginBottom = 'var(--padding-xl, 3rem)';
+                    // Füge extra margin-bottom hinzu für das letzte Feld (mindestens 4rem = 64px)
+                    fieldContainer.style.marginBottom = '4rem';
                 }
             }
             
