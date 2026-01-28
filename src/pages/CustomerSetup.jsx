@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { getGiftById, updateGift, markSetupAsStarted } from '../services/gifts';
+import { getGiftById, updateGift, markSetupAsStarted, markGiftAsViewed } from '../services/gifts';
 import WizardMessageEditor from '../modules/anima/experiences/multimedia-gift/components/WizardMessageEditor';
 import { Loader, Lock, CheckCircle, Save, Info, ShieldAlert, X, HelpCircle, Eye, Edit2, User, Calendar, FileText } from 'lucide-react';
 import MugViewer from '../modules/anima/experiences/multimedia-gift/pages/Viewer';
@@ -59,6 +59,11 @@ export default function CustomerSetup() {
 
                     if (!data.setupStarted && !data.locked) {
                         markSetupAsStarted(id);
+                    }
+                    
+                    // Mark as viewed when link is opened (for all projects including Memoria)
+                    if (!data.viewed) {
+                        markGiftAsViewed(id).catch(err => console.error("Error marking as viewed", err));
                     }
                 }
             } catch (err) {
