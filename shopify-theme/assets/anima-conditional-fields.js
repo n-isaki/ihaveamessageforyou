@@ -15,8 +15,6 @@
 (function() {
     'use strict';
     
-    console.log('[Anima] Script geladen!');
-    
     // Verstecke alle Personalisierungsfelder SOFORT beim Laden (verhindert FOUC)
     function hideFieldsImmediately() {
         // Finde ALLE Custom Property Felder (nicht mehr hardcoded)
@@ -425,21 +423,12 @@
     
     // Initialisierung für Quick-Add-Modal
     function initModal() {
-        console.log('[Anima Modal] initModal() aufgerufen');
-        
         const modalContent = document.getElementById('quick-add-modal-content');
-        if (!modalContent) {
-            console.log('[Anima Modal] quick-add-modal-content nicht gefunden');
-            return;
-        }
-        
-        console.log('[Anima Modal] Modal-Content gefunden:', modalContent);
+        if (!modalContent) return;
         
         // Prüfe ob Personalisierungs-Select im Modal vorhanden ist
         // Suche ZUERST im Modal, nicht im gesamten Dokument
         const allSelectsInModal = modalContent.querySelectorAll('select');
-        console.log('[Anima Modal] Gefundene Selects im Modal:', allSelectsInModal.length);
-        
         let personalizationSelect = null;
         
         // Suche nach Select mit "Personalisierung" im Label/Name
@@ -447,56 +436,40 @@
             const label = select.closest('.field, .product-form__input, .variant-picker')?.querySelector('label');
             const labelText = (label?.textContent?.toLowerCase() || '') + (select.getAttribute('aria-label')?.toLowerCase() || '');
             
-            console.log('[Anima Modal] Prüfe Select:', select.name, 'Label:', labelText);
-            
             if (labelText.includes('personalisierung') || labelText.includes('personalization')) {
                 personalizationSelect = select;
-                console.log('[Anima Modal] Gefunden via Label:', select);
                 break;
             }
             
             const name = select.name?.toLowerCase() || '';
             if (name.includes('personal') || name.includes('personalisierung')) {
                 personalizationSelect = select;
-                console.log('[Anima Modal] Gefunden via Name:', select);
                 break;
             }
         }
         
         // Falls nicht gefunden, suche nach Optionen mit "gravur"
         if (!personalizationSelect) {
-            console.log('[Anima Modal] Suche nach Select mit Gravur-Optionen...');
             for (const select of allSelectsInModal) {
                 const options = Array.from(select.options).map(opt => opt.text.toLowerCase());
                 const hasGravur = options.some(text => text.includes('gravur') || text.includes('ohne gravur'));
                 
-                console.log('[Anima Modal] Select Optionen:', options, 'Hat Gravur:', hasGravur);
-                
                 if (hasGravur) {
                     personalizationSelect = select;
-                    console.log('[Anima Modal] Gefunden via Optionen:', select);
                     break;
                 }
             }
         }
         
-        if (!personalizationSelect) {
-            console.log('[Anima Modal] Personalisierungs-Select nicht gefunden. Alle Selects:', Array.from(allSelectsInModal).map(s => ({ name: s.name, options: Array.from(s.options).map(o => o.text) })));
-            return;
-        }
+        if (!personalizationSelect) return;
         
         // Prüfe ob bereits initialisiert
-        if (personalizationSelect.dataset.animaModalInitialized) {
-            console.log('[Anima Modal] Bereits initialisiert');
-            return;
-        }
+        if (personalizationSelect.dataset.animaModalInitialized) return;
         
-        console.log('[Anima Modal] Initialisiere Modal mit Select:', personalizationSelect);
         personalizationSelect.dataset.animaModalInitialized = 'true';
         
         // Verstecke Felder zuerst
         const fieldsInModal = modalContent.querySelectorAll('input[name^="properties["], textarea[name^="properties["]');
-        console.log('[Anima Modal] Gefundene Felder:', fieldsInModal.length);
         fieldsInModal.forEach(field => {
             let container = field.closest('.spacing-style');
             if (!container) container = field.closest('product-custom-property-component');
@@ -515,12 +488,10 @@
         
         // Initiale Anzeige basierend auf aktueller Auswahl (NUR im Modal)
         const initialValue = personalizationSelect.value || personalizationSelect.options[0]?.value;
-        console.log('[Anima Modal] Initiale Auswahl:', initialValue);
         updateFields(initialValue, modalContent);
         
         // Auf Änderungen hören
         personalizationSelect.addEventListener('change', function() {
-            console.log('[Anima Modal] Select geändert:', this.value);
             updateFields(this.value, modalContent);
         });
         
@@ -559,7 +530,6 @@
         });
         
         if (hasNewContent) {
-            console.log('[Anima Modal] Neuer Inhalt im Modal erkannt');
             setTimeout(() => {
                 initModal();
             }, 500);
@@ -570,30 +540,32 @@
     function startModalContentObservation() {
         const modalContent = document.getElementById('quick-add-modal-content');
         if (modalContent) {
-            console.log('[Anima Modal] Starte Beobachtung des Modal-Contents');
             modalContentObserver.observe(modalContent, {
                 childList: true,
                 subtree: true
             });
         } else {
-            console.log('[Anima Modal] Modal-Content noch nicht gefunden, versuche erneut...');
             setTimeout(startModalContentObservation, 500);
         }
     }
-    
-    console.log('[Anima] Starte Modal-Content-Beobachtung...');
     startModalContentObservation();
     
-    // Prüfe Modal alle 500ms wenn es geöffnet ist
-    setInterval(function() {
-        const modal = document.querySelector('.quick-add-modal[open], dialog.quick-add-modal[open], dialog[open].quick-add-modal');
-        if (modal) {
-            const modalContent = document.getElementById('quick-add-modal-content');
-            if (modalContent && modalContent.children.length > 0) {
-                initModal();
+    // Prüfe Modal alle 1000ms wenn es geöffnet ist (reduziert unnötige Checks)
+    let modalCheckInterval = null;
+    function startModalCheck() {
+        if (modalCheckInterval) return; // Bereits gestartet
+        
+        modalCheckInterval = setInterval(function() {
+            const modal = document.querySelector('.quick-add-modal[open], dialog.quick-add-modal[open], dialog[open].quick-add-modal');
+            if (modal) {
+                const modalContent = document.getElementById('quick-add-modal-content');
+                if (modalContent && modalContent.children.length > 0) {
+                    initModal();
+                }
             }
-        }
-    }, 500);
+        }, 1000);
+    }
+    startModalCheck();
     
     // Auch direkt beim Öffnen des Dialogs
     const dialogObserver = new MutationObserver(function(mutations) {
@@ -601,7 +573,6 @@
             if (mutation.type === 'attributes' && mutation.attributeName === 'open') {
                 const dialog = mutation.target;
                 if (dialog.hasAttribute('open') && (dialog.classList.contains('quick-add-modal') || dialog.tagName === 'DIALOG')) {
-                    console.log('[Anima Modal] Dialog geöffnet erkannt');
                     // Warte bis Inhalt geladen ist (nach morph())
                     setTimeout(() => {
                         initModal();
@@ -617,9 +588,7 @@
     // Beobachte alle Dialog-Elemente
     function observeDialogs() {
         const dialogs = document.querySelectorAll('dialog, .quick-add-modal, quick-add-dialog');
-        console.log('[Anima Modal] Gefundene Dialog-Elemente:', dialogs.length);
         dialogs.forEach(dialog => {
-            console.log('[Anima Modal] Beobachte Dialog:', dialog);
             dialogObserver.observe(dialog, {
                 attributes: true,
                 attributeFilter: ['open']
@@ -631,7 +600,6 @@
             setTimeout(observeDialogs, 1000);
         }
     }
-    
     observeDialogs();
     
     // Beobachte auch neue Dialog-Elemente
@@ -644,7 +612,6 @@
                         dialogs.push(node);
                     }
                     dialogs.forEach(dialog => {
-                        console.log('[Anima Modal] Neuer Dialog gefunden:', dialog);
                         dialogObserver.observe(dialog, {
                             attributes: true,
                             attributeFilter: ['open']
