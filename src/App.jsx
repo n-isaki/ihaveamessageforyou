@@ -8,6 +8,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import LandingPage from './pages/LandingPage';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
+import CustomerSetup from './pages/CustomerSetup';
 import PrintGift from './pages/PrintGift';
 
 
@@ -61,11 +62,24 @@ const DomainAwareHome = () => {
     return <Navigate to="/admin/dashboard" replace />;
   }
 
-  // If user visits /admin/* on non-admin domain, redirect to home (or could redirect to admin subdomain)
-  // This logic is better handled in the route guard, but if we are at root and NOT admin subdomain, we show LandingPage.
-  // The actual protection for /admin routes needs to be in the Route definition.
+  // Allow Staging/Localhost to show Landing Page directly
+  const isStagingOrDev = host.includes('staging') || host.includes('localhost') || host.includes('127.0.0.1');
+  if (isStagingOrDev) {
+    return <LandingPage />;
+  }
 
-  // Otherwise show standard Landing Page
+  // If it's a product subdomain (memoria, noor, ritual, scan) but NOT the main domain
+  // We redirect to the main marketing site
+  // We assume main domain is kamlimos.com or www.kamlimos.com
+  // If host is NOT main, redirect.
+  const isMain = host === 'kamlimos.com' || host === 'www.kamlimos.com';
+
+  if (!isMain) {
+    window.location.href = 'https://kamlimos.com';
+    return null;
+  }
+
+  // Otherwise show standard Landing Page on main domain
   return <LandingPage />;
 };
 
@@ -85,6 +99,9 @@ function App() {
 
           {/* Legacy / Alias */}
           <Route path="/gift/:id" element={<UniversalViewer />} />
+
+          {/* Customer Setup (Etsy Flow) */}
+          <Route path="/setup/:id" element={<CustomerSetup />} />
 
           <Route path="/admin/login" element={<AdminLogin />} />
 

@@ -60,7 +60,7 @@ const InlinePlayer = ({ url, label, isActive, onToggle }) => {
 };
 
 
-export default function DuaViewer() {
+export default function NoorViewer() {
     const { id } = useParams();
     const [gift, setGift] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -82,7 +82,7 @@ export default function DuaViewer() {
                 if (data?.meaningAudioUrl) meaningRef.current.src = data.meaningAudioUrl;
 
             } catch (error) {
-                console.error("Failed to fetch dua", error);
+                console.error("Failed to fetch noor", error);
             } finally {
                 setLoading(false);
             }

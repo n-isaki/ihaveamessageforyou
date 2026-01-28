@@ -37,9 +37,14 @@ export default function PrintGift() {
     }
 
     // Determine Domain based on Project
-    let baseUrl = 'https://kamlimos.com';
-    if (gift.project === 'memoria') {
+    let baseUrl = 'https://scan.kamlimos.com'; // Default for Mugs
+
+    if (gift.project === 'noor' || gift.project === 'dua') {
+        baseUrl = 'https://noor.kamlimos.com';
+    } else if (gift.project === 'memoria') {
         baseUrl = 'https://memoria.kamlimos.com';
+    } else if (gift.project === 'ritual' || gift.productType === 'bracelet') {
+        baseUrl = 'https://ritual.kamlimos.com';
     }
 
     const giftUrl = `${baseUrl}/v/${gift.id}`;
@@ -79,7 +84,9 @@ export default function PrintGift() {
                 </div>
 
                 <div className="pt-12 border-t border-stone-100 mt-12">
-                    <p className="text-rose-400 font-serif italic">Von {gift.customerName}</p>
+                    <p className="text-rose-400 font-serif italic">
+                        {(gift.senderName || gift.customerName) ? `Von ${gift.senderName || gift.customerName}` : ''}
+                    </p>
                 </div>
             </div>
 

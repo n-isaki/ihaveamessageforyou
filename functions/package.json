@@ -1,0 +1,16 @@
+{
+    "name": "functions",
+    "description": "Shopify Webhook Functions",
+    "scripts": {
+        "deploy": "firebase deploy --only functions"
+    },
+    "engines": {
+        "node": "20"
+    },
+    "main": "index.js",
+    "dependencies": {
+        "firebase-admin": "^11.8.0",
+        "firebase-functions": "^4.3.0"
+    },
+    "private": true
+}
