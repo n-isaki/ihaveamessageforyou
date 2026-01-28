@@ -269,7 +269,13 @@
       product-inventory,
       product-inventory *,
       .view-more-details__wrapper,
-      .view-more-details__wrapper *
+      .view-more-details__wrapper *,
+      .spacing-style,
+      product-custom-property-component,
+      product-custom-property-component *,
+      [class*="custom-property"],
+      input[name^="properties["],
+      textarea[name^="properties["]
     ) {
     @media screen and (min-width: 750px) {
       /* stylelint-disable-next-line declaration-no-important */
@@ -291,7 +297,10 @@
           product-inventory,
           product-inventory *,
           .view-more-details__wrapper,
-          .view-more-details__wrapper *
+          .view-more-details__wrapper *,
+          .spacing-style,
+          product-custom-property-component,
+          [class*="custom-property"]
         ),
       .buy-buttons-block
     ) {
