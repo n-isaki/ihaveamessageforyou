@@ -242,7 +242,8 @@
             // Setze margin-bottom auf das letzte sichtbare Feld (größerer Wert)
             if (visibleFields.length > 0) {
                 const lastField = visibleFields[visibleFields.length - 1];
-                lastField.style.marginBottom = '6rem';
+                // Verwende sowohl style als auch !important über setProperty
+                lastField.style.setProperty('margin-bottom', '6rem', 'important');
             }
         }, 100);
     }
