@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ShoppingBag } from 'lucide-react';
-import { createEtsyOrder } from '../../services/gifts';
+import { createEtsyOrder, createGift } from '../../services/gifts';
 
 export default function EtsyModal({ isOpen, onClose, onSuccess }) {
     const [etsyForm, setEtsyForm] = useState({ buyerName: '', personalizationText: '', productType: 'mug', buyerEmail: '' });
