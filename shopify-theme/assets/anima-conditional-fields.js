@@ -423,12 +423,21 @@
     
     // Initialisierung für Quick-Add-Modal
     function initModal() {
+        console.log('[Anima Modal] initModal() aufgerufen');
+        
         const modalContent = document.getElementById('quick-add-modal-content');
-        if (!modalContent) return;
+        if (!modalContent) {
+            console.log('[Anima Modal] quick-add-modal-content nicht gefunden');
+            return;
+        }
+        
+        console.log('[Anima Modal] Modal-Content gefunden:', modalContent);
         
         // Prüfe ob Personalisierungs-Select im Modal vorhanden ist
         // Suche ZUERST im Modal, nicht im gesamten Dokument
         const allSelectsInModal = modalContent.querySelectorAll('select');
+        console.log('[Anima Modal] Gefundene Selects im Modal:', allSelectsInModal.length);
+        
         let personalizationSelect = null;
         
         // Suche nach Select mit "Personalisierung" im Label/Name
@@ -436,38 +445,49 @@
             const label = select.closest('.field, .product-form__input, .variant-picker')?.querySelector('label');
             const labelText = (label?.textContent?.toLowerCase() || '') + (select.getAttribute('aria-label')?.toLowerCase() || '');
             
+            console.log('[Anima Modal] Prüfe Select:', select.name, 'Label:', labelText);
+            
             if (labelText.includes('personalisierung') || labelText.includes('personalization')) {
                 personalizationSelect = select;
+                console.log('[Anima Modal] Gefunden via Label:', select);
                 break;
             }
             
             const name = select.name?.toLowerCase() || '';
             if (name.includes('personal') || name.includes('personalisierung')) {
                 personalizationSelect = select;
+                console.log('[Anima Modal] Gefunden via Name:', select);
                 break;
             }
         }
         
         // Falls nicht gefunden, suche nach Optionen mit "gravur"
         if (!personalizationSelect) {
+            console.log('[Anima Modal] Suche nach Select mit Gravur-Optionen...');
             for (const select of allSelectsInModal) {
                 const options = Array.from(select.options).map(opt => opt.text.toLowerCase());
                 const hasGravur = options.some(text => text.includes('gravur') || text.includes('ohne gravur'));
                 
+                console.log('[Anima Modal] Select Optionen:', options, 'Hat Gravur:', hasGravur);
+                
                 if (hasGravur) {
                     personalizationSelect = select;
+                    console.log('[Anima Modal] Gefunden via Optionen:', select);
                     break;
                 }
             }
         }
         
         if (!personalizationSelect) {
-            console.log('[Anima Modal] Personalisierungs-Select nicht gefunden');
+            console.log('[Anima Modal] Personalisierungs-Select nicht gefunden. Alle Selects:', Array.from(allSelectsInModal).map(s => ({ name: s.name, options: Array.from(s.options).map(o => o.text) })));
             return;
         }
         
         // Prüfe ob bereits initialisiert
-        if (personalizationSelect.dataset.animaModalInitialized) return;
+        if (personalizationSelect.dataset.animaModalInitialized) {
+            console.log('[Anima Modal] Bereits initialisiert');
+            return;
+        }
         
         console.log('[Anima Modal] Initialisiere Modal mit Select:', personalizationSelect);
         personalizationSelect.dataset.animaModalInitialized = 'true';
@@ -520,31 +540,78 @@
         });
     }
     
-    // Prüfe Modal alle 300ms wenn es geöffnet ist
-    setInterval(function() {
-        const modal = document.querySelector('.quick-add-modal[open], dialog.quick-add-modal[open]');
-        if (modal) {
-            initModal();
+    // Beobachte Änderungen im Modal-Content (wenn Inhalt per morph() geladen wird)
+    const modalContentObserver = new MutationObserver(function(mutations) {
+        const modalContent = document.getElementById('quick-add-modal-content');
+        if (!modalContent) return;
+        
+        const modal = modalContent.closest('.quick-add-modal, dialog');
+        if (!modal || !modal.hasAttribute('open')) return;
+        
+        // Prüfe ob neue Selects oder Felder hinzugefügt wurden
+        let hasNewContent = false;
+        mutations.forEach(function(mutation) {
+            if (mutation.addedNodes.length > 0) {
+                hasNewContent = true;
+            }
+        });
+        
+        if (hasNewContent) {
+            console.log('[Anima Modal] Neuer Inhalt im Modal erkannt');
+            setTimeout(() => {
+                initModal();
+            }, 500);
         }
-    }, 300);
+    });
+    
+    // Starte Beobachtung des Modal-Contents sobald er existiert
+    function startModalContentObservation() {
+        const modalContent = document.getElementById('quick-add-modal-content');
+        if (modalContent) {
+            console.log('[Anima Modal] Starte Beobachtung des Modal-Contents');
+            modalContentObserver.observe(modalContent, {
+                childList: true,
+                subtree: true
+            });
+        } else {
+            setTimeout(startModalContentObservation, 500);
+        }
+    }
+    startModalContentObservation();
+    
+    // Prüfe Modal alle 500ms wenn es geöffnet ist
+    setInterval(function() {
+        const modal = document.querySelector('.quick-add-modal[open], dialog.quick-add-modal[open], dialog[open].quick-add-modal');
+        if (modal) {
+            const modalContent = document.getElementById('quick-add-modal-content');
+            if (modalContent && modalContent.children.length > 0) {
+                initModal();
+            }
+        }
+    }, 500);
     
     // Auch direkt beim Öffnen des Dialogs
     const dialogObserver = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {
             if (mutation.type === 'attributes' && mutation.attributeName === 'open') {
                 const dialog = mutation.target;
-                if (dialog.hasAttribute('open') && dialog.classList.contains('quick-add-modal')) {
+                if (dialog.hasAttribute('open') && (dialog.classList.contains('quick-add-modal') || dialog.tagName === 'DIALOG')) {
+                    console.log('[Anima Modal] Dialog geöffnet erkannt');
                     // Warte bis Inhalt geladen ist (nach morph())
                     setTimeout(() => {
                         initModal();
-                    }, 800);
+                    }, 1000);
+                    setTimeout(() => {
+                        initModal();
+                    }, 2000);
                 }
             }
         });
     });
     
     // Beobachte alle Dialog-Elemente
-    const dialogs = document.querySelectorAll('dialog, .quick-add-modal');
+    const dialogs = document.querySelectorAll('dialog, .quick-add-modal, quick-add-dialog');
+    console.log('[Anima Modal] Gefundene Dialog-Elemente:', dialogs.length);
     dialogs.forEach(dialog => {
         dialogObserver.observe(dialog, {
             attributes: true,
@@ -557,11 +624,12 @@
         mutations.forEach(function(mutation) {
             mutation.addedNodes.forEach(function(node) {
                 if (node.nodeType === 1) {
-                    const dialogs = node.querySelectorAll ? node.querySelectorAll('dialog, .quick-add-modal') : [];
-                    if (node.tagName === 'DIALOG' || node.classList.contains('quick-add-modal')) {
+                    const dialogs = node.querySelectorAll ? node.querySelectorAll('dialog, .quick-add-modal, quick-add-dialog') : [];
+                    if (node.tagName === 'DIALOG' || node.classList.contains('quick-add-modal') || node.tagName === 'QUICK-ADD-DIALOG') {
                         dialogs.push(node);
                     }
                     dialogs.forEach(dialog => {
+                        console.log('[Anima Modal] Neuer Dialog gefunden:', dialog);
                         dialogObserver.observe(dialog, {
                             attributes: true,
                             attributeFilter: ['open']
