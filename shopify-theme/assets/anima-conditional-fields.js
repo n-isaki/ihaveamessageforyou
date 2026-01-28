@@ -344,6 +344,7 @@
             fieldContainer.style.overflow = '';
             fieldContainer.style.margin = '';
             fieldContainer.style.padding = '';
+            fieldContainer.style.marginBottom = ''; // Stelle sicher, dass margin-bottom zurückgesetzt wird
             fieldContainer.removeAttribute('hidden');
             fieldContainer.classList.remove('anima-hidden', 'anima-initially-hidden');
             
@@ -359,6 +360,18 @@
                 } else {
                     // Für andere Container, verwende den Standard-Display-Wert
                     fieldContainer.style.display = '';
+                }
+            }
+            
+            // Stelle sicher, dass genug Abstand nach unten ist (verhindert, dass es am Quantity Selector klebt)
+            if (fieldContainer.classList.contains('spacing-style')) {
+                // Prüfe ob es das letzte sichtbare Feld ist
+                const allFields = Array.from(document.querySelectorAll('.spacing-style:not(.anima-hidden):not([hidden])'));
+                const isLastField = allFields.length > 0 && allFields[allFields.length - 1] === fieldContainer;
+                
+                if (isLastField) {
+                    // Füge extra margin-bottom hinzu für das letzte Feld
+                    fieldContainer.style.marginBottom = 'var(--padding-md, 1.5rem)';
                 }
             }
             
@@ -550,22 +563,7 @@
     }
     startModalContentObservation();
     
-    // Prüfe Modal alle 1000ms wenn es geöffnet ist (reduziert unnötige Checks)
-    let modalCheckInterval = null;
-    function startModalCheck() {
-        if (modalCheckInterval) return; // Bereits gestartet
-        
-        modalCheckInterval = setInterval(function() {
-            const modal = document.querySelector('.quick-add-modal[open], dialog.quick-add-modal[open], dialog[open].quick-add-modal');
-            if (modal) {
-                const modalContent = document.getElementById('quick-add-modal-content');
-                if (modalContent && modalContent.children.length > 0) {
-                    initModal();
-                }
-            }
-        }, 1000);
-    }
-    startModalCheck();
+    // Interval-Check entfernt - MutationObserver reicht aus
     
     // Auch direkt beim Öffnen des Dialogs
     const dialogObserver = new MutationObserver(function(mutations) {
