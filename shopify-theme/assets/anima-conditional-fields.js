@@ -371,8 +371,9 @@
                 fieldContainer.style.marginBottom = '5rem';
             } else if (fieldContainer.classList.contains('spacing-style')) {
                 // Für andere Felder: Prüfe ob es das letzte sichtbare Feld ist
-                const searchContainer = container || document;
-                const allFields = Array.from(searchContainer.querySelectorAll('.spacing-style:not(.anima-hidden):not([hidden])'));
+                // Suche im gleichen Container wie das Feld (Form oder Modal)
+                const formContainer = fieldContainer.closest('form, #quick-add-modal-content, .product-details') || document;
+                const allFields = Array.from(formContainer.querySelectorAll('.spacing-style:not(.anima-hidden):not([hidden])'));
                 const isLastField = allFields.length > 0 && allFields[allFields.length - 1] === fieldContainer;
                 
                 if (isLastField) {
