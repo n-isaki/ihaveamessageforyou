@@ -364,21 +364,19 @@
             }
             
             // Stelle sicher, dass genug Abstand nach unten ist (verhindert, dass es am Quantity Selector klebt)
-            if (fieldContainer.classList.contains('spacing-style')) {
-                // Prüfe ob es ein PIN-Feld ist (immer das letzte Feld)
-                const field = fieldContainer.querySelector('input[name*="pin"], input[name*="PIN"]');
-                if (field) {
-                    // PIN-Feld bekommt immer extra margin-bottom
+            // Prüfe ob es ein PIN-Feld ist (immer das letzte Feld)
+            const pinField = fieldContainer.querySelector('input[name*="pin"], input[name*="PIN"]');
+            if (pinField) {
+                // PIN-Feld bekommt immer extra margin-bottom
+                fieldContainer.style.marginBottom = '5rem';
+            } else if (fieldContainer.classList.contains('spacing-style')) {
+                // Für andere Felder: Prüfe ob es das letzte sichtbare Feld ist
+                const searchContainer = container || document;
+                const allFields = Array.from(searchContainer.querySelectorAll('.spacing-style:not(.anima-hidden):not([hidden])'));
+                const isLastField = allFields.length > 0 && allFields[allFields.length - 1] === fieldContainer;
+                
+                if (isLastField) {
                     fieldContainer.style.marginBottom = '5rem';
-                } else {
-                    // Für andere Felder: Prüfe ob es das letzte sichtbare Feld ist
-                    const searchContainer = container || document;
-                    const allFields = Array.from(searchContainer.querySelectorAll('.spacing-style:not(.anima-hidden):not([hidden])'));
-                    const isLastField = allFields.length > 0 && allFields[allFields.length - 1] === fieldContainer;
-                    
-                    if (isLastField) {
-                        fieldContainer.style.marginBottom = '5rem';
-                    }
                 }
             }
             
