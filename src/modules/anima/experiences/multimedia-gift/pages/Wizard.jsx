@@ -22,7 +22,6 @@ export default function GiftWizard() {
     const [loading, setLoading] = useState(false);
     const [uploadingRecitation, setUploadingRecitation] = useState(false);
     const [uploadingMeaning, setUploadingMeaning] = useState(false);
-    const [uploadingPhoto, setUploadingPhoto] = useState(false);
     const [initialLoading, setInitialLoading] = useState(isEditMode);
     const [error, setError] = useState('');
 
@@ -54,7 +53,6 @@ export default function GiftWizard() {
         // Memoria Specific
         deceasedName: '',
         lifeDates: '', // e.g. "1954 - 2023"
-        photoUrl: '', // URL to image in Storage
     });
 
     useEffect(() => {
@@ -85,8 +83,7 @@ export default function GiftWizard() {
                             transliteration: data.transliteration || '',
                             // Memoria
                             deceasedName: data.deceasedName || '',
-                            lifeDates: data.lifeDates || '',
-                            photoUrl: data.photoUrl || ''
+                            lifeDates: data.lifeDates || ''
                         });
                     } else {
                         setError("Geschenk nicht gefunden.");
@@ -142,23 +139,6 @@ export default function GiftWizard() {
         } finally {
             if (type === 'recitation') setUploadingRecitation(false);
             else setUploadingMeaning(false);
-        }
-    };
-
-    const handlePhotoUpload = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        setUploadingPhoto(true);
-        try {
-            const storageRef = ref(storage, `memoria-photos/${Date.now()}_${file.name}`);
-            await uploadBytes(storageRef, file);
-            const url = await getDownloadURL(storageRef);
-            setFormData(prev => ({ ...prev, photoUrl: url }));
-        } catch (error) {
-            console.error("Upload failed", error);
-            alert(`Upload Fehler: ${error.message}`);
-        } finally {
-            setUploadingPhoto(false);
         }
     };
 
