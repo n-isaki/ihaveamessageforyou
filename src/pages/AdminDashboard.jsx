@@ -255,14 +255,17 @@ export default function AdminDashboard() {
                                     </button>
                                 </div>
 
-                                {/* TABS */}
-                                <div className="flex p-1 bg-stone-200 rounded-xl overflow-x-auto">
+                                {/* TABS - Werkstatt Style (wie Schubladen) */}
+                                <div className="flex gap-1 border-b border-stone-200 overflow-x-auto">
                                     {['kamlimos', 'noor', 'memoria', 'ritual'].map(tab => (
                                         <button
                                             key={tab}
                                             onClick={() => { setActiveTab(tab); setSearchParams({ tab }); }}
-                                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap capitalize ${activeTab === tab ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'
-                                                }`}
+                                            className={`px-4 py-2 text-sm font-medium transition-all whitespace-nowrap capitalize border-b-2 ${
+                                                activeTab === tab 
+                                                    ? 'text-[#2C2C2C] border-[#2C2C2C]' 
+                                                    : 'text-stone-500 border-transparent hover:text-stone-700 hover:border-stone-300'
+                                            }`}
                                         >
                                             {tab === 'kamlimos' ? 'Tasse' : tab === 'ritual' ? 'Armband' : tab}
                                         </button>
