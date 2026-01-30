@@ -61,5 +61,54 @@ service cloud.firestore {
       // DELETE: Only Admin
       allow delete: if isAdmin();
     }
+    
+    // ============================================
+    // KARAKEDIMARTIN - Separate Collections mit Prefix
+    // ============================================
+    
+    match /karakedimartin_notes/{noteId} {
+      // READ: Public notes are readable by everyone, private only by owner
+      allow read: if resource.data.isPublic == true 
+                  || isAdmin();
+      
+      // CREATE: Only authenticated users (you)
+      allow create: if isAdmin();
+      
+      // UPDATE: Only owner (you)
+      allow update: if isAdmin();
+      
+      // DELETE: Only owner (you)
+      allow delete: if isAdmin();
+    }
+    
+    match /karakedimartin_links/{linkId} {
+      // READ: Public links are readable by everyone, private only by owner
+      allow read: if resource.data.isPublic == true 
+                  || isAdmin();
+      
+      // CREATE: Only authenticated users (you)
+      allow create: if isAdmin();
+      
+      // UPDATE: Only owner (you)
+      allow update: if isAdmin();
+      
+      // DELETE: Only owner (you)
+      allow delete: if isAdmin();
+    }
+    
+    match /karakedimartin_collections/{collectionId} {
+      // READ: Public collections are readable by everyone, private only by owner
+      allow read: if resource.data.isPublic == true 
+                  || isAdmin();
+      
+      // CREATE: Only authenticated users (you)
+      allow create: if isAdmin();
+      
+      // UPDATE: Only owner (you)
+      allow update: if isAdmin();
+      
+      // DELETE: Only owner (you)
+      allow delete: if isAdmin();
+    }
   }
 }

@@ -25,3 +25,8 @@ dist-ssr
 .env
 .env.local
 .firebase/
+
+# Karakedimartin
+karakedimartin/.env.local
+karakedimartin/.next
+karakedimartin/node_modules
