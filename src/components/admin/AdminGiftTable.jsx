@@ -4,12 +4,21 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Lock, Unlock, Check, EyeOff, ExternalLink, Printer, Edit2, Trash2,
-    ChevronUp, ChevronDown, Copy, Package, Gift, Eye
+    ChevronUp, ChevronDown, Copy, Package, Gift, Eye, CheckSquare, Square
 } from 'lucide-react';
 import { getExperience } from '../../modules/registry';
 import { toast } from '../Toast';
 
-export default function AdminGiftTable({ gifts, expandedId, onToggleExpand, onDeleteClick, onToggleViewed }) {
+export default function AdminGiftTable({ 
+    gifts, 
+    expandedId, 
+    onToggleExpand, 
+    onDeleteClick, 
+    onToggleViewed,
+    isSelectMode = false,
+    selectedGifts = new Set(),
+    onToggleSelect
+}) {
 
     const handleCopyLink = (e, gift) => {
         e.stopPropagation();
@@ -82,6 +91,30 @@ export default function AdminGiftTable({ gifts, expandedId, onToggleExpand, onDe
                     <table className="w-full text-left border-collapse">
                         <thead className="bg-stone-50 border-b border-stone-200 text-xs font-bold uppercase text-stone-500 tracking-wider sticky top-0 z-10">
                             <tr>
+                                {isSelectMode && (
+                                    <th className="p-2 pl-4 w-12">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                const allSelected = gifts.every(g => selectedGifts.has(g.id));
+                                                gifts.forEach(g => {
+                                                    if (allSelected) {
+                                                        if (selectedGifts.has(g.id)) onToggleSelect(g.id);
+                                                    } else {
+                                                        if (!selectedGifts.has(g.id)) onToggleSelect(g.id);
+                                                    }
+                                                });
+                                            }}
+                                            className="p-1 hover:bg-stone-200 rounded transition-colors"
+                                        >
+                                            {gifts.length > 0 && gifts.every(g => selectedGifts.has(g.id)) ? (
+                                                <CheckSquare className="h-4 w-4 text-rose-600" />
+                                            ) : (
+                                                <Square className="h-4 w-4 text-stone-400" />
+                                            )}
+                                        </button>
+                                    </th>
+                                )}
                                 <th className="p-2 pl-4">Status</th>
                                 <th className="p-2">Produkt</th>
                                 <th className="p-2">Kunde</th>
@@ -95,9 +128,23 @@ export default function AdminGiftTable({ gifts, expandedId, onToggleExpand, onDe
                                 return (
                                     <React.Fragment key={gift.id}>
                                         <tr
-                                            onClick={() => onToggleExpand(gift.id)}
-                                            className={`cursor-pointer hover:bg-stone-100 transition-colors ${expandedId === gift.id ? 'bg-emerald-50/60 ring-1 ring-inset ring-emerald-100' : index % 2 === 0 ? 'bg-white' : 'bg-stone-50/50'}`}
+                                            onClick={() => !isSelectMode && onToggleExpand(gift.id)}
+                                            className={`${!isSelectMode ? 'cursor-pointer' : ''} hover:bg-stone-100 transition-colors ${expandedId === gift.id ? 'bg-emerald-50/60 ring-1 ring-inset ring-emerald-100' : index % 2 === 0 ? 'bg-white' : 'bg-stone-50/50'} ${selectedGifts.has(gift.id) ? 'bg-rose-50/50 ring-1 ring-inset ring-rose-200' : ''}`}
                                         >
+                                            {isSelectMode && (
+                                                <td className="p-2 pl-4" onClick={(e) => e.stopPropagation()}>
+                                                    <button
+                                                        onClick={() => onToggleSelect(gift.id)}
+                                                        className="p-1 hover:bg-stone-200 rounded transition-colors"
+                                                    >
+                                                        {selectedGifts.has(gift.id) ? (
+                                                            <CheckSquare className="h-4 w-4 text-rose-600" />
+                                                        ) : (
+                                                            <Square className="h-4 w-4 text-stone-400" />
+                                                        )}
+                                                    </button>
+                                                </td>
+                                            )}
                                             {/* Status */}
                                             <td className="p-2 pl-4 align-middle">
                                                 <div className="flex flex-col items-start gap-1">
@@ -212,7 +259,7 @@ export default function AdminGiftTable({ gifts, expandedId, onToggleExpand, onDe
                                         {/* EXPANDED DETAILS */}
                                         {expandedId === gift.id && (
                                             <tr>
-                                                <td colSpan="6" className="p-0 border-none">
+                                                <td colSpan={isSelectMode ? "7" : "6"} className="p-0 border-none">
                                                     <motion.div
                                                         initial={{ height: 0, opacity: 0 }}
                                                         animate={{ height: 'auto', opacity: 1 }}
@@ -373,20 +420,22 @@ export default function AdminGiftTable({ gifts, expandedId, onToggleExpand, onDe
                                     </button>
                                 </div>
 
-                                <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-stone-100">
-                                    <Link to={`/admin/edit/${gift.id}`} className="flex flex-col items-center justify-center p-2 rounded-lg bg-stone-50 text-stone-600 active:bg-stone-200">
-                                        <Edit2 className="h-4 w-4 mb-1" />
-                                        <span className="text-[10px] font-bold uppercase">Edit</span>
-                                    </Link>
-                                    <a href={exp.getViewerUrl(gift)} target="_blank" className="flex flex-col items-center justify-center p-2 rounded-lg bg-stone-50 text-stone-600 active:bg-stone-200">
-                                        <ExternalLink className="h-4 w-4 mb-1" />
-                                        <span className="text-[10px] font-bold uppercase">View</span>
-                                    </a>
-                                    <button onClick={() => onToggleExpand(gift.id)} className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors ${expandedId === gift.id ? 'bg-stone-800 text-white' : 'bg-stone-50 text-stone-600'}`}>
-                                        {expandedId === gift.id ? <ChevronUp className="h-4 w-4 mb-1" /> : <ChevronDown className="h-4 w-4 mb-1" />}
-                                        <span className="text-[10px] font-bold uppercase">Info</span>
-                                    </button>
-                                </div>
+                                {!isSelectMode && (
+                                    <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-stone-100">
+                                        <Link to={`/admin/edit/${gift.id}`} className="flex flex-col items-center justify-center p-2 rounded-lg bg-stone-50 text-stone-600 active:bg-stone-200">
+                                            <Edit2 className="h-4 w-4 mb-1" />
+                                            <span className="text-[10px] font-bold uppercase">Edit</span>
+                                        </Link>
+                                        <a href={exp.getViewerUrl(gift)} target="_blank" className="flex flex-col items-center justify-center p-2 rounded-lg bg-stone-50 text-stone-600 active:bg-stone-200">
+                                            <ExternalLink className="h-4 w-4 mb-1" />
+                                            <span className="text-[10px] font-bold uppercase">View</span>
+                                        </a>
+                                        <button onClick={() => onToggleExpand(gift.id)} className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors ${expandedId === gift.id ? 'bg-stone-800 text-white' : 'bg-stone-50 text-stone-600'}`}>
+                                            {expandedId === gift.id ? <ChevronUp className="h-4 w-4 mb-1" /> : <ChevronDown className="h-4 w-4 mb-1" />}
+                                            <span className="text-[10px] font-bold uppercase">Info</span>
+                                        </button>
+                                    </div>
+                                )}
 
                                 <AnimatePresence>
                                     {expandedId === gift.id && (

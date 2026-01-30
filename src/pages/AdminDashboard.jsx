@@ -27,11 +27,16 @@ export default function AdminDashboard() {
     // Delete Modal State
     const [deleteId, setDeleteId] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [bulkDeleteIds, setBulkDeleteIds] = useState([]);
 
     const [searchParams, setSearchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'kamlimos');
     const [searchQuery, setSearchQuery] = useState('');
     const viewParam = searchParams.get('view');
+    
+    // Bulk Select State
+    const [selectedGifts, setSelectedGifts] = useState(new Set());
+    const [isSelectMode, setIsSelectMode] = useState(false);
 
     useEffect(() => {
         fetchGifts();
@@ -130,9 +135,61 @@ export default function AdminDashboard() {
             await deleteGift(deleteId);
             setGifts(gifts.filter(g => g.id !== deleteId));
             setDeleteId(null);
+            setSelectedGifts(new Set());
         } catch (error) {
             console.error("Failed to delete gift", error);
             alert("Fehler beim Löschen des Geschenks.");
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
+    // Bulk Select Functions
+    const toggleSelectMode = () => {
+        setIsSelectMode(!isSelectMode);
+        if (isSelectMode) {
+            setSelectedGifts(new Set());
+        }
+    };
+
+    const toggleSelectGift = (giftId) => {
+        const newSelected = new Set(selectedGifts);
+        if (newSelected.has(giftId)) {
+            newSelected.delete(giftId);
+        } else {
+            newSelected.add(giftId);
+        }
+        setSelectedGifts(newSelected);
+    };
+
+    const selectAll = () => {
+        setSelectedGifts(new Set(filteredGifts.map(g => g.id)));
+    };
+
+    const deselectAll = () => {
+        setSelectedGifts(new Set());
+    };
+
+    const handleBulkDelete = () => {
+        if (selectedGifts.size === 0) return;
+        setBulkDeleteIds(Array.from(selectedGifts));
+        setDeleteId('bulk'); // Special marker for bulk delete
+    };
+
+    const confirmBulkDelete = async () => {
+        if (bulkDeleteIds.length === 0) return;
+        setIsDeleting(true);
+        try {
+            // Delete all selected gifts
+            await Promise.all(bulkDeleteIds.map(id => deleteGift(id)));
+            setGifts(gifts.filter(g => !bulkDeleteIds.includes(g.id)));
+            setSelectedGifts(new Set());
+            setBulkDeleteIds([]);
+            setDeleteId(null);
+            setIsSelectMode(false);
+        } catch (error) {
+            console.error("Failed to delete gifts", error);
+            alert("Fehler beim Löschen der Geschenke.");
         } finally {
             setIsDeleting(false);
         }
@@ -181,10 +238,21 @@ export default function AdminDashboard() {
                                     <button onClick={() => setSidebarOpen(true)} className="md:hidden p-2 -ml-2 text-stone-600 hover:bg-stone-200 rounded-lg">
                                         <Menu className="h-6 w-6" />
                                     </button>
-                                    <div>
+                                    <div className="flex-1">
                                         <h1 className="text-3xl font-bold text-stone-900">Dashboard</h1>
                                         <p className="text-stone-500 mt-1">Verwalte deine Connected Produkte</p>
                                     </div>
+                                    {/* Bulk Select Toggle */}
+                                    <button
+                                        onClick={toggleSelectMode}
+                                        className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                                            isSelectMode
+                                                ? 'bg-rose-600 text-white'
+                                                : 'bg-stone-200 text-stone-700 hover:bg-stone-300'
+                                        }`}
+                                    >
+                                        {isSelectMode ? 'Auswahl beenden' : 'Auswählen'}
+                                    </button>
                                 </div>
 
                                 {/* TABS */}
@@ -264,12 +332,41 @@ export default function AdminDashboard() {
 
                             <div className="space-y-4">
                                 <AdminStats gifts={gifts} filteredGifts={filteredGifts} />
+                                
+                                {/* Bulk Actions Toolbar */}
+                                {isSelectMode && selectedGifts.size > 0 && (
+                                    <div className="mb-4 p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-center justify-between">
+                                        <div className="flex items-center gap-4">
+                                            <span className="text-sm font-medium text-rose-900">
+                                                {selectedGifts.size} {selectedGifts.size === 1 ? 'Item' : 'Items'} ausgewählt
+                                            </span>
+                                            <button
+                                                onClick={selectedGifts.size === filteredGifts.length ? deselectAll : selectAll}
+                                                className="text-sm text-rose-700 hover:text-rose-900 underline"
+                                            >
+                                                {selectedGifts.size === filteredGifts.length ? 'Alle abwählen' : 'Alle auswählen'}
+                                            </button>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={handleBulkDelete}
+                                                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
+                                            >
+                                                Löschen ({selectedGifts.size})
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
                                 <AdminGiftTable
                                     gifts={filteredGifts}
                                     expandedId={expandedId}
                                     onToggleExpand={toggleExpand}
                                     onDeleteClick={handleDeleteClick}
                                     onToggleViewed={handleToggleViewed}
+                                    isSelectMode={isSelectMode}
+                                    selectedGifts={selectedGifts}
+                                    onToggleSelect={toggleSelectGift}
                                 />
                             </div>
                         </div>
@@ -288,10 +385,14 @@ export default function AdminDashboard() {
                         />
 
                         <DeleteModal
-                            isOpen={!!deleteId}
-                            onClose={() => setDeleteId(null)}
-                            onConfirm={confirmDelete}
+                            isOpen={deleteId !== null}
+                            onClose={() => {
+                                setDeleteId(null);
+                                setBulkDeleteIds([]);
+                            }}
+                            onConfirm={deleteId === 'bulk' ? confirmBulkDelete : confirmDelete}
                             isDeleting={isDeleting}
+                            itemName={deleteId === 'bulk' ? `${bulkDeleteIds.length} Geschenke` : (gifts.find(g => g.id === deleteId)?.customerName || 'Geschenk')}
                         />
                     </>
                 )}
