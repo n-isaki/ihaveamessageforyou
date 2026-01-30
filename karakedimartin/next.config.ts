@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Kein statischer Export wegen dynamischen Routen
+  output: 'export', // Statischer Export für Firebase Hosting
   images: {
     unoptimized: true,
   },

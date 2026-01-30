@@ -261,13 +261,13 @@ export default function DashboardPage() {
                           <ExternalLink className="h-4 w-4 text-stone-400" />
                         </a>
                       )}
-                      <Link
-                        href={`/dashboard/edit/note/${note.id}`}
+                      <button
+                        onClick={() => router.push(`/dashboard/edit?type=note&id=${note.id}`)}
                         className="p-2 hover:bg-stone-800 rounded-lg transition-colors"
                         title="Bearbeiten"
                       >
                         <Edit2 className="h-4 w-4 text-stone-400" />
-                      </Link>
+                      </button>
                       <button
                         onClick={() => handleDeleteNote(note.id)}
                         disabled={deletingId === note.id}
@@ -350,13 +350,13 @@ export default function DashboardPage() {
                           <ExternalLink className="h-4 w-4 text-stone-400" />
                         </a>
                       )}
-                      <Link
-                        href={`/dashboard/edit/link/${link.id}`}
+                      <button
+                        onClick={() => router.push(`/dashboard/edit?type=link&id=${link.id}`)}
                         className="p-2 hover:bg-stone-800 rounded-lg transition-colors"
                         title="Bearbeiten"
                       >
                         <Edit2 className="h-4 w-4 text-stone-400" />
-                      </Link>
+                      </button>
                       <button
                         onClick={() => handleDeleteLink(link.id)}
                         disabled={deletingId === link.id}

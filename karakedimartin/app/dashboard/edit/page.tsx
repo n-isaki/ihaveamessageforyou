@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/lib/firebase";
 import { getNote, getLink, updateNote, updateLink } from "@/lib/firestore";
@@ -11,15 +11,12 @@ import Link from "next/link";
 import type { Note, Link as LinkType } from "@/types";
 import { useToast } from "@/components/Toast";
 
-// Für statischen Export: generateStaticParams ist nicht nötig bei "use client"
-export const dynamic = 'force-dynamic';
-
-export default function EditPage() {
+function EditPageContent() {
   const [user, loading] = useAuthState(auth);
   const router = useRouter();
-  const params = useParams();
-  const type = params.type as "note" | "link";
-  const id = params.id as string;
+  const searchParams = useSearchParams();
+  const type = searchParams.get("type") as "note" | "link" | null;
+  const id = searchParams.get("id") || "";
   const { showToast } = useToast();
 
   const [saving, setSaving] = useState(false);
@@ -41,12 +38,14 @@ export default function EditPage() {
   }, [user, loading, router]);
 
   useEffect(() => {
-    if (user && id) {
+    if (user && id && type) {
       loadData();
     }
-  }, [user, id]);
+  }, [user, id, type]);
 
   const loadData = async () => {
+    if (!type || !id) return;
+    
     try {
       if (type === "note") {
         const note = await getNote(id);
@@ -71,7 +70,7 @@ export default function EditPage() {
   };
 
   const handleSave = async () => {
-    if (!user) return;
+    if (!user || !type || !id) return;
 
     setSaving(true);
     try {
@@ -128,6 +127,14 @@ export default function EditPage() {
 
   if (!user) {
     return null;
+  }
+
+  if (!type || !id) {
+    return (
+      <div className="min-h-screen bg-stone-950 flex items-center justify-center">
+        <div className="text-stone-400">Ungültige Parameter</div>
+      </div>
+    );
   }
 
   return (
@@ -259,5 +266,17 @@ export default function EditPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function EditPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-stone-950 flex items-center justify-center">
+        <div className="text-stone-400">Lädt...</div>
+      </div>
+    }>
+      <EditPageContent />
+    </Suspense>
   );
 }

@@ -32,7 +32,7 @@
         },
         {
             "target": "karakedimartin",
-            "public": "karakedimartin/.next",
+            "public": "karakedimartin/out",
             "ignore": [
                 "firebase.json",
                 "**/.*",
