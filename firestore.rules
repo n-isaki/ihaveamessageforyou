@@ -29,9 +29,13 @@ service cloud.firestore {
     
     match /gift_orders/{documentId} {
       
-      // READ: Only Admin or with valid token (single document)
+      // READ: 
+      // 1. Admin can always read
+      // 2. With valid token (for setup links)
+      // 3. Locked gifts are publicly readable (for viewer links without token - PIN protects content client-side)
       allow read: if isAdmin() 
-                  || isValidToken();
+                  || isValidToken()
+                  || isLocked();
       
       // CREATE: Only Admin or Shopify Webhook (with shopifyOrderId)
       allow create: if isAdmin() 

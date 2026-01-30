@@ -30,10 +30,23 @@ export default function AdminDashboard() {
 
     const [searchParams, setSearchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'kamlimos');
+    const viewParam = searchParams.get('view');
 
     useEffect(() => {
         fetchGifts();
     }, []);
+
+    // Setze View-Mode basierend auf URL Parameter
+    useEffect(() => {
+        if (viewParam === 'kanban' && viewMode !== 'kanban') {
+            setViewMode('kanban');
+        } else if (viewParam === 'list' && viewMode !== 'list') {
+            setViewMode('list');
+        } else if (!viewParam && viewMode !== 'list') {
+            // Default zu 'list' wenn kein Parameter
+            setViewMode('list');
+        }
+    }, [viewParam]);
 
     // Auto-select from URL
     useEffect(() => {

@@ -11,7 +11,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "deploy:staging": "./scripts/deploy-staging.sh",
-    "deploy:production": "./scripts/deploy-production.sh"
+    "deploy:production": "./scripts/deploy-production.sh",
+    "shopify:dev": "./scripts/shopify-dev.sh",
+    "shopify:dev:live": "cd shopify-theme && shopify theme dev --allow-live --theme=188249964926"
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",

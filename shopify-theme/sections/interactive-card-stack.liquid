@@ -1,0 +1,901 @@
+{% comment %}
+  Interactive Card Stack Hero Section
+  Cards liegen übereinander und werden beim Hover größer/kleiner
+{% endcomment %}
+
+<div class="interactive-card-stack color-{{ section.settings.color_scheme }}" style="--section-padding-top: {{ section.settings.padding-block-start }}px; --section-padding-bottom: {{ section.settings.padding-block-end }}px;">
+  <div class="section-background"></div>
+  
+  <div class="page-width">
+    <div class="card-stack-container" style="--stack-height: {{ section.settings.stack_height }}vh; --card-gap: {{ section.settings.card_gap }}px;">
+      {% for block in section.blocks %}
+        {% if block.type == 'card' %}
+          <div 
+            class="card-stack-item" 
+            data-card-index="{{ forloop.index0 }}"
+            {{ block.shopify_attributes }}
+            style="
+              --card-z-index: {{ forloop.index }};
+              --card-scale-hover: {{ block.settings.scale_on_hover }};
+              --card-scale-default: {{ block.settings.scale_default }};
+            "
+          >
+            <div class="card-stack-item__inner">
+              {% comment %} Background Image/Video/Color {% endcomment %}
+              <div class="card-stack-item__background" style="{% if block.settings.background_type == 'color' %}background-color: {{ block.settings.background_color }};{% endif %}">
+                {% if block.settings.background_type == 'image' and block.settings.background_image != blank %}
+                  {% liquid
+                    assign image_scale = block.settings.image_scale | divided_by: 100.0
+                    
+                    assign image_width_calc = 'calc(100% * ' | append: image_scale | append: ')'
+                    assign image_height_calc = 'calc(100% * ' | append: image_scale | append: ')'
+                    
+                    assign image_style = 'object-fit: ' | append: block.settings.image_fit | append: '; '
+                    assign image_style = image_style | append: 'object-position: ' | append: block.settings.image_position | append: '; '
+                    assign image_style = image_style | append: 'width: ' | append: image_width_calc | append: '; '
+                    assign image_style = image_style | append: 'height: ' | append: image_height_calc | append: '; '
+                    
+                    if block.settings.image_width != 'auto' and block.settings.image_width != '100%'
+                      assign image_style = image_style | append: 'width: ' | append: block.settings.image_width | append: '; '
+                    endif
+                    if block.settings.image_height != 'auto' and block.settings.image_height != '100%'
+                      assign image_style = image_style | append: 'height: ' | append: block.settings.image_height | append: '; '
+                    endif
+                  %}
+                  <div class="card-stack-item__image-wrapper">
+                    {{
+                      block.settings.background_image
+                      | image_url: width: 1920
+                      | image_tag:
+                        loading: 'lazy',
+                        alt: block.settings.background_image.alt,
+                        class: 'card-stack-item__image',
+                        style: image_style
+                    }}
+                  </div>
+                {% elsif block.settings.background_type == 'video' %}
+                  {% if block.settings.background_video != blank %}
+                    {% liquid
+                      assign video_url = block.settings.background_video
+                      assign is_youtube = false
+                      assign is_vimeo = false
+                      
+                      if video_url contains 'youtube.com' or video_url contains 'youtu.be'
+                        assign is_youtube = true
+                        assign video_id = video_url | split: 'v=' | last | split: '&' | first
+                        if video_url contains 'youtu.be'
+                          assign video_id = video_url | split: '/' | last | split: '?' | first
+                        endif
+                        assign embed_url = 'https://www.youtube.com/embed/' | append: video_id | append: '?autoplay=1&loop=1&mute=1&playlist=' | append: video_id | append: '&controls=0&modestbranding=1&rel=0'
+                      elsif video_url contains 'vimeo.com'
+                        assign is_vimeo = true
+                        assign video_id = video_url | split: '/' | last | split: '?' | first
+                        assign embed_url = 'https://player.vimeo.com/video/' | append: video_id | append: '?autoplay=1&loop=1&muted=1&background=1'
+                      endif
+                    %}
+                    {% if is_youtube or is_vimeo %}
+                      <iframe 
+                        class="card-stack-item__video card-stack-item__video--iframe"
+                        src="{{ embed_url }}"
+                        frameborder="0"
+                        allow="autoplay; encrypted-media"
+                        allowfullscreen
+                      ></iframe>
+                    {% endif %}
+                  {% elsif block.settings.background_video_mp4 != blank %}
+                    <video 
+                      class="card-stack-item__video" 
+                      autoplay 
+                      loop 
+                      muted 
+                      playsinline
+                      {% if block.settings.background_image != blank %}
+                        poster="{{ block.settings.background_image | image_url: width: 1920 }}"
+                      {% endif %}
+                    >
+                      <source src="{{ block.settings.background_video_mp4 }}" type="video/mp4">
+                    </video>
+                  {% endif %}
+                {% endif %}
+                  
+                  {% if block.settings.overlay_enabled %}
+                    <div 
+                      class="card-stack-item__overlay"
+                      style="background-color: {{ block.settings.overlay_color }}; opacity: {{ block.settings.overlay_opacity | divided_by: 100.0 }};"
+                    ></div>
+                  {% endif %}
+              </div>
+
+              {% comment %} Content {% endcomment %}
+              <div class="card-stack-item__content" style="
+                text-align: {{ block.settings.text_alignment }};
+                color: {{ block.settings.text_color }};
+              ">
+                {% if block.settings.heading != blank %}
+                  <h2 class="card-stack-item__heading" style="
+                    font-size: {{ block.settings.heading_size }}px;
+                    font-weight: {{ block.settings.heading_weight }};
+                    margin-bottom: {{ block.settings.heading_spacing }}px;
+                  ">
+                    {{ block.settings.heading }}
+                  </h2>
+                {% endif %}
+
+                {% if block.settings.text != blank %}
+                  <div class="card-stack-item__text" style="
+                    font-size: {{ block.settings.text_size }}px;
+                    line-height: {{ block.settings.text_line_height }};
+                    margin-bottom: {{ block.settings.text_spacing }}px;
+                  ">
+                    {{ block.settings.text }}
+                  </div>
+                {% endif %}
+
+                {% if block.settings.button_text != blank and block.settings.button_link != blank %}
+                  <a 
+                    href="{{ block.settings.button_link }}"
+                    class="card-stack-item__button"
+                    style="
+                      background-color: {{ block.settings.button_bg_color }};
+                      color: {{ block.settings.button_text_color }};
+                      padding: {{ block.settings.button_padding_vertical }}px {{ block.settings.button_padding_horizontal }}px;
+                      border-radius: {{ block.settings.button_border_radius }}px;
+                      font-size: {{ block.settings.button_font_size }}px;
+                      display: inline-block;
+                      text-decoration: none;
+                      transition: all 0.3s ease;
+                    "
+                    onmouseover="this.style.transform='scale(1.05)'"
+                    onmouseout="this.style.transform='scale(1)'"
+                  >
+                    {{ block.settings.button_text }}
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .interactive-card-stack {
+    position: relative;
+    padding-top: var(--section-padding-top);
+    padding-bottom: var(--section-padding-bottom);
+    overflow: hidden;
+  }
+
+  .card-stack-container {
+    position: relative;
+    height: var(--stack-height, 80vh);
+    min-height: 500px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    perspective: 1000px;
+  }
+
+  .card-stack-item {
+    position: absolute;
+    width: 100%;
+    max-width: 1200px;
+    height: 100%;
+    z-index: var(--card-z-index, 1);
+    cursor: pointer;
+    transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), 
+                z-index 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.6s ease;
+    transform: scale(var(--card-scale-default, 0.85));
+    opacity: 0.7;
+  }
+
+  .card-stack-item:hover {
+    transform: scale(var(--card-scale-hover, 1.05));
+    z-index: 100;
+    opacity: 1;
+  }
+
+  /* Verkleinere andere Cards beim Hover */
+  .card-stack-container:hover .card-stack-item:not(:hover) {
+    transform: scale(calc(var(--card-scale-default, 0.85) * 0.9));
+    opacity: 0.5;
+  }
+
+  .card-stack-item__inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    transition: box-shadow 0.6s ease;
+  }
+
+  .card-stack-item:hover .card-stack-item__inner {
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+  }
+
+  .card-stack-item__background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+  }
+
+  .card-stack-item__background:has(.card-stack-item__image),
+  .card-stack-item__background:has(.card-stack-item__video) {
+    background-color: transparent;
+  }
+
+  .card-stack-item__image-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    z-index: 1;
+  }
+
+  .card-stack-item__image {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    z-index: 1;
+  }
+
+  .card-stack-item__video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .card-stack-item__video--iframe {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    transform: translate(-50%, -50%);
+    min-width: 100%;
+    min-height: 100%;
+    object-fit: cover;
+  }
+
+  .card-stack-item__overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+  }
+
+  .card-stack-item__content {
+    position: relative;
+    z-index: 10;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 60px;
+    pointer-events: none;
+  }
+
+  .card-stack-item__content * {
+    pointer-events: auto;
+  }
+
+  .card-stack-item__heading {
+    margin: 0;
+    line-height: 1.2;
+  }
+
+  .card-stack-item__text {
+    margin: 0;
+  }
+
+  .card-stack-item__button {
+    margin-top: auto;
+    align-self: flex-start;
+  }
+
+  .card-stack-item__button:hover {
+    opacity: 0.9;
+  }
+
+  @media screen and (max-width: 749px) {
+    .card-stack-container {
+      height: 60vh;
+      min-height: 400px;
+    }
+
+    .card-stack-item {
+      transform: scale(1) !important;
+      opacity: 1 !important;
+    }
+
+    .card-stack-item:hover {
+      transform: scale(1) !important;
+    }
+
+    .card-stack-container:hover .card-stack-item:not(:hover) {
+      transform: scale(1) !important;
+      opacity: 1 !important;
+    }
+
+    .card-stack-item__content {
+      padding: 40px 30px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Interactive Card Stack",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "stack_height",
+      "label": "Stack Höhe",
+      "min": 50,
+      "max": 100,
+      "step": 5,
+      "unit": "vh",
+      "default": 80
+    },
+    {
+      "type": "range",
+      "id": "card_gap",
+      "label": "Abstand zwischen Cards",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "px",
+      "default": 20
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "Farbschema",
+      "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "Spacing"
+    },
+    {
+      "type": "range",
+      "id": "padding-block-start",
+      "label": "Padding oben",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 0
+    },
+    {
+      "type": "range",
+      "id": "padding-block-end",
+      "label": "Padding unten",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "default": 0
+    }
+  ],
+  "blocks": [
+    {
+      "type": "card",
+      "name": "Card",
+      "settings": [
+        {
+          "type": "header",
+          "content": "Background"
+        },
+        {
+          "type": "select",
+          "id": "background_type",
+          "label": "Background Typ",
+          "options": [
+            {
+              "value": "image",
+              "label": "Bild"
+            },
+            {
+              "value": "video",
+              "label": "Video"
+            },
+            {
+              "value": "color",
+              "label": "Farbe"
+            }
+          ],
+          "default": "image"
+        },
+        {
+          "type": "image_picker",
+          "id": "background_image",
+          "label": "Background Bild",
+          "info": "Wird auch als Video-Poster verwendet"
+        },
+        {
+          "type": "header",
+          "content": "Bild-Einstellungen",
+          "info": "Nur wenn Background Typ = Bild"
+        },
+        {
+          "type": "select",
+          "id": "image_fit",
+          "label": "Bild-Anpassung",
+          "options": [
+            {
+              "value": "cover",
+              "label": "Cover (füllt aus, schneidet ab)"
+            },
+            {
+              "value": "contain",
+              "label": "Contain (zeigt vollständig)"
+            },
+            {
+              "value": "fill",
+              "label": "Fill (streckt sich)"
+            },
+            {
+              "value": "none",
+              "label": "None (Originalgröße)"
+            },
+            {
+              "value": "scale-down",
+              "label": "Scale Down (verkleinert wenn nötig)"
+            }
+          ],
+          "default": "cover"
+        },
+        {
+          "type": "select",
+          "id": "image_position",
+          "label": "Bild-Position",
+          "options": [
+            {
+              "value": "center",
+              "label": "Mitte"
+            },
+            {
+              "value": "left",
+              "label": "Links"
+            },
+            {
+              "value": "right",
+              "label": "Rechts"
+            },
+            {
+              "value": "top",
+              "label": "Oben"
+            },
+            {
+              "value": "bottom",
+              "label": "Unten"
+            },
+            {
+              "value": "left top",
+              "label": "Links Oben"
+            },
+            {
+              "value": "left bottom",
+              "label": "Links Unten"
+            },
+            {
+              "value": "right top",
+              "label": "Rechts Oben"
+            },
+            {
+              "value": "right bottom",
+              "label": "Rechts Unten"
+            },
+            {
+              "value": "center top",
+              "label": "Mitte Oben"
+            },
+            {
+              "value": "center bottom",
+              "label": "Mitte Unten"
+            }
+          ],
+          "default": "center"
+        },
+        {
+          "type": "select",
+          "id": "image_aspect_ratio",
+          "label": "Aspect Ratio",
+          "options": [
+            {
+              "value": "auto",
+              "label": "Auto (Original)"
+            },
+            {
+              "value": "16/9",
+              "label": "16:9 (Widescreen)"
+            },
+            {
+              "value": "4/3",
+              "label": "4:3 (Standard)"
+            },
+            {
+              "value": "1/1",
+              "label": "1:1 (Quadrat)"
+            },
+            {
+              "value": "3/4",
+              "label": "3:4 (Hochformat)"
+            },
+            {
+              "value": "21/9",
+              "label": "21:9 (Ultrawide)"
+            }
+          ],
+          "default": "auto"
+        },
+        {
+          "type": "range",
+          "id": "image_scale",
+          "label": "Bild-Größe (%)",
+          "min": 50,
+          "max": 200,
+          "step": 5,
+          "unit": "%",
+          "default": 100,
+          "info": "Zoom-Level des Bildes"
+        },
+        {
+          "type": "select",
+          "id": "image_width",
+          "label": "Bild-Breite",
+          "options": [
+            {
+              "value": "100%",
+              "label": "100% (Vollbreite)"
+            },
+            {
+              "value": "auto",
+              "label": "Auto"
+            },
+            {
+              "value": "150%",
+              "label": "150%"
+            },
+            {
+              "value": "200%",
+              "label": "200%"
+            }
+          ],
+          "default": "100%"
+        },
+        {
+          "type": "select",
+          "id": "image_height",
+          "label": "Bild-Höhe",
+          "options": [
+            {
+              "value": "100%",
+              "label": "100% (Vollhöhe)"
+            },
+            {
+              "value": "auto",
+              "label": "Auto"
+            },
+            {
+              "value": "150%",
+              "label": "150%"
+            },
+            {
+              "value": "200%",
+              "label": "200%"
+            }
+          ],
+          "default": "100%"
+        },
+        {
+          "type": "video_url",
+          "id": "background_video",
+          "label": "Background Video URL (YouTube/Vimeo)",
+          "accept": ["youtube", "vimeo"],
+          "info": "YouTube oder Vimeo URL"
+        },
+        {
+          "type": "text",
+          "id": "background_video_mp4",
+          "label": "Background Video MP4 URL",
+          "info": "Direkte MP4 Video-URL (falls nicht YouTube/Vimeo)"
+        },
+        {
+          "type": "color",
+          "id": "background_color",
+          "label": "Background Farbe",
+          "default": "#000000"
+        },
+        {
+          "type": "header",
+          "content": "Overlay"
+        },
+        {
+          "type": "checkbox",
+          "id": "overlay_enabled",
+          "label": "Overlay aktivieren",
+          "default": false
+        },
+        {
+          "type": "color",
+          "id": "overlay_color",
+          "label": "Overlay Farbe",
+          "default": "#000000"
+        },
+        {
+          "type": "range",
+          "id": "overlay_opacity",
+          "label": "Overlay Deckkraft",
+          "min": 0,
+          "max": 100,
+          "step": 5,
+          "unit": "%",
+          "default": 30
+        },
+        {
+          "type": "header",
+          "content": "Content"
+        },
+        {
+          "type": "text",
+          "id": "heading",
+          "label": "Überschrift",
+          "default": "Card Überschrift"
+        },
+        {
+          "type": "range",
+          "id": "heading_size",
+          "label": "Überschrift Größe",
+          "min": 20,
+          "max": 80,
+          "step": 2,
+          "unit": "px",
+          "default": 48
+        },
+        {
+          "type": "select",
+          "id": "heading_weight",
+          "label": "Überschrift Gewicht",
+          "options": [
+            {
+              "value": "300",
+              "label": "Light"
+            },
+            {
+              "value": "400",
+              "label": "Normal"
+            },
+            {
+              "value": "600",
+              "label": "Semi Bold"
+            },
+            {
+              "value": "700",
+              "label": "Bold"
+            }
+          ],
+          "default": "700"
+        },
+        {
+          "type": "range",
+          "id": "heading_spacing",
+          "label": "Abstand nach Überschrift",
+          "min": 0,
+          "max": 60,
+          "step": 4,
+          "unit": "px",
+          "default": 20
+        },
+        {
+          "type": "richtext",
+          "id": "text",
+          "label": "Text",
+          "default": "<p>Beschreibungstext für diese Card</p>"
+        },
+        {
+          "type": "range",
+          "id": "text_size",
+          "label": "Text Größe",
+          "min": 12,
+          "max": 24,
+          "step": 1,
+          "unit": "px",
+          "default": 16
+        },
+        {
+          "type": "range",
+          "id": "text_line_height",
+          "label": "Text Zeilenhöhe",
+          "min": 1.2,
+          "max": 2.0,
+          "step": 0.1,
+          "default": 1.6
+        },
+        {
+          "type": "range",
+          "id": "text_spacing",
+          "label": "Abstand nach Text",
+          "min": 0,
+          "max": 60,
+          "step": 4,
+          "unit": "px",
+          "default": 32
+        },
+        {
+          "type": "select",
+          "id": "text_alignment",
+          "label": "Text Ausrichtung",
+          "options": [
+            {
+              "value": "left",
+              "label": "Links"
+            },
+            {
+              "value": "center",
+              "label": "Mitte"
+            },
+            {
+              "value": "right",
+              "label": "Rechts"
+            }
+          ],
+          "default": "left"
+        },
+        {
+          "type": "color",
+          "id": "text_color",
+          "label": "Text Farbe",
+          "default": "#ffffff"
+        },
+        {
+          "type": "header",
+          "content": "Button"
+        },
+        {
+          "type": "text",
+          "id": "button_text",
+          "label": "Button Text",
+          "default": "Mehr erfahren"
+        },
+        {
+          "type": "url",
+          "id": "button_link",
+          "label": "Button Link"
+        },
+        {
+          "type": "color",
+          "id": "button_bg_color",
+          "label": "Button Hintergrund",
+          "default": "#ffffff"
+        },
+        {
+          "type": "color",
+          "id": "button_text_color",
+          "label": "Button Text Farbe",
+          "default": "#000000"
+        },
+        {
+          "type": "range",
+          "id": "button_padding_vertical",
+          "label": "Button Padding (vertikal)",
+          "min": 8,
+          "max": 32,
+          "step": 2,
+          "unit": "px",
+          "default": 16
+        },
+        {
+          "type": "range",
+          "id": "button_padding_horizontal",
+          "label": "Button Padding (horizontal)",
+          "min": 16,
+          "max": 64,
+          "step": 4,
+          "unit": "px",
+          "default": 32
+        },
+        {
+          "type": "range",
+          "id": "button_border_radius",
+          "label": "Button Border Radius",
+          "min": 0,
+          "max": 50,
+          "step": 2,
+          "unit": "px",
+          "default": 8
+        },
+        {
+          "type": "range",
+          "id": "button_font_size",
+          "label": "Button Schriftgröße",
+          "min": 12,
+          "max": 24,
+          "step": 1,
+          "unit": "px",
+          "default": 16
+        },
+        {
+          "type": "header",
+          "content": "Animation"
+        },
+        {
+          "type": "range",
+          "id": "scale_default",
+          "label": "Standard Größe (%)",
+          "min": 60,
+          "max": 100,
+          "step": 5,
+          "unit": "%",
+          "default": 85,
+          "info": "Größe der Card wenn nicht gehovered"
+        },
+        {
+          "type": "range",
+          "id": "scale_on_hover",
+          "label": "Größe beim Hover (%)",
+          "min": 100,
+          "max": 120,
+          "step": 5,
+          "unit": "%",
+          "default": 105,
+          "info": "Größe der Card beim Hover"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Interactive Card Stack",
+      "blocks": [
+        {
+          "type": "card",
+          "settings": {
+            "heading": "Card 1",
+            "text": "<p>Erste Card mit vollem Inhalt</p>"
+          }
+        },
+        {
+          "type": "card",
+          "settings": {
+            "heading": "Card 2",
+            "text": "<p>Zweite Card</p>"
+          }
+        },
+        {
+          "type": "card",
+          "settings": {
+            "heading": "Card 3",
+            "text": "<p>Dritte Card</p>"
+          }
+        }
+      ]
+    }
+  ],
+  "max_blocks": 5
+}
+{% endschema %}

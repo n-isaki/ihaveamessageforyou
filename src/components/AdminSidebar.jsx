@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { LayoutGrid, Kanban, Plus, ChevronDown, ChevronRight, Package, Watch, Heart, Zap, Coffee, ChevronsLeft, ChevronsRight, LogOut, X } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { LayoutGrid, Kanban, Plus, ChevronDown, ChevronRight, Package, Watch, Heart, Zap, Coffee, ChevronsLeft, ChevronsRight, LogOut, X, Store } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 
 export default function AdminSidebar({ activeView, onViewChange, onRefresh, isOpen, onClose }) {
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [collapsed, setCollapsed] = useState(false);
+    const location = useLocation();
 
     // Adjusted class logic: center content if collapsed
     const menuItemClass = (view) =>
@@ -73,14 +74,37 @@ export default function AdminSidebar({ activeView, onViewChange, onRefresh, isOp
                 <nav className="flex-1 px-4 space-y-6 mt-4">
                     <div>
                         {!collapsed && <p className="px-4 text-[10px] font-bold text-stone-600 uppercase tracking-wider mb-2">Management</p>}
-                        <button onClick={() => { onViewChange('list'); onClose?.(); }} className={menuItemClass('list')} title="Alle Aufträge">
+                        <Link 
+                            to="/admin/dashboard?view=list"
+                            onClick={() => { onViewChange?.('list'); onClose?.(); }}
+                            className={`flex items-center space-x-3 w-full px-4 py-3 rounded-xl transition-all font-medium text-sm ${activeView === 'list' && location.pathname === '/admin/dashboard' ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/20' : 'text-stone-400 hover:text-stone-100 hover:bg-stone-900'} ${collapsed ? 'justify-center px-2' : ''}`}
+                            title="Alle Aufträge"
+                        >
                             <LayoutGrid className="h-5 w-5" />
                             {!collapsed && <span>Alle Aufträge</span>}
-                        </button>
-                        <button onClick={() => { onViewChange('kanban'); onClose?.(); }} className={menuItemClass('kanban')} title="Kanban Board">
+                        </Link>
+                        <Link 
+                            to="/admin/dashboard?view=kanban"
+                            onClick={() => { onViewChange?.('kanban'); onClose?.(); }}
+                            className={`flex items-center space-x-3 w-full px-4 py-3 rounded-xl transition-all font-medium text-sm ${activeView === 'kanban' && location.pathname === '/admin/dashboard' ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/20' : 'text-stone-400 hover:text-stone-100 hover:bg-stone-900'} ${collapsed ? 'justify-center px-2' : ''}`}
+                            title="Kanban Board"
+                        >
                             <Kanban className="h-5 w-5" />
                             {!collapsed && <span>Kanban Board</span>}
-                        </button>
+                        </Link>
+                    </div>
+
+                    <div>
+                        {!collapsed && <p className="px-4 text-[10px] font-bold text-stone-600 uppercase tracking-wider mb-2">Shopify</p>}
+                        <Link 
+                            to="/admin/shopify" 
+                            onClick={onClose} 
+                            className={`flex items-center space-x-3 w-full px-4 py-3 rounded-xl transition-all font-medium text-sm ${location.pathname === '/admin/shopify' ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/20' : 'text-stone-400 hover:text-stone-100 hover:bg-stone-900'} ${collapsed ? 'justify-center px-2' : ''}`}
+                            title="Shopify Theme Explorer"
+                        >
+                            <Store className="h-5 w-5" />
+                            {!collapsed && <span>Theme Explorer</span>}
+                        </Link>
                     </div>
 
                     <div>

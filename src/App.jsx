@@ -10,6 +10,7 @@ import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import CustomerSetup from './pages/CustomerSetup';
 import PrintGift from './pages/PrintGift';
+import ShopifyThemeExplorer from './pages/ShopifyThemeExplorer';
 
 
 // Anima Modules
@@ -131,6 +132,13 @@ function App() {
             <ProtectedRoute>
               <PrintGift />
             </ProtectedRoute>
+          } />
+          <Route path="/admin/shopify" element={
+            <AdminDomainGuard>
+              <ProtectedRoute>
+                <ShopifyThemeExplorer />
+              </ProtectedRoute>
+            </AdminDomainGuard>
           } />
 
         </Routes>
