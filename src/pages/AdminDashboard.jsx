@@ -32,14 +32,8 @@ export default function AdminDashboard() {
     const [searchParams, setSearchParams] = useSearchParams();
     const [searchQuery, setSearchQuery] = useState('');
     
-    // Active Tab aus URL lesen
+    // Active Tab direkt aus URL lesen (nicht als State)
     const activeTab = searchParams.get('tab') || 'kamlimos';
-    
-    // Reagiere auf Tab-Änderungen in der URL
-    useEffect(() => {
-        const tabFromUrl = searchParams.get('tab') || 'kamlimos';
-        // Tab ist bereits in activeTab gesetzt, keine weitere Aktion nötig
-    }, [searchParams]);
     const viewParam = searchParams.get('view');
     
     // Bulk Select State
@@ -74,8 +68,11 @@ export default function AdminDashboard() {
                 else if (gift.project === 'memoria') targetTab = 'memoria';
                 else if (gift.project === 'ritual' || gift.productType === 'bracelet') targetTab = 'ritual';
 
-                if (activeTab !== targetTab) {
-                    setActiveTab(targetTab);
+                const currentTab = searchParams.get('tab') || 'kamlimos';
+                if (currentTab !== targetTab) {
+                    const newParams = new URLSearchParams(searchParams);
+                    newParams.set('tab', targetTab);
+                    setSearchParams(newParams);
                 }
             }
         }
@@ -268,7 +265,11 @@ export default function AdminDashboard() {
                                     {['kamlimos', 'noor', 'memoria', 'ritual'].map(tab => (
                                         <button
                                             key={tab}
-                                            onClick={() => { setActiveTab(tab); setSearchParams({ tab }); }}
+                                            onClick={() => { 
+                                                const newParams = new URLSearchParams(searchParams);
+                                                newParams.set('tab', tab);
+                                                setSearchParams(newParams);
+                                            }}
                                             className={`px-4 py-2 text-sm font-medium transition-all whitespace-nowrap capitalize border-b-2 ${
                                                 activeTab === tab 
                                                     ? 'text-[#2C2C2C] border-[#2C2C2C]' 
