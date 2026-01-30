@@ -7,6 +7,7 @@ import {
     ChevronUp, ChevronDown, Copy, Package, Gift, Eye
 } from 'lucide-react';
 import { getExperience } from '../../modules/registry';
+import { toast } from '../Toast';
 
 export default function AdminGiftTable({ gifts, expandedId, onToggleExpand, onDeleteClick, onToggleViewed }) {
 
@@ -31,8 +32,36 @@ export default function AdminGiftTable({ gifts, expandedId, onToggleExpand, onDe
         }
         
         const setupUrl = `${baseUrl}/setup/${gift.id}${tokenPart}`;
-        navigator.clipboard.writeText(`Hallo ${name}, bitte richte dein Geschenk hier ein: ${setupUrl}`);
-        alert("Link kopiert!");
+        navigator.clipboard.writeText(`Hallo ${name}, bitte richte dein Geschenk hier ein: ${setupUrl}`)
+            .then(() => toast.copy('Setup-Link kopiert!'))
+            .catch(() => toast.error('Fehler beim Kopieren'));
+    };
+
+    const handleCopyId = (e, id) => {
+        e.stopPropagation();
+        navigator.clipboard.writeText(id)
+            .then(() => toast.copy('ID kopiert!'))
+            .catch(() => toast.error('Fehler beim Kopieren'));
+    };
+
+    const handleCopyPin = (e, pin) => {
+        e.stopPropagation();
+        if (!pin || pin === '-') {
+            toast.error('Kein PIN Code vorhanden');
+            return;
+        }
+        navigator.clipboard.writeText(pin)
+            .then(() => toast.copy('PIN Code kopiert!'))
+            .catch(() => toast.error('Fehler beim Kopieren'));
+    };
+
+    const handleCopyViewerLink = (e, gift) => {
+        e.stopPropagation();
+        const exp = getExperience(gift);
+        const viewerUrl = exp.getViewerUrl(gift);
+        navigator.clipboard.writeText(viewerUrl)
+            .then(() => toast.copy('Viewer-Link kopiert!'))
+            .catch(() => toast.error('Fehler beim Kopieren'));
     };
 
     if (gifts.length === 0) {
@@ -151,6 +180,15 @@ export default function AdminGiftTable({ gifts, expandedId, onToggleExpand, onDe
                                                         <ExternalLink className="h-4 w-4" />
                                                     </a>
 
+                                                    {/* Copy Viewer Link */}
+                                                    <button
+                                                        onClick={(e) => handleCopyViewerLink(e, gift)}
+                                                        className="p-1.5 rounded-lg text-stone-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                                                        title="Viewer-Link kopieren"
+                                                    >
+                                                        <Copy className="h-4 w-4" />
+                                                    </button>
+
                                                     <Link to={`/admin/print/${gift.id}`} target="_blank" className="p-1.5 text-stone-400 hover:text-stone-800 hover:bg-stone-100 rounded-lg" title="QR Code">
                                                         <Printer className="h-4 w-4" />
                                                     </Link>
@@ -248,7 +286,16 @@ export default function AdminGiftTable({ gifts, expandedId, onToggleExpand, onDe
                                                                     <div className="mt-6 pt-4 border-t border-stone-100 flex justify-between items-center text-xs text-stone-400">
                                                                         <div className="flex flex-col gap-1">
                                                                             <span>Erstellt: {gift.createdAt?.toDate ? gift.createdAt.toDate().toLocaleString('de-DE') : 'Unbekannt'}</span>
-                                                                            <span>ID: <span className="font-mono select-all text-stone-500">{gift.id}</span></span>
+                                                                            <span className="flex items-center gap-2">
+                                                                                ID: <span className="font-mono select-all text-stone-500">{gift.id}</span>
+                                                                                <button
+                                                                                    onClick={(e) => handleCopyId(e, gift.id)}
+                                                                                    className="p-1 hover:bg-stone-200 rounded transition-colors"
+                                                                                    title="ID kopieren"
+                                                                                >
+                                                                                    <Copy className="h-3 w-3 text-stone-400 hover:text-stone-600" />
+                                                                                </button>
+                                                                            </span>
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -263,9 +310,20 @@ export default function AdminGiftTable({ gifts, expandedId, onToggleExpand, onDe
                                                                             <dt className="text-stone-500">Erstellt am</dt>
                                                                             <dd>{gift.createdAt?.toDate ? gift.createdAt.toDate().toLocaleDateString() : 'N/A'}</dd>
                                                                         </div>
-                                                                        <div className="flex justify-between border-b border-stone-200 pb-2">
+                                                                        <div className="flex justify-between items-center border-b border-stone-200 pb-2">
                                                                             <dt className="text-stone-500">PIN Code</dt>
-                                                                            <dd className="font-mono font-bold">{gift.accessCode || '-'}</dd>
+                                                                            <dd className="font-mono font-bold flex items-center gap-2">
+                                                                                {gift.accessCode || '-'}
+                                                                                {gift.accessCode && (
+                                                                                    <button
+                                                                                        onClick={(e) => handleCopyPin(e, gift.accessCode)}
+                                                                                        className="p-1 hover:bg-stone-200 rounded transition-colors"
+                                                                                        title="PIN Code kopieren"
+                                                                                    >
+                                                                                        <Copy className="h-3 w-3 text-stone-400 hover:text-stone-600" />
+                                                                                    </button>
+                                                                                )}
+                                                                            </dd>
                                                                         </div>
                                                                     </dl>
                                                                 </div>

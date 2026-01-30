@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase';
 import ErrorBoundary from './components/ErrorBoundary';
+import { ToastContainer } from './components/Toast';
 
 // Pages
 import LandingPage from './pages/LandingPage';
@@ -143,6 +144,7 @@ function App() {
 
         </Routes>
       </Router>
+      <ToastContainer />
     </ErrorBoundary>
   );
 }
