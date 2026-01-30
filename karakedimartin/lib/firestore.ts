@@ -104,13 +104,39 @@ export async function getAllNotes(userId: string): Promise<Note[]> {
 }
 
 export async function getPublicNotes(): Promise<Note[]> {
-  const q = query(
-    collection(db, NOTES_COLLECTION),
-    where("isPublic", "==", true),
-    orderBy("createdAt", "desc")
-  );
-  const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Note));
+  try {
+    // Versuche mit orderBy, falls Index fehlt → ohne orderBy
+    try {
+      const q = query(
+        collection(db, NOTES_COLLECTION),
+        where("isPublic", "==", true),
+        orderBy("createdAt", "desc")
+      );
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Note));
+    } catch (error: any) {
+      if (error.code === "failed-precondition") {
+        // Index fehlt, versuche ohne orderBy
+        const q = query(
+          collection(db, NOTES_COLLECTION),
+          where("isPublic", "==", true)
+        );
+        const querySnapshot = await getDocs(q);
+        const notes = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Note));
+        // Sortiere client-side
+        notes.sort((a, b) => {
+          const aTime = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+          const bTime = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+          return bTime - aTime;
+        });
+        return notes;
+      }
+      throw error;
+    }
+  } catch (error: any) {
+    console.error("Firestore Error beim Laden der öffentlichen Notizen:", error);
+    throw error;
+  }
 }
 
 export async function updateNote(id: string, data: Partial<Note>) {
@@ -223,13 +249,39 @@ export async function getAllLinks(userId: string): Promise<Link[]> {
 }
 
 export async function getPublicLinks(): Promise<Link[]> {
-  const q = query(
-    collection(db, LINKS_COLLECTION),
-    where("isPublic", "==", true),
-    orderBy("createdAt", "desc")
-  );
-  const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Link));
+  try {
+    // Versuche mit orderBy, falls Index fehlt → ohne orderBy
+    try {
+      const q = query(
+        collection(db, LINKS_COLLECTION),
+        where("isPublic", "==", true),
+        orderBy("createdAt", "desc")
+      );
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Link));
+    } catch (error: any) {
+      if (error.code === "failed-precondition") {
+        // Index fehlt, versuche ohne orderBy
+        const q = query(
+          collection(db, LINKS_COLLECTION),
+          where("isPublic", "==", true)
+        );
+        const querySnapshot = await getDocs(q);
+        const links = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Link));
+        // Sortiere client-side
+        links.sort((a, b) => {
+          const aTime = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : 0;
+          const bTime = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : 0;
+          return bTime - aTime;
+        });
+        return links;
+      }
+      throw error;
+    }
+  } catch (error: any) {
+    console.error("Firestore Error beim Laden der öffentlichen Links:", error);
+    throw error;
+  }
 }
 
 export async function updateLink(id: string, data: Partial<Link>) {

@@ -1,21 +1,34 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAuthState } from "react-firebase-hooks/auth";
-import { auth } from "@/lib/firebase";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, BookOpen, Link as LinkIcon } from "lucide-react";
+import { ArrowRight, BookOpen, Link as LinkIcon, Calendar, Tag } from "lucide-react";
+import { getPublicNotes, getPublicLinks } from "@/lib/firestore";
+import type { Note, Link as LinkType } from "@/types";
 
 export default function HomePage() {
-  const [user, loading] = useAuthState(auth);
-  const router = useRouter();
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [links, setLinks] = useState<LinkType[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push("/login");
+    loadPublicContent();
+  }, []);
+
+  const loadPublicContent = async () => {
+    try {
+      const [publicNotes, publicLinks] = await Promise.all([
+        getPublicNotes(),
+        getPublicLinks()
+      ]);
+      setNotes(publicNotes);
+      setLinks(publicLinks);
+    } catch (error) {
+      console.error("Fehler beim Laden:", error);
+    } finally {
+      setLoading(false);
     }
-  }, [user, loading, router]);
+  };
 
   if (loading) {
     return (
@@ -23,10 +36,6 @@ export default function HomePage() {
         <div className="text-stone-400">Lädt...</div>
       </div>
     );
-  }
-
-  if (!user) {
-    return null;
   }
 
   return (
@@ -41,38 +50,100 @@ export default function HomePage() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6 mb-12">
-          <Link
-            href="/dashboard"
-            className="group p-8 bg-stone-900 rounded-2xl border border-stone-800 hover:border-stone-700 transition-all"
-          >
-            <BookOpen className="h-8 w-8 text-rose-500 mb-4" />
-            <h2 className="text-xl font-bold mb-2">Dashboard</h2>
-            <p className="text-stone-400 mb-4">
-              Verwalte deine Notizen und Links
-            </p>
-            <div className="flex items-center text-rose-500 group-hover:translate-x-1 transition-transform">
-              Öffnen <ArrowRight className="h-4 w-4 ml-2" />
+        {/* Public Notes */}
+        {notes.length > 0 && (
+          <div className="mb-16">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-3xl font-bold">Notizen & Artikel</h2>
+              <Link
+                href="/dashboard"
+                className="text-sm text-stone-400 hover:text-stone-100 transition-colors flex items-center gap-2"
+              >
+                Dashboard <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
-          </Link>
-
-          <Link
-            href="/public"
-            className="group p-8 bg-stone-900 rounded-2xl border border-stone-800 hover:border-stone-700 transition-all"
-          >
-            <LinkIcon className="h-8 w-8 text-emerald-500 mb-4" />
-            <h2 className="text-xl font-bold mb-2">Public Inhalte</h2>
-            <p className="text-stone-400 mb-4">
-              Öffentliche Notizen und Links
-            </p>
-            <div className="flex items-center text-emerald-500 group-hover:translate-x-1 transition-transform">
-              Ansehen <ArrowRight className="h-4 w-4 ml-2" />
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {notes.map((note) => (
+                <Link
+                  key={note.id}
+                  href={`/note?slug=${note.slug || note.id}`}
+                  className="group p-6 bg-stone-900 rounded-xl border border-stone-800 hover:border-stone-700 transition-all"
+                >
+                  <h3 className="text-xl font-bold mb-2 group-hover:text-rose-400 transition-colors">
+                    {note.title}
+                  </h3>
+                  <p className="text-stone-400 text-sm line-clamp-3 mb-4">
+                    {note.content?.substring(0, 150)}...
+                  </p>
+                  <div className="flex items-center gap-4 text-xs text-stone-500">
+                    {note.createdAt?.toDate && (
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-3 w-3" />
+                        {note.createdAt.toDate().toLocaleDateString("de-DE")}
+                      </div>
+                    )}
+                    {note.tags && note.tags.length > 0 && (
+                      <div className="flex items-center gap-1">
+                        <Tag className="h-3 w-3" />
+                        {note.tags[0]}
+                      </div>
+                    )}
+                  </div>
+                </Link>
+              ))}
             </div>
-          </Link>
-        </div>
+          </div>
+        )}
 
-        <div className="text-center text-stone-500 text-sm">
-          <p>Privat & Public • Notizen • Links • Gedanken</p>
+        {/* Public Links */}
+        {links.length > 0 && (
+          <div className="mb-16">
+            <h2 className="text-3xl font-bold mb-8">Links</h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {links.map((link) => (
+                <a
+                  key={link.id}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group p-6 bg-stone-900 rounded-xl border border-stone-800 hover:border-stone-700 transition-all"
+                >
+                  <LinkIcon className="h-6 w-6 text-emerald-500 mb-3" />
+                  <h3 className="text-lg font-bold mb-2 group-hover:text-emerald-400 transition-colors">
+                    {link.title}
+                  </h3>
+                  {link.description && (
+                    <p className="text-stone-400 text-sm mb-3 line-clamp-2">
+                      {link.description}
+                    </p>
+                  )}
+                  <p className="text-xs text-stone-500 truncate">{link.url}</p>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {notes.length === 0 && links.length === 0 && (
+          <div className="text-center py-20">
+            <BookOpen className="h-16 w-16 text-stone-700 mx-auto mb-4" />
+            <h3 className="text-xl font-bold mb-2">Noch keine öffentlichen Inhalte</h3>
+            <p className="text-stone-400 mb-6">
+              Die ersten Notizen und Links werden hier erscheinen
+            </p>
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-rose-600 hover:bg-rose-700 rounded-xl transition-colors"
+            >
+              Zum Dashboard <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="text-center text-stone-500 text-sm pt-12 border-t border-stone-800">
+          <p>Karakedimartin • Gedankenwerkstatt • Notizen • Links</p>
         </div>
       </div>
     </div>

@@ -251,9 +251,9 @@ export default function DashboardPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 ml-4">
-                      {note.isPublic && note.slug && (
+                      {note.isPublic && (note.slug || note.id) && (
                         <a
-                          href={`/public/note/${note.slug}`}
+                          href={`/note?slug=${note.slug || note.id}`}
                           target="_blank"
                           className="p-2 hover:bg-stone-800 rounded-lg transition-colors"
                           title="Öffentliche Seite öffnen"
