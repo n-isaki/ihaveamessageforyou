@@ -30,8 +30,16 @@ export default function AdminDashboard() {
     const [bulkDeleteIds, setBulkDeleteIds] = useState([]);
 
     const [searchParams, setSearchParams] = useSearchParams();
-    const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'kamlimos');
     const [searchQuery, setSearchQuery] = useState('');
+    
+    // Active Tab aus URL lesen
+    const activeTab = searchParams.get('tab') || 'kamlimos';
+    
+    // Reagiere auf Tab-Änderungen in der URL
+    useEffect(() => {
+        const tabFromUrl = searchParams.get('tab') || 'kamlimos';
+        // Tab ist bereits in activeTab gesetzt, keine weitere Aktion nötig
+    }, [searchParams]);
     const viewParam = searchParams.get('view');
     
     // Bulk Select State
