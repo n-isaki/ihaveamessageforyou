@@ -9,8 +9,8 @@ node_modules/
 .gitignore
 
 # IDE
-.vscode/
-.idea/
+.vscode/*
+.idea/*
 *.swp
 *.swo
 *~
@@ -30,5 +30,5 @@ npm-debug.log*
 !.env.example
 
 # Build files (falls vorhanden)
-dist/
-build/
+dist/*
+build/*
