@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { getGifts, deleteGift, updateGift } from '../services/gifts';
-import { Plus, Loader, Menu, ShoppingBag, Heart } from 'lucide-react';
+import { Plus, Loader, Menu, ShoppingBag, Heart, Search, X } from 'lucide-react';
 import AdminSidebar from '../components/AdminSidebar';
 import AdminKanban from '../components/AdminKanban';
 import AdminStats from '../components/admin/AdminStats';
@@ -30,6 +30,7 @@ export default function AdminDashboard() {
 
     const [searchParams, setSearchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'kamlimos');
+    const [searchQuery, setSearchQuery] = useState('');
     const viewParam = searchParams.get('view');
 
     useEffect(() => {
@@ -85,10 +86,32 @@ export default function AdminDashboard() {
     };
 
     const filteredGifts = gifts.filter(g => {
-        if (activeTab === 'noor' || activeTab === 'dua') return g.project === 'noor' || g.project === 'dua';
-        if (activeTab === 'memoria') return g.project === 'memoria';
-        if (activeTab === 'ritual') return g.project === 'ritual' || (g.productType === 'bracelet' && (!g.project || g.project === 'kamlimos'));
-        return (!g.project || g.project === 'kamlimos') && g.productType !== 'bracelet';
+        // Tab-Filter
+        let matchesTab = false;
+        if (activeTab === 'noor' || activeTab === 'dua') matchesTab = g.project === 'noor' || g.project === 'dua';
+        else if (activeTab === 'memoria') matchesTab = g.project === 'memoria';
+        else if (activeTab === 'ritual') matchesTab = g.project === 'ritual' || (g.productType === 'bracelet' && (!g.project || g.project === 'kamlimos'));
+        else matchesTab = (!g.project || g.project === 'kamlimos') && g.productType !== 'bracelet';
+        
+        if (!matchesTab) return false;
+        
+        // Search-Filter
+        if (!searchQuery.trim()) return true;
+        
+        const query = searchQuery.toLowerCase().trim();
+        const searchFields = [
+            g.customerName || '',
+            g.customerEmail || '',
+            g.senderName || '',
+            g.recipientName || '',
+            g.orderId || '',
+            g.id || '',
+            g.headline || '',
+            g.title || '',
+            g.deceasedName || ''
+        ];
+        
+        return searchFields.some(field => field.toLowerCase().includes(query));
     });
 
     const toggleExpand = (id) => {
@@ -209,6 +232,34 @@ export default function AdminDashboard() {
                                         Neuer Auftrag
                                     </Link>
                                 </div>
+                            </div>
+
+                            {/* Search Input */}
+                            <div className="max-w-6xl mx-auto mb-6">
+                                <div className="relative">
+                                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-stone-400" />
+                                    <input
+                                        type="text"
+                                        placeholder="Suche nach Name, Email, Bestellnummer, ID..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="w-full pl-12 pr-12 py-3 border border-stone-200 rounded-xl bg-white text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all"
+                                    />
+                                    {searchQuery && (
+                                        <button
+                                            onClick={() => setSearchQuery('')}
+                                            className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 hover:bg-stone-100 rounded-lg transition-colors"
+                                            title="Suche löschen"
+                                        >
+                                            <X className="h-4 w-4 text-stone-400" />
+                                        </button>
+                                    )}
+                                </div>
+                                {searchQuery && (
+                                    <p className="mt-2 text-sm text-stone-500">
+                                        {filteredGifts.length} {filteredGifts.length === 1 ? 'Ergebnis' : 'Ergebnisse'} gefunden
+                                    </p>
+                                )}
                             </div>
 
                             <div className="space-y-4">
