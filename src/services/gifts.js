@@ -125,6 +125,16 @@ export const getGifts = async () => {
 
 export const getGiftById = async (id) => {
     try {
+        // Debug: Check authentication
+        const currentUser = auth.currentUser;
+        console.log("🔍 getGiftById Debug:", {
+            id,
+            isAuthenticated: !!currentUser,
+            userId: currentUser?.uid,
+            email: currentUser?.email,
+            hostname: window.location.hostname
+        });
+        
         const docRef = doc(db, COLLECTION_NAME, id);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
@@ -133,7 +143,13 @@ export const getGiftById = async (id) => {
             return null;
         }
     } catch (error) {
-        console.error("Error getting gift:", error);
+        console.error("❌ Error getting gift:", error);
+        console.error("Error details:", {
+            code: error.code,
+            message: error.message,
+            hostname: window.location.hostname,
+            isAuthenticated: auth?.currentUser != null
+        });
         throw error;
     }
 };
