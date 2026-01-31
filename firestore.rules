@@ -67,16 +67,10 @@ service cloud.firestore {
                       && onlyAllowedFields(['messages', 'headline', 'subheadline', 'locked', 
                                             'setupCompletedAt', 'setupStarted', 'setupStartedAt',
                                             'deceasedName', 'lifeDates', 'meaningText',
-                                            'engravingText', 'meaningText', 'accessCode', 'securityToken']))
+                                            'engravingText', 'meaningText', 'accessCode', 'securityToken', 'updatedAt']))
                   || (!isLocked() 
-                      && onlyAllowedFields(['setupStarted', 'setupStartedAt'])) // ✅ Allow setupStarted updates without token (called from CustomerSetup after token validation)
-                  || (!isLocked() 
-                      && isOwner()
-                      && onlyAllowedFields(['messages', 'headline', 'subheadline', 'locked', 
-                                            'setupCompletedAt', 'setupStarted', 'setupStartedAt',
-                                            'deceasedName', 'lifeDates', 'meaningText',
-                                            'engravingText', 'meaningText', 'accessCode']))
-                  || onlyAllowedFields(['viewed', 'viewedAt']); // ✅ Erlaube viewed/viewedAt Updates für alle (locked oder unlocked)
+                      && onlyAllowedFields(['setupStarted', 'setupStartedAt', 'updatedAt'])) // ✅ Allow setupStarted updates without token
+                  || onlyAllowedFields(['viewed', 'viewedAt', 'updatedAt']); // ✅ Erlaube viewed/viewedAt Updates für alle (locked oder unlocked)
       
       // DELETE: Only Admin
       allow delete: if isAdmin();
