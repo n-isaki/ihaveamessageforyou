@@ -31,6 +31,8 @@ export default function MemoriaModal({ isOpen, onClose, onSuccess }) {
             });
             
             // Get the created gift to get securityToken
+            // Wait a bit to ensure document is fully written
+            await new Promise(resolve => setTimeout(resolve, 500));
             const { getGiftById } = await import('../../services/gifts');
             const createdGift = await getGiftById(giftId);
             
