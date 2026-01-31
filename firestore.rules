@@ -35,7 +35,7 @@ service cloud.firestore {
       // 3. Locked gifts are publicly readable (for viewer links without token - PIN protects content client-side)
       allow read: if isAdmin() 
                   || isValidToken()
-                  || (isLocked() && resource.data != null);
+                  || isLocked();
       
       // CREATE: Only Admin or Shopify Webhook (with shopifyOrderId)
       allow create: if isAdmin() 
