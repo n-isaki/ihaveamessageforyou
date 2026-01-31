@@ -141,35 +141,56 @@ export const getGifts = async () => {
     }
 };
 
-export const getGiftById = async (id) => {
-    try {
-        // Debug: Check authentication
-        const currentUser = auth.currentUser;
-        console.log("🔍 getGiftById Debug:", {
-            id,
-            isAuthenticated: !!currentUser,
-            userId: currentUser?.uid,
-            email: currentUser?.email,
-            hostname: window.location.hostname
-        });
-        
-        const docRef = doc(db, COLLECTION_NAME, id);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-            return { id: docSnap.id, ...docSnap.data() };
-        } else {
-            return null;
+export const getGiftById = async (id, retries = 3) => {
+    // Debug: Check authentication
+    const currentUser = auth.currentUser;
+    console.log("🔍 getGiftById Debug:", {
+        id,
+        isAuthenticated: !!currentUser,
+        userId: currentUser?.uid,
+        email: currentUser?.email,
+        hostname: window.location.hostname,
+        retriesLeft: retries
+    });
+    
+    for (let attempt = 0; attempt < retries; attempt++) {
+        try {
+            const docRef = doc(db, COLLECTION_NAME, id);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                console.log("✅ Gift found on attempt", attempt + 1);
+                return { id: docSnap.id, ...docSnap.data() };
+            } else {
+                // Document doesn't exist yet, wait and retry
+                if (attempt < retries - 1) {
+                    console.log(`⏳ Document not found, waiting... (attempt ${attempt + 1}/${retries})`);
+                    await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1))); // Exponential backoff
+                    continue;
+                }
+                return null;
+            }
+        } catch (error) {
+            console.error(`❌ Error getting gift (attempt ${attempt + 1}/${retries}):`, error);
+            console.error("Error details:", {
+                code: error.code,
+                message: error.message,
+                hostname: window.location.hostname,
+                isAuthenticated: auth?.currentUser != null
+            });
+            
+            // If it's a permission error and we have retries left, wait and retry
+            if (error.code === 'permission-denied' && attempt < retries - 1) {
+                console.log(`⏳ Permission denied, waiting and retrying... (attempt ${attempt + 1}/${retries})`);
+                await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+                continue;
+            }
+            
+            // Last attempt or non-permission error - throw
+            throw error;
         }
-    } catch (error) {
-        console.error("❌ Error getting gift:", error);
-        console.error("Error details:", {
-            code: error.code,
-            message: error.message,
-            hostname: window.location.hostname,
-            isAuthenticated: auth?.currentUser != null
-        });
-        throw error;
     }
+    
+    return null;
 };
 
 export const markGiftAsViewed = async (id) => {
