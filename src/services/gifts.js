@@ -11,7 +11,7 @@ import {
     orderBy
 } from "firebase/firestore";
 import { ref, deleteObject } from "firebase/storage";
-import { db, storage } from "../firebase";
+import { db, storage, auth } from "../firebase";
 import { getExperience } from "../modules/registry";
 
 const COLLECTION_NAME = "gift_orders";
@@ -38,6 +38,16 @@ export const createEtsyOrder = async (data) => {
 
 export const createGift = async (giftData) => {
     try {
+        // Debug: Check authentication before creating
+        const currentUser = auth.currentUser;
+        console.log("🔍 createGift Debug:", {
+            isAuthenticated: !!currentUser,
+            userId: currentUser?.uid,
+            email: currentUser?.email,
+            hostname: window.location.hostname,
+            platform: giftData.platform || 'manual'
+        });
+        
         // Determine if this product type requires setup
         const exp = getExperience(giftData);
         const requiresSetup = exp.isSetupRequired !== false; // Default to true if not specified
@@ -55,9 +65,17 @@ export const createGift = async (giftData) => {
             viewed: false,
             viewedAt: null
         });
+        
+        console.log("✅ Gift created with ID:", docRef.id);
         return docRef.id;
     } catch (error) {
-        console.error("Error creating gift:", error);
+        console.error("❌ Error creating gift:", error);
+        console.error("Error details:", {
+            code: error.code,
+            message: error.message,
+            hostname: window.location.hostname,
+            isAuthenticated: auth?.currentUser != null
+        });
         throw error;
     }
 };
