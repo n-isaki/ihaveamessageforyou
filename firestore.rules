@@ -58,10 +58,9 @@ service cloud.firestore {
       
       // UPDATE: 
       // 1. Admin can always update
-      // 2. Setup Phase (NOT locked): Owner can update allowed fields (token validated client-side)
+      // 2. Setup Phase (NOT locked): Allow updates if token matches OR if only updating setupStarted/setupStartedAt
       // 3. Locked: Only 'viewed'/'viewedAt' can be updated
       // 4. Anyone can update 'viewed'/'viewedAt' (for viewer pages to mark as seen)
-      // 5. Allow updates for unlocked gifts if securityToken matches (for setup pages)
       allow update: if isAdmin()
                   || (!isLocked() 
                       && hasValidTokenInUpdate()
@@ -69,6 +68,8 @@ service cloud.firestore {
                                             'setupCompletedAt', 'setupStarted', 'setupStartedAt',
                                             'deceasedName', 'lifeDates', 'meaningText',
                                             'engravingText', 'meaningText', 'accessCode', 'securityToken']))
+                  || (!isLocked() 
+                      && onlyAllowedFields(['setupStarted', 'setupStartedAt'])) // ✅ Allow setupStarted updates without token (called from CustomerSetup after token validation)
                   || (!isLocked() 
                       && isOwner()
                       && onlyAllowedFields(['messages', 'headline', 'subheadline', 'locked', 
