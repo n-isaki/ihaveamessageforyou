@@ -82,13 +82,33 @@ export const createGift = async (giftData) => {
 
 export const updateGift = async (id, giftData) => {
     try {
+        // Debug: Log what we're trying to update
+        const currentUser = auth.currentUser;
+        console.log("🔍 updateGift Debug:", {
+            id,
+            isAuthenticated: !!currentUser,
+            userId: currentUser?.uid,
+            email: currentUser?.email,
+            hostname: window.location.hostname,
+            dataToUpdate: giftData,
+            hasSecurityToken: !!giftData.securityToken
+        });
+        
         const docRef = doc(db, COLLECTION_NAME, id);
         await updateDoc(docRef, {
             ...giftData,
             updatedAt: serverTimestamp()
         });
+        console.log("✅ Gift updated successfully");
     } catch (error) {
-        console.error("Error updating gift:", error);
+        console.error("❌ Error updating gift:", error);
+        console.error("Error details:", {
+            code: error.code,
+            message: error.message,
+            hostname: window.location.hostname,
+            isAuthenticated: auth?.currentUser != null,
+            dataTried: giftData
+        });
         throw error;
     }
 };

@@ -24,8 +24,10 @@ service cloud.firestore {
     function hasValidTokenInUpdate() {
       // Check if the update includes a matching securityToken (sent from client)
       // This allows updates when token is validated client-side and included in update data
-      return request.resource.data.securityToken == resource.data.securityToken
-             && request.resource.data.securityToken != null;
+      // Token must exist in both old and new data and match
+      return request.resource.data.securityToken != null
+             && resource.data.securityToken != null
+             && request.resource.data.securityToken == resource.data.securityToken;
     }
     
     function isLocked() {
