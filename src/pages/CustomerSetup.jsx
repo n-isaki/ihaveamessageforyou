@@ -124,7 +124,11 @@ export default function CustomerSetup() {
                 updates.subheadline = subheadline;
             }
 
-            await updateGift(id, updates);
+            // Include securityToken in update to validate ownership in Firestore rules
+            await updateGift(id, {
+                ...updates,
+                securityToken: gift.securityToken // Include token for Firestore rule validation
+            });
             setLocked(true);
             setGift(prev => ({ ...prev, locked: true }));
         } catch (err) {

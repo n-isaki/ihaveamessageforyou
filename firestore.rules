@@ -16,7 +16,16 @@ service cloud.firestore {
     
     function isOwner() {
       // Check if user has valid token for this document
-      return request.resource.data.securityToken == resource.data.securityToken;
+      // Token must match AND not be changed during update
+      return request.resource.data.securityToken == resource.data.securityToken
+             && request.resource.data.securityToken != null;
+    }
+    
+    function hasValidTokenInUpdate() {
+      // Check if the update includes a matching securityToken (sent from client)
+      // This allows updates when token is validated client-side and included in update data
+      return request.resource.data.securityToken == resource.data.securityToken
+             && request.resource.data.securityToken != null;
     }
     
     function isLocked() {
@@ -49,17 +58,24 @@ service cloud.firestore {
       
       // UPDATE: 
       // 1. Admin can always update
-      // 2. Setup Phase (NOT locked): Owner can update allowed fields
+      // 2. Setup Phase (NOT locked): Owner can update allowed fields (token validated client-side)
       // 3. Locked: Only 'viewed'/'viewedAt' can be updated
       // 4. Anyone can update 'viewed'/'viewedAt' (for viewer pages to mark as seen)
+      // 5. Allow updates for unlocked gifts if securityToken matches (for setup pages)
       allow update: if isAdmin()
+                  || (!isLocked() 
+                      && hasValidTokenInUpdate()
+                      && onlyAllowedFields(['messages', 'headline', 'subheadline', 'locked', 
+                                            'setupCompletedAt', 'setupStarted', 'setupStartedAt',
+                                            'deceasedName', 'lifeDates', 'meaningText',
+                                            'engravingText', 'meaningText', 'accessCode', 'securityToken']))
                   || (!isLocked() 
                       && isOwner()
                       && onlyAllowedFields(['messages', 'headline', 'subheadline', 'locked', 
                                             'setupCompletedAt', 'setupStarted', 'setupStartedAt',
                                             'deceasedName', 'lifeDates', 'meaningText',
                                             'engravingText', 'meaningText', 'accessCode']))
-                  || onlyAllowedFields(['viewed', 'viewedAt']); // ✅ NEU: Erlaube viewed/viewedAt Updates für alle (locked oder unlocked)
+                  || onlyAllowedFields(['viewed', 'viewedAt']); // ✅ Erlaube viewed/viewedAt Updates für alle (locked oder unlocked)
       
       // DELETE: Only Admin
       allow delete: if isAdmin();
