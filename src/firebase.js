@@ -14,8 +14,10 @@ const firebaseConfig = {
 };
 
 import { getStorage } from "firebase/storage";
+import { getApps } from "firebase/app";
 
-const app = initializeApp(firebaseConfig);
+// Prevent multiple Firebase initializations (important when karakedimartin is also running)
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 export const analytics = getAnalytics(app);
