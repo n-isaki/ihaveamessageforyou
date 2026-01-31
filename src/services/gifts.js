@@ -91,7 +91,9 @@ export const updateGift = async (id, giftData) => {
             email: currentUser?.email,
             hostname: window.location.hostname,
             dataToUpdate: giftData,
-            hasSecurityToken: !!giftData.securityToken
+            hasSecurityToken: !!giftData.securityToken,
+            securityTokenValue: giftData.securityToken ? giftData.securityToken.substring(0, 10) + '...' : null,
+            fieldsToUpdate: Object.keys(giftData)
         });
         
         const docRef = doc(db, COLLECTION_NAME, id);
