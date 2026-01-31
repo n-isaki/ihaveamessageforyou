@@ -48,6 +48,7 @@ export const createGift = async (giftData) => {
         
         const docRef = await addDoc(collection(db, COLLECTION_NAME), {
             securityToken: self.crypto.randomUUID(), // Ensure every gift has a token for setup
+            platform: giftData.platform || 'manual', // Ensure platform is set for Firestore rules
             ...giftData,
             locked: shouldBeLocked ? true : (giftData.locked ?? false),
             createdAt: serverTimestamp(),
