@@ -28,6 +28,10 @@ fi
 echo "📦 Building..."
 npm run build:all
 
+# Deploy Firestore Rules (shared between staging and production)
+echo "📋 Deploying Firestore Rules..."
+firebase deploy --only firestore:rules
+
 # Deploy to production
 echo "🌐 Deploying to Firebase Production..."
 firebase deploy --only hosting:production
