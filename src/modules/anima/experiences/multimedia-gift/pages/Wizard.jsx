@@ -178,7 +178,10 @@ export default function GiftWizard() {
             if (isEditMode) {
                 await updateGift(id, formData);
             } else {
-                await createGift(formData);
+                const giftId = await createGift(formData);
+                console.log("✅ Gift created successfully:", giftId);
+                // Wait a bit to ensure Firestore has fully written the document
+                await new Promise(resolve => setTimeout(resolve, 1000));
             }
             navigate(`/admin/dashboard?tab=${getDashboardTab()}`);
         } catch (err) {
