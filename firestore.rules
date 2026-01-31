@@ -51,6 +51,7 @@ service cloud.firestore {
       // 1. Admin can always update
       // 2. Setup Phase (NOT locked): Owner can update allowed fields
       // 3. Locked: Only 'viewed'/'viewedAt' can be updated
+      // 4. Anyone can update 'viewed'/'viewedAt' (for viewer pages to mark as seen)
       allow update: if isAdmin()
                   || (!isLocked() 
                       && isOwner()
@@ -58,8 +59,7 @@ service cloud.firestore {
                                             'setupCompletedAt', 'setupStarted', 'setupStartedAt',
                                             'deceasedName', 'lifeDates', 'meaningText',
                                             'engravingText', 'meaningText', 'accessCode']))
-                  || (isLocked() 
-                      && onlyAllowedFields(['viewed', 'viewedAt']));
+                  || onlyAllowedFields(['viewed', 'viewedAt']); // ✅ NEU: Erlaube viewed/viewedAt Updates für alle (locked oder unlocked)
       
       // DELETE: Only Admin
       allow delete: if isAdmin();
