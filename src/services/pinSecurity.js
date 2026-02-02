@@ -55,11 +55,27 @@ export async function comparePin(pin, hash) {
  */
 export async function verifyGiftPin(giftId, pin) {
     try {
+        if (!giftId || !pin) {
+            console.error('verifyGiftPin: Missing giftId or pin', { giftId, pin });
+            return false;
+        }
+        
+        console.log('verifyGiftPin: Calling Cloud Function with', { giftId, pinLength: pin.length });
         const verifyGiftPinFunction = httpsCallable(functions, 'verifyGiftPin');
-        const result = await verifyGiftPinFunction({ giftId, pin });
-        return result.data.match;
+        const result = await verifyGiftPinFunction({ 
+            giftId: String(giftId), 
+            pin: String(pin) 
+        });
+        
+        console.log('verifyGiftPin: Result', result.data);
+        return result.data.match === true;
     } catch (error) {
         console.error('Error verifying gift PIN:', error);
+        console.error('Error details:', {
+            code: error.code,
+            message: error.message,
+            details: error.details
+        });
         return false;
     }
 }

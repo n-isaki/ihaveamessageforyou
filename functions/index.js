@@ -190,10 +190,24 @@ exports.verifyGiftPin = onRequest({ cors: true }, async (req, res) => {
   }
 
   try {
+    console.log('verifyGiftPin called with body:', JSON.stringify(req.body));
     const { giftId, pin } = req.body;
 
-    if (!giftId || !pin) {
-      res.status(400).json({ error: 'Missing giftId or pin' });
+    if (!giftId || giftId === '') {
+      console.error('Missing giftId');
+      res.status(400).json({ error: 'Missing giftId' });
+      return;
+    }
+
+    if (!pin || pin === '') {
+      console.error('Missing pin');
+      res.status(400).json({ error: 'Missing pin' });
+      return;
+    }
+
+    if (typeof pin !== 'string') {
+      console.error('Invalid pin type:', typeof pin);
+      res.status(400).json({ error: 'Invalid pin type' });
       return;
     }
 
