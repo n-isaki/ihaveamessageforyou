@@ -142,6 +142,11 @@ export default function GiftReveal({ initialData }) {
             return;
         }
         
+        if (!id) {
+            setError("Geschenk-ID fehlt.");
+            return;
+        }
+        
         // Rate Limiting: Check if too many attempts
         if (checkRateLimit(`pin_${id}`)) {
             const remaining = getRemainingAttempts(`pin_${id}`);
@@ -151,7 +156,8 @@ export default function GiftReveal({ initialData }) {
         
         try {
             // Verify PIN server-side (supports both hashed and plain text for backward compatibility)
-            const isValid = await verifyGiftPin(id, pin);
+            console.log('Verifying PIN for gift:', { id, pinLength: pin.length, hasGift: !!gift });
+            const isValid = await verifyGiftPin(id, pin.trim());
             
             if (isValid) {
                 // Success: Reset rate limit
