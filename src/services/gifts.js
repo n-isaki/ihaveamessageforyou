@@ -57,10 +57,26 @@ export const createGift = async (giftData) => {
         // unless explicitly set to false
         const shouldBeLocked = !requiresSetup && giftData.locked !== false;
         
+        // Hash PIN if provided (server-side security)
+        let accessCodeHash = null;
+        if (giftData.accessCode && typeof giftData.accessCode === 'string' && giftData.accessCode.length > 0) {
+            try {
+                accessCodeHash = await hashPin(giftData.accessCode);
+                // Keep plain text for backward compatibility and QR code printing
+                // In future, we can remove accessCode and only use accessCodeHash
+            } catch (error) {
+                console.error('Error hashing PIN, storing plain text:', error);
+                // Fallback: Store plain text if hashing fails (backward compatibility)
+            }
+        }
+        
         const docRef = await addDoc(collection(db, COLLECTION_NAME), {
             securityToken: self.crypto.randomUUID(), // Ensure every gift has a token for setup
             platform: giftData.platform || 'manual', // Ensure platform is set for Firestore rules
             ...giftData,
+            // Store both hash and plain text for now (migration period)
+            // accessCodeHash will be used for verification, accessCode for display/QR codes
+            ...(accessCodeHash && { accessCodeHash }),
             locked: shouldBeLocked ? true : (giftData.locked ?? false),
             createdAt: serverTimestamp(),
             viewed: false,

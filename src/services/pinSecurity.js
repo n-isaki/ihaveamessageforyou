@@ -4,7 +4,15 @@
  */
 
 import { httpsCallable } from "firebase/functions";
-import { functions } from "../firebase.js";
+import { getApps, getApp } from "firebase/app";
+import { getFunctions } from "firebase/functions";
+
+// Get the same app instance that firebase.js uses
+const app = getApps().length > 0 ? getApp() : null;
+if (!app) {
+    throw new Error("Firebase app not initialized. Import firebase.js first.");
+}
+const functions = getFunctions(app);
 
 /**
  * Hash a PIN code securely (server-side)
