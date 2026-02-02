@@ -5,6 +5,7 @@ import { Lock, Play, Loader, Heart, Sparkles, Type } from 'lucide-react';
 import { motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import ReactMarkdown from 'react-markdown';
+import { checkRateLimit, resetRateLimit, getRemainingAttempts } from '@/utils/security';
 
 export default function GiftReveal({ initialData }) {
     const { id } = useParams();
@@ -134,7 +135,17 @@ export default function GiftReveal({ initialData }) {
 
     const handleUnlock = async (e) => {
         e.preventDefault();
+        
+        // Rate Limiting: Check if too many attempts
+        if (checkRateLimit(`pin_${id}`)) {
+            const remaining = getRemainingAttempts(`pin_${id}`);
+            setError(`Zu viele Versuche. Bitte warte eine Stunde. (${remaining} Versuche übrig)`);
+            return;
+        }
+        
         if (gift && pin === gift.accessCode) {
+            // Success: Reset rate limit
+            resetRateLimit(`pin_${id}`);
             setUnlocked(true);
 
             // Mark as viewed when unlocked with PIN
@@ -146,7 +157,8 @@ export default function GiftReveal({ initialData }) {
                 setTimeout(() => triggerAnimation(gift.openingAnimation), 500);
             }
         } else {
-            setError("Falscher PIN Code.");
+            const remaining = getRemainingAttempts(`pin_${id}`);
+            setError(`Falscher PIN Code. (${remaining} Versuche übrig)`);
         }
     };
 

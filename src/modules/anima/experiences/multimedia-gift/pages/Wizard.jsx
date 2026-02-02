@@ -6,6 +6,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Plus, Trash2, Video, MessageSquare, ArrowRight, ArrowLeft, Save, Loader, Coffee, Watch, Music, FileAudio, UploadCloud, Zap, Heart, Image as ImageIcon, Menu } from 'lucide-react';
 import WizardMessageEditor from '../components/WizardMessageEditor';
 import AdminSidebar from '@/components/AdminSidebar';
+import { sanitizeInput, isValidMessage } from '@/utils/security';
 
 export default function GiftWizard() {
     const navigate = useNavigate();

@@ -9,6 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { getExperience } from '../modules/registry';
+import { sanitizeInput, isValidMessage } from '../utils/security';
 
 export default function CustomerSetup() {
     const { id } = useParams();
