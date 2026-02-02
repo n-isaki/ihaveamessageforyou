@@ -164,7 +164,9 @@ exports.comparePin = onRequest({ cors: true }, async (req, res) => {
   }
 
   try {
-    const { pin, hash } = req.body;
+    // httpsCallable sends data in req.body.data
+    const requestData = req.body.data || req.body;
+    const { pin, hash } = requestData;
 
     if (!pin || !hash || typeof pin !== 'string' || typeof hash !== 'string') {
       res.status(400).json({ error: 'Invalid parameters' });
@@ -234,18 +236,20 @@ exports.verifyGiftPin = onRequest({ cors: true }, async (req, res) => {
     // If hash exists, compare with hash
     if (accessCodeHash) {
       const match = await bcrypt.compare(pin, accessCodeHash);
-      res.status(200).json({ match });
+      // httpsCallable expects response in { data: ... } format
+      res.status(200).json({ data: { match } });
       return;
     }
 
     // Fallback: Compare with plain text (backward compatibility)
     if (accessCode) {
-      res.status(200).json({ match: pin === accessCode });
+      // httpsCallable expects response in { data: ... } format
+      res.status(200).json({ data: { match: pin === accessCode } });
       return;
     }
 
     // No PIN set
-    res.status(200).json({ match: false });
+    res.status(200).json({ data: { match: false } });
   } catch (error) {
     console.error('Error verifying gift PIN:', error);
     res.status(500).json({ error: 'Internal server error' });
