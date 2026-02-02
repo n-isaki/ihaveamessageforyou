@@ -97,11 +97,29 @@ export const updateGift = async (id, giftData) => {
             fieldsToUpdate: Object.keys(giftData)
         });
         
-        const docRef = doc(db, COLLECTION_NAME, id);
-        await updateDoc(docRef, {
+        // Hash PIN if accessCode is being updated
+        let accessCodeHash = null;
+        if (giftData.accessCode && typeof giftData.accessCode === 'string' && giftData.accessCode.length > 0) {
+            try {
+                accessCodeHash = await hashPin(giftData.accessCode);
+            } catch (error) {
+                console.error('Error hashing PIN during update:', error);
+                // Continue without hash (backward compatibility)
+            }
+        }
+        
+        const updateData = {
             ...giftData,
             updatedAt: serverTimestamp()
-        });
+        };
+        
+        // Add hash if available
+        if (accessCodeHash) {
+            updateData.accessCodeHash = accessCodeHash;
+        }
+        
+        const docRef = doc(db, COLLECTION_NAME, id);
+        await updateDoc(docRef, updateData);
         console.log("✅ Gift updated successfully");
     } catch (error) {
         console.error("❌ Error updating gift:", error);
