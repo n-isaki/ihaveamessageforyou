@@ -131,7 +131,9 @@ exports.hashPin = onRequest({ cors: true }, async (req, res) => {
   }
 
   try {
-    const { pin } = req.body;
+    // httpsCallable sends data in req.body.data
+    const requestData = req.body.data || req.body;
+    const { pin } = requestData;
 
     if (!pin || typeof pin !== 'string' || pin.length < 4 || pin.length > 8) {
       res.status(400).json({ error: 'Invalid PIN format' });
@@ -141,7 +143,8 @@ exports.hashPin = onRequest({ cors: true }, async (req, res) => {
     const saltRounds = 10;
     const hash = await bcrypt.hash(pin, saltRounds);
 
-    res.status(200).json({ hash });
+    // httpsCallable expects response in { data: ... } format
+    res.status(200).json({ data: { hash } });
   } catch (error) {
     console.error('Error hashing PIN:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -170,7 +173,8 @@ exports.comparePin = onRequest({ cors: true }, async (req, res) => {
 
     const match = await bcrypt.compare(pin, hash);
 
-    res.status(200).json({ match });
+    // httpsCallable expects response in { data: ... } format
+    res.status(200).json({ data: { match } });
   } catch (error) {
     console.error('Error comparing PIN:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -190,8 +194,11 @@ exports.verifyGiftPin = onRequest({ cors: true }, async (req, res) => {
   }
 
   try {
-    console.log('verifyGiftPin called with body:', JSON.stringify(req.body));
-    const { giftId, pin } = req.body;
+    // httpsCallable sends data in req.body.data, not req.body directly
+    const requestData = req.body.data || req.body;
+    console.log('verifyGiftPin called with:', JSON.stringify({ body: req.body, requestData }));
+    
+    const { giftId, pin } = requestData;
 
     if (!giftId || giftId === '') {
       console.error('Missing giftId');
