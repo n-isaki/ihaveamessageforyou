@@ -16,6 +16,7 @@ export default function GiftReveal({ initialData }) {
     const [error, setError] = useState('');
     const [unlocked, setUnlocked] = useState(false);
     const [fontSizeLevel, setFontSizeLevel] = useState(0); // 0=Normal, 1=Large, 2=Extra Large
+    const [isVerifyingPin, setIsVerifyingPin] = useState(false);
     const isPreview = !!initialData;
     const messagesEndRef = useRef(null);
 
@@ -154,6 +155,9 @@ export default function GiftReveal({ initialData }) {
             return;
         }
         
+        setIsVerifyingPin(true);
+        setError('');
+        
         try {
             // Verify PIN server-side (supports both hashed and plain text for backward compatibility)
             console.log('Verifying PIN for gift:', { id, pinLength: pin.length, hasGift: !!gift });
@@ -192,6 +196,8 @@ export default function GiftReveal({ initialData }) {
                 const remaining = getRemainingAttempts(`pin_${id}`);
                 setError(`Falscher PIN Code. (${remaining} Versuche übrig)`);
             }
+        } finally {
+            setIsVerifyingPin(false);
         }
     };
 
@@ -254,17 +260,47 @@ export default function GiftReveal({ initialData }) {
                                     setPin(e.target.value);
                                     setError('');
                                 }}
-                                className="block w-full text-center text-3xl tracking-widest bg-stone-950/50 border border-stone-700 text-white rounded-xl py-4 focus:ring-1 focus:ring-rose-500/50 focus:border-rose-500/50 outline-none transition-all placeholder-stone-700 font-mono uppercase"
+                                disabled={isVerifyingPin}
+                                className="block w-full text-center text-3xl tracking-widest bg-stone-950/50 border border-stone-700 text-white rounded-xl py-4 focus:ring-1 focus:ring-rose-500/50 focus:border-rose-500/50 outline-none transition-all placeholder-stone-700 font-mono uppercase disabled:opacity-50 disabled:cursor-not-allowed"
                                 placeholder="CODE"
                             />
                             {error && (
-                                <div className="text-rose-500 text-xs font-medium tracking-wide">{error}</div>
+                                <motion.div
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="text-rose-500 text-xs font-medium tracking-wide"
+                                >
+                                    {error}
+                                </motion.div>
+                            )}
+                            {isVerifyingPin && (
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className="flex flex-col items-center gap-3 py-2"
+                                >
+                                    <div className="relative">
+                                        <Loader className="h-6 w-6 animate-spin text-rose-500" />
+                                        <div className="absolute inset-0 bg-rose-500/20 rounded-full blur-md animate-pulse"></div>
+                                    </div>
+                                    <p className="text-stone-400 text-sm font-light tracking-wide">
+                                        Nachricht wird geladen...
+                                    </p>
+                                </motion.div>
                             )}
                             <button
                                 type="submit"
-                                className="w-full py-4 px-4 rounded-xl text-sm font-medium tracking-wide text-white bg-rose-600 hover:bg-rose-500 active:scale-95 transition-all shadow-lg shadow-rose-900/20 mt-2"
+                                disabled={isVerifyingPin || !pin}
+                                className="w-full py-4 px-4 rounded-xl text-sm font-medium tracking-wide text-white bg-rose-600 hover:bg-rose-500 active:scale-95 transition-all shadow-lg shadow-rose-900/20 mt-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-rose-600 relative overflow-hidden"
                             >
-                                Nachricht öffnen
+                                {isVerifyingPin ? (
+                                    <span className="flex items-center justify-center gap-2">
+                                        <Loader className="h-4 w-4 animate-spin" />
+                                        <span>Wird geladen...</span>
+                                    </span>
+                                ) : (
+                                    'Nachricht öffnen'
+                                )}
                             </button>
                         </form>
                     </motion.div>
