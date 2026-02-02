@@ -113,3 +113,120 @@ function getCustomerName(order) {
   }
   return 'Unbekannt';
 }
+
+// ============================================
+// PIN HASHING FUNCTIONS (Server-side Security)
+// ============================================
+
+/**
+ * Hash a PIN code securely (server-side only)
+ * POST /hashPin
+ * Body: { pin: string }
+ * Returns: { hash: string }
+ */
+exports.hashPin = onRequest({ cors: true }, async (req, res) => {
+  if (req.method !== 'POST') {
+    res.status(405).send('Method Not Allowed');
+    return;
+  }
+
+  try {
+    const { pin } = req.body;
+
+    if (!pin || typeof pin !== 'string' || pin.length < 4 || pin.length > 8) {
+      res.status(400).json({ error: 'Invalid PIN format' });
+      return;
+    }
+
+    const saltRounds = 10;
+    const hash = await bcrypt.hash(pin, saltRounds);
+
+    res.status(200).json({ hash });
+  } catch (error) {
+    console.error('Error hashing PIN:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * Compare a PIN with a hash (server-side only)
+ * POST /comparePin
+ * Body: { pin: string, hash: string }
+ * Returns: { match: boolean }
+ */
+exports.comparePin = onRequest({ cors: true }, async (req, res) => {
+  if (req.method !== 'POST') {
+    res.status(405).send('Method Not Allowed');
+    return;
+  }
+
+  try {
+    const { pin, hash } = req.body;
+
+    if (!pin || !hash || typeof pin !== 'string' || typeof hash !== 'string') {
+      res.status(400).json({ error: 'Invalid parameters' });
+      return;
+    }
+
+    const match = await bcrypt.compare(pin, hash);
+
+    res.status(200).json({ match });
+  } catch (error) {
+    console.error('Error comparing PIN:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+/**
+ * Verify PIN for a gift (convenience function)
+ * POST /verifyGiftPin
+ * Body: { giftId: string, pin: string }
+ * Returns: { match: boolean }
+ */
+exports.verifyGiftPin = onRequest({ cors: true }, async (req, res) => {
+  if (req.method !== 'POST') {
+    res.status(405).send('Method Not Allowed');
+    return;
+  }
+
+  try {
+    const { giftId, pin } = req.body;
+
+    if (!giftId || !pin) {
+      res.status(400).json({ error: 'Missing giftId or pin' });
+      return;
+    }
+
+    // Get gift document
+    const giftRef = db.collection('gift_orders').doc(giftId);
+    const giftDoc = await giftRef.get();
+
+    if (!giftDoc.exists) {
+      res.status(404).json({ error: 'Gift not found' });
+      return;
+    }
+
+    const giftData = giftDoc.data();
+    const accessCodeHash = giftData.accessCodeHash;
+    const accessCode = giftData.accessCode;
+
+    // If hash exists, compare with hash
+    if (accessCodeHash) {
+      const match = await bcrypt.compare(pin, accessCodeHash);
+      res.status(200).json({ match });
+      return;
+    }
+
+    // Fallback: Compare with plain text (backward compatibility)
+    if (accessCode) {
+      res.status(200).json({ match: pin === accessCode });
+      return;
+    }
+
+    // No PIN set
+    res.status(200).json({ match: false });
+  } catch (error) {
+    console.error('Error verifying gift PIN:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
