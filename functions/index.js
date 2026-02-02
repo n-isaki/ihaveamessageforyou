@@ -1,6 +1,7 @@
 const { onRequest } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 const crypto = require("crypto");
+const bcrypt = require("bcrypt");
 
 admin.initializeApp();
 const db = admin.firestore();

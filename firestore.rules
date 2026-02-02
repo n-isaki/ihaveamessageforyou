@@ -67,7 +67,7 @@ service cloud.firestore {
                       && onlyAllowedFields(['messages', 'headline', 'subheadline', 'locked', 
                                             'setupCompletedAt', 'setupStarted', 'setupStartedAt',
                                             'deceasedName', 'lifeDates', 'meaningText',
-                                            'engravingText', 'meaningText', 'accessCode', 'securityToken', 'updatedAt']))
+                                            'engravingText', 'meaningText', 'accessCode', 'accessCodeHash', 'securityToken', 'updatedAt']))
                   || (!isLocked() 
                       && onlyAllowedFields(['setupStarted', 'setupStartedAt', 'updatedAt'])) // ✅ Allow setupStarted updates without token
                   || onlyAllowedFields(['viewed', 'viewedAt', 'updatedAt']); // ✅ Erlaube viewed/viewedAt Updates für alle (locked oder unlocked)

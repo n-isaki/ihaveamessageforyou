@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { getGiftById, markGiftAsViewed } from '@/services/gifts';
+import { verifyGiftPin } from '@/services/pinSecurity';
 import { Lock, Play, Loader, Heart, Sparkles, Type } from 'lucide-react';
 import { motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
@@ -136,6 +137,11 @@ export default function GiftReveal({ initialData }) {
     const handleUnlock = async (e) => {
         e.preventDefault();
         
+        if (!gift || !pin) {
+            setError("Bitte gib einen PIN Code ein.");
+            return;
+        }
+        
         // Rate Limiting: Check if too many attempts
         if (checkRateLimit(`pin_${id}`)) {
             const remaining = getRemainingAttempts(`pin_${id}`);
@@ -143,22 +149,43 @@ export default function GiftReveal({ initialData }) {
             return;
         }
         
-        if (gift && pin === gift.accessCode) {
-            // Success: Reset rate limit
-            resetRateLimit(`pin_${id}`);
-            setUnlocked(true);
+        try {
+            // Verify PIN server-side (supports both hashed and plain text for backward compatibility)
+            const isValid = await verifyGiftPin(id, pin);
+            
+            if (isValid) {
+                // Success: Reset rate limit
+                resetRateLimit(`pin_${id}`);
+                setUnlocked(true);
 
-            // Mark as viewed when unlocked with PIN
-            if (!gift.viewed && !isPreview) {
-                markGiftAsViewed(id).catch(err => console.error("Error marking as viewed", err));
-            }
+                // Mark as viewed when unlocked with PIN
+                if (!gift.viewed && !isPreview) {
+                    markGiftAsViewed(id).catch(err => console.error("Error marking as viewed", err));
+                }
 
-            if (gift.openingAnimation && gift.openingAnimation !== 'none') {
-                setTimeout(() => triggerAnimation(gift.openingAnimation), 500);
+                if (gift.openingAnimation && gift.openingAnimation !== 'none') {
+                    setTimeout(() => triggerAnimation(gift.openingAnimation), 500);
+                }
+            } else {
+                const remaining = getRemainingAttempts(`pin_${id}`);
+                setError(`Falscher PIN Code. (${remaining} Versuche übrig)`);
             }
-        } else {
-            const remaining = getRemainingAttempts(`pin_${id}`);
-            setError(`Falscher PIN Code. (${remaining} Versuche übrig)`);
+        } catch (error) {
+            console.error('Error verifying PIN:', error);
+            // Fallback to client-side comparison for backward compatibility
+            if (gift && pin === gift.accessCode) {
+                resetRateLimit(`pin_${id}`);
+                setUnlocked(true);
+                if (!gift.viewed && !isPreview) {
+                    markGiftAsViewed(id).catch(err => console.error("Error marking as viewed", err));
+                }
+                if (gift.openingAnimation && gift.openingAnimation !== 'none') {
+                    setTimeout(() => triggerAnimation(gift.openingAnimation), 500);
+                }
+            } else {
+                const remaining = getRemainingAttempts(`pin_${id}`);
+                setError(`Falscher PIN Code. (${remaining} Versuche übrig)`);
+            }
         }
     };
 

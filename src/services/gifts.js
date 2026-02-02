@@ -13,6 +13,7 @@ import {
 import { ref, deleteObject } from "firebase/storage";
 import { db, storage, auth } from "../firebase";
 import { getExperience } from "../modules/registry";
+import { hashPin } from "./pinSecurity";
 
 const COLLECTION_NAME = "gift_orders";
 
