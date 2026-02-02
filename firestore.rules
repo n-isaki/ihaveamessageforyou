@@ -43,11 +43,11 @@ service cloud.firestore {
       // READ: 
       // 1. Admin can always read (including unlocked gifts)
       // 2. With valid token (for setup links) - Note: Only works for queries, not getDoc()
-      // 3. All gifts are publicly readable (PIN protects content client-side in Viewer)
-      //    This allows viewing gifts before/after they are locked
+      // 3. Locked gifts are publicly readable (PIN protects content client-side in Viewer)
+      //    Unlocked gifts are NOT publicly readable (only with token or admin)
       allow read: if isAdmin() 
                   || isValidToken()
-                  || true; // ✅ Allow reading all gifts (security handled client-side with PIN)
+                  || isLocked(); // ⚠️ SECURITY: Nur gesperrte Geschenke öffentlich lesbar (PIN schützt client-seitig)
       
       // CREATE: Only Admin or Shopify Webhook (with shopifyOrderId)
       allow create: if isAdmin() 

@@ -322,7 +322,7 @@ export default function GiftReveal({ initialData }) {
                                     </div>
                                     <h2 className="text-5xl md:text-7xl font-serif italic text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-stone-500 tracking-tight leading-tight">
                                         {gift.headline ? (
-                                            <span dangerouslySetInnerHTML={{ __html: gift.headline.replace(/\n/g, '<br/>') }} />
+                                            <ReactMarkdown className="text-2xl md:text-3xl font-bold text-stone-900 leading-tight">{gift.headline || ''}</ReactMarkdown>
                                         ) : (
                                             <>Von Herzen<br />für dich</>
                                         )}
