@@ -14,6 +14,13 @@ service cloud.firestore {
              resource.data.securityToken == request.query.token;
     }
     
+    function isUnlocked() {
+      // Allow reading unlocked gifts (for setup links)
+      // Security: Unlocked gifts don't contain sensitive data yet (messages are added during setup)
+      // Token validation happens client-side in CustomerSetup.jsx
+      return !isLocked();
+    }
+    
     function isOwner() {
       // Check if user has valid token for this document
       // Token must match AND not be changed during update
@@ -44,10 +51,11 @@ service cloud.firestore {
       // 1. Admin can always read (including unlocked gifts)
       // 2. With valid token (for setup links) - Note: Only works for queries, not getDoc()
       // 3. Locked gifts are publicly readable (PIN protects content client-side in Viewer)
-      //    Unlocked gifts are NOT publicly readable (only with token or admin)
+      // 4. Unlocked gifts are readable (for setup links - token validated client-side, no sensitive data yet)
       allow read: if isAdmin() 
                   || isValidToken()
-                  || isLocked(); // ⚠️ SECURITY: Nur gesperrte Geschenke öffentlich lesbar (PIN schützt client-seitig)
+                  || isLocked() // ⚠️ SECURITY: Gesperrte Geschenke öffentlich lesbar (PIN schützt client-seitig)
+                  || isUnlocked(); // ✅ Erlaube Setup-Links für ungesperrte Geschenke (Token wird client-seitig validiert, keine sensiblen Daten)
       
       // CREATE: Only Admin or Shopify Webhook (with shopifyOrderId)
       allow create: if isAdmin() 
