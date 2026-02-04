@@ -521,11 +521,11 @@ export default function CustomerSetup() {
       <div className="fixed bottom-0 left-0 right-0 p-6 bg-stone-950/90 backdrop-blur-xl border-t border-stone-800 flex justify-center z-30">
         <button
           onClick={handleSaveAndLockClick}
-          disabled={saving || messages.length === 0}
+          disabled={saving || (messages.length === 0 && albumImages.length === 0)}
           className={`
                         w-full max-w-md flex items-center justify-center space-x-3 px-8 py-4 rounded-2xl font-bold text-lg shadow-2xl transition-all
                         ${
-                          messages.length === 0
+                          messages.length === 0 && albumImages.length === 0
                             ? "bg-stone-900 text-stone-600 cursor-not-allowed border border-stone-800"
                             : "bg-gradient-to-r from-rose-700 to-rose-600 hover:from-rose-600 hover:to-rose-500 text-white shadow-rose-900/20 border border-rose-500/20"
                         }
