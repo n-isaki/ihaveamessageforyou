@@ -517,14 +517,17 @@ export default function GiftReveal({ initialData }) {
                 </div>
               )}
 
-              {/* Messages Section – direkt sichtbar wenn kein Hero */}
+              {/* Messages Section – mit Hero: unterhalb; ohne Hero: zentriert, vollflächig */}
               <div
                 className={`bg-stone-900/50 flex flex-col items-center p-6 md:p-12 space-y-24 ${
                   gift.headline || gift.subheadline
                     ? "min-h-screen py-32"
-                    : "pt-12 md:pt-16 pb-24"
+                    : "min-h-screen justify-center py-12 md:py-16 relative"
                 }`}
               >
+                {!(gift.headline || gift.subheadline) && (
+                  <div className="absolute top-8 left-1/2 -translate-x-1/2 w-px h-12 bg-gradient-to-b from-transparent via-rose-500/40 to-transparent opacity-60 pointer-events-none" aria-hidden="true" />
+                )}
                 {gift.messages?.map((msg, index) => (
                   <motion.div
                     key={index}
