@@ -478,49 +478,53 @@ export default function GiftReveal({ initialData }) {
           ) : (
             /* MUG MODE (Cinematic Dark Theme) */
             <div className="min-h-screen bg-stone-950 flex flex-col">
-              {/* Hero Section */}
-              <div className="min-h-screen flex flex-col items-center justify-center p-8 relative">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-center space-y-6 max-w-4xl"
-                >
-                  {gift.headline || gift.subheadline ? (
-                    <>
-                      <div className="inline-flex justify-center mb-4">
-                        <div className="w-px h-16 bg-gradient-to-b from-transparent via-rose-500 to-transparent opacity-50"></div>
-                      </div>
-                      {gift.headline && (
-                        <h2 className="text-5xl md:text-7xl font-serif italic text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-stone-500 tracking-tight leading-tight">
-                          <ReactMarkdown className="text-2xl md:text-3xl font-bold text-stone-900 leading-tight">
-                            {gift.headline}
-                          </ReactMarkdown>
-                        </h2>
-                      )}
-                      {gift.subheadline && (
-                        <p className="text-lg text-stone-400 font-light tracking-wide mt-8">
-                          {gift.subheadline}
-                        </p>
-                      )}
-                    </>
-                  ) : null}
-                </motion.div>
+              {/* Hero Section – nur wenn Headline oder Subheadline da sind */}
+              {(gift.headline || gift.subheadline) && (
+                <div className="min-h-screen flex flex-col items-center justify-center p-8 relative">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-center space-y-6 max-w-4xl"
+                  >
+                    <div className="inline-flex justify-center mb-4">
+                      <div className="w-px h-16 bg-gradient-to-b from-transparent via-rose-500 to-transparent opacity-50"></div>
+                    </div>
+                    {gift.headline && (
+                      <h2 className="text-5xl md:text-7xl font-serif italic text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-stone-500 tracking-tight leading-tight">
+                        <ReactMarkdown className="text-2xl md:text-3xl font-bold text-stone-900 leading-tight">
+                          {gift.headline}
+                        </ReactMarkdown>
+                      </h2>
+                    )}
+                    {gift.subheadline && (
+                      <p className="text-lg text-stone-400 font-light tracking-wide mt-8">
+                        {gift.subheadline}
+                      </p>
+                    )}
+                  </motion.div>
 
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 1, duration: 1 }}
-                  className="absolute bottom-12 left-0 right-0 flex justify-center"
-                >
-                  <div className="flex flex-col items-center text-stone-500 text-xs tracking-[0.2em] uppercase animate-bounce">
-                    <span className="mb-2">Nachricht öffnen</span>
-                    <div className="w-px h-8 bg-gradient-to-b from-stone-500 to-transparent"></div>
-                  </div>
-                </motion.div>
-              </div>
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1, duration: 1 }}
+                    className="absolute bottom-12 left-0 right-0 flex justify-center"
+                  >
+                    <div className="flex flex-col items-center text-stone-500 text-xs tracking-[0.2em] uppercase animate-bounce">
+                      <span className="mb-2">Nachricht öffnen</span>
+                      <div className="w-px h-8 bg-gradient-to-b from-stone-500 to-transparent"></div>
+                    </div>
+                  </motion.div>
+                </div>
+              )}
 
-              {/* Messages Section */}
-              <div className="min-h-screen bg-stone-900/50 flex flex-col items-center p-6 md:p-12 space-y-24 py-32">
+              {/* Messages Section – direkt sichtbar wenn kein Hero */}
+              <div
+                className={`bg-stone-900/50 flex flex-col items-center p-6 md:p-12 space-y-24 ${
+                  gift.headline || gift.subheadline
+                    ? "min-h-screen py-32"
+                    : "pt-12 md:pt-16 pb-24"
+                }`}
+              >
                 {gift.messages?.map((msg, index) => (
                   <motion.div
                     key={index}
