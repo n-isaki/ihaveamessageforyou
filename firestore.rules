@@ -72,7 +72,7 @@ service cloud.firestore {
       allow update: if isAdmin()
                   || (!isLocked() 
                       && hasValidTokenInUpdate()
-                      && onlyAllowedFields(['messages', 'headline', 'subheadline', 'locked', 
+                      && onlyAllowedFields(['messages', 'headline', 'subheadline', 'albumImages', 'locked', 
                                             'setupCompletedAt', 'setupStarted', 'setupStartedAt',
                                             'deceasedName', 'lifeDates', 'meaningText',
                                             'engravingText', 'meaningText', 'accessCode', 'accessCodeHash', 'securityToken', 'updatedAt']))

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { getGiftById, markGiftAsViewed } from "@/services/gifts";
 import { verifyGiftPin } from "@/services/pinSecurity";
-import { Lock, Play, Loader, Heart, Sparkles, Type } from "lucide-react";
+import { Lock, Play, Loader, Heart, Sparkles, Type, X } from "lucide-react";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import ReactMarkdown from "react-markdown";
@@ -21,8 +21,10 @@ export default function GiftReveal({ initialData }) {
   const [unlocked, setUnlocked] = useState(false);
   const [fontSizeLevel, setFontSizeLevel] = useState(0); // 0=Normal, 1=Large, 2=Extra Large
   const [isVerifyingPin, setIsVerifyingPin] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(null);
   const isPreview = !!initialData;
   const messagesEndRef = useRef(null);
+  const albumImages = gift?.albumImages || [];
 
   // Initial Fetch (Only if no initialData)
   useEffect(() => {
@@ -526,8 +528,68 @@ export default function GiftReveal({ initialData }) {
                 }`}
               >
                 {!(gift.headline || gift.subheadline) && (
-                  <div className="absolute top-8 left-1/2 -translate-x-1/2 w-px h-12 bg-gradient-to-b from-transparent via-rose-500/40 to-transparent opacity-60 pointer-events-none" aria-hidden="true" />
+                  <div
+                    className="absolute top-8 left-1/2 -translate-x-1/2 w-px h-12 bg-gradient-to-b from-transparent via-rose-500/40 to-transparent opacity-60 pointer-events-none"
+                    aria-hidden="true"
+                  />
                 )}
+
+                {/* Album Gallery */}
+                {albumImages.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    className="max-w-4xl w-full"
+                  >
+                    <div className="bg-stone-900/80 backdrop-blur-sm rounded-[2rem] p-6 md:p-10 border border-stone-800 shadow-2xl">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4">
+                        {albumImages.map((url, index) => (
+                          <button
+                            key={url}
+                            type="button"
+                            onClick={() => setLightboxIndex(index)}
+                            className="relative aspect-square rounded-xl overflow-hidden border border-stone-700/80 hover:border-rose-500/40 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500/50"
+                          >
+                            <img
+                              src={url}
+                              alt=""
+                              loading="lazy"
+                              className="w-full h-full object-cover"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Lightbox */}
+                {lightboxIndex !== null && albumImages[lightboxIndex] && (
+                  <div
+                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm"
+                    onClick={() => setLightboxIndex(null)}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Bild vergrößert"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setLightboxIndex(null)}
+                      className="absolute top-4 right-4 w-10 h-10 rounded-full bg-stone-800 text-white flex items-center justify-center hover:bg-stone-700 transition-colors"
+                      aria-label="Schließen"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                    <img
+                      src={albumImages[lightboxIndex]}
+                      alt=""
+                      className="max-w-full max-h-[90vh] w-auto h-auto object-contain rounded-lg"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+                )}
+
                 {gift.messages?.map((msg, index) => (
                   <motion.div
                     key={index}
