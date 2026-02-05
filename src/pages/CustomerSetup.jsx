@@ -17,6 +17,7 @@ import {
   Calendar,
   FileText,
   Image as ImageIcon,
+  Gift,
 } from "lucide-react";
 import { uploadAlbumImage } from "../services/albumUpload";
 import { ALBUM_MAX_FILES } from "../utils/security";
@@ -201,9 +202,14 @@ export default function CustomerSetup() {
         <div className="max-w-md w-full bg-stone-900 rounded-3xl shadow-2xl p-8 text-center space-y-6 border border-red-900/50">
           <ShieldAlert className="h-12 w-12 text-red-500 mx-auto" />
           <h1 className="text-xl font-serif font-bold text-stone-100">
-            Zugriff verweigert
+            Dieser Link funktioniert nicht
           </h1>
-          <p className="text-stone-400">Der Link ist ungültig.</p>
+          <p className="text-stone-400 text-sm leading-relaxed">
+            Der Link ist ungültig oder wurde nicht vollständig kopiert. Bitte
+            öffne den Link genau so, wie er dir zugeschickt wurde (z.B. aus der
+            E-Mail oder Nachricht). Bei Fragen wende dich an den Absender oder
+            an uns.
+          </p>
         </div>
       </div>
     );
@@ -245,6 +251,16 @@ export default function CustomerSetup() {
         </div>
 
         <div className="max-w-xl mx-auto p-6 space-y-8 mt-4">
+          <div className="bg-stone-900/80 border border-stone-800 rounded-2xl p-6 mb-6">
+            <h2 className="text-lg font-serif font-bold text-white mb-2">
+              Willkommen!
+            </h2>
+            <p className="text-stone-400 text-sm leading-relaxed">
+              Du hast einen persönlichen Link erhalten. Fülle die folgenden
+              Angaben aus. Nach dem Absenden wird die Karte für uns freigegeben
+              und wir starten die Fertigung. Der Link ist nur für dich gültig.
+            </p>
+          </div>
           <div className="bg-stone-900 p-6 rounded-3xl border border-stone-800 space-y-6">
             <h2 className="text-xl font-bold font-serif text-white mb-4">
               Erinnerung teilen
@@ -371,6 +387,43 @@ export default function CustomerSetup() {
       </div>
 
       <div className="max-w-2xl mx-auto p-6 space-y-8 mt-4">
+        {/* Willkommen & Ablauf */}
+        <div className="bg-stone-900/80 border border-stone-800 rounded-2xl p-6 space-y-4">
+          <h2 className="text-lg font-serif font-bold text-white flex items-center">
+            <Gift className="w-5 h-5 mr-2 text-rose-500" />
+            Willkommen!
+          </h2>
+          <p className="text-stone-300 text-sm leading-relaxed">
+            Du hast einen persönlichen Link erhalten. Hier richtest du dein
+            Geschenk in wenigen Schritten ein. Der Link ist nur für dich gültig
+            – niemand sonst kann ihn nutzen.
+          </p>
+          <div className="pt-2 border-t border-stone-800">
+            <p className="text-xs font-bold uppercase tracking-wider text-stone-500 mb-3">
+              So geht’s:
+            </p>
+            <ol className="text-stone-400 text-sm space-y-2 list-decimal list-inside">
+              <li>
+                <strong className="text-stone-300">Start-Bildschirm</strong> –
+                Titel und Untertitel (z.B. „Von Herzen für dich“).
+              </li>
+              <li>
+                <strong className="text-stone-300">Album</strong> – Optional bis
+                zu {ALBUM_MAX_FILES} Fotos hochladen.
+              </li>
+              <li>
+                <strong className="text-stone-300">Deine Inhalte</strong> –
+                Text-Nachricht oder Video-Link hinzufügen.
+              </li>
+              <li>
+                <strong className="text-stone-300">Versiegeln</strong> – Am Ende
+                auf „Geschenk versiegeln“ klicken. Danach können wir dein
+                Geschenk nicht mehr ändern und starten die Veredelung.
+              </li>
+            </ol>
+          </div>
+        </div>
+
         {/* Greeting Card */}
         {/* Intro Screen Editor */}
         <div className="bg-gradient-to-br from-stone-900 to-stone-900/50 p-8 rounded-3xl shadow-xl border border-stone-800 relative overflow-hidden">

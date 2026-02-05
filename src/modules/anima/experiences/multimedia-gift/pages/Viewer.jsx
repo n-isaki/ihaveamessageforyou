@@ -319,8 +319,12 @@ export default function GiftReveal({ initialData }) {
             <h1 className="text-2xl font-serif italic text-stone-100 mb-2">
               Deine Nachricht
             </h1>
-            <p className="text-stone-400 mb-8 text-sm font-light">
+            <p className="text-stone-400 mb-2 text-sm font-light">
               Eine persönliche Botschaft wartet auf dich.
+            </p>
+            <p className="text-stone-500 mb-6 text-xs font-light">
+              Wo findest du den Code? Auf der Geschenkkarte (z.B. neben dem
+              QR-Code) oder in der Nachricht des Absenders.
             </p>
 
             <form onSubmit={handleUnlock} className="space-y-4">
