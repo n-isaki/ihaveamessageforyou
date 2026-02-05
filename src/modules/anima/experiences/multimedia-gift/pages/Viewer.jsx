@@ -12,6 +12,7 @@ import {
   X,
   ChevronDown,
 } from "lucide-react";
+// eslint-disable-next-line no-unused-vars -- motion is used in JSX as <motion.div>
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import ReactMarkdown from "react-markdown";
@@ -49,22 +50,6 @@ export default function GiftReveal({ initialData }) {
     (albumImages.length > 0 && (gift?.messages?.length ?? 0) > 0) ||
     (gift?.messages?.length ?? 0) > 1 ||
     albumImages.length > 1;
-
-  // Einzeiliger Text: wie viel noch zum Scrollen (z. B. "Noch 2 Nachrichten", "Noch 1 Bild, 1 Nachricht")
-  const getMoreBelowLabel = () => {
-    const a = albumImages.length;
-    const m = gift?.messages?.length ?? 0;
-    if (a > 1 && m === 0) return `Noch ${a - 1} Bild${a - 1 > 1 ? "er" : ""}`;
-    if (a === 0 && m > 1)
-      return `Noch ${m - 1} Nachricht${m - 1 > 1 ? "en" : ""}`;
-    if (a === 1 && m > 0)
-      return `Noch 1 Bild, ${m} Nachricht${m > 1 ? "en" : ""}`;
-    if (a > 1 && m > 0)
-      return `Noch ${a - 1} Bild${a - 1 > 1 ? "er" : ""}, ${m} Nachricht${
-        m > 1 ? "en" : ""
-      }`;
-    return "Noch mehr unten";
-  };
 
   // "Mehr unten"-Hinweis ausblenden, wenn Nutzer bis zum Ende gescrollt hat
   useEffect(() => {
@@ -456,52 +441,52 @@ export default function GiftReveal({ initialData }) {
                   >
                     <ReactMarkdown
                       components={{
-                        p: ({ node, ...props }) => (
+                        p: ({ ...props }) => (
                           <p
                             className="mb-6 leading-loose text-stone-300 font-light"
                             {...props}
                           />
                         ),
-                        strong: ({ node, ...props }) => (
+                        strong: ({ ...props }) => (
                           <strong
                             className="font-semibold text-white"
                             {...props}
                           />
                         ),
-                        h1: ({ node, ...props }) => (
+                        h1: ({ ...props }) => (
                           <h1
                             className="text-3xl font-serif text-white mt-8 mb-4"
                             {...props}
                           />
                         ),
-                        h2: ({ node, ...props }) => (
+                        h2: ({ ...props }) => (
                           <h2
                             className="text-2xl font-serif text-stone-200 mt-8 mb-4 border-b border-stone-800 pb-2"
                             {...props}
                           />
                         ),
-                        h3: ({ node, ...props }) => (
+                        h3: ({ ...props }) => (
                           <h3
                             className="text-xl font-serif text-stone-200 mt-6 mb-3"
                             {...props}
                           />
                         ),
-                        ul: ({ node, ...props }) => (
+                        ul: ({ ...props }) => (
                           <ul
                             className="list-disc pl-6 mb-6 space-y-2 text-stone-300"
                             {...props}
                           />
                         ),
-                        li: ({ node, ...props }) => (
+                        li: ({ ...props }) => (
                           <li className="pl-2" {...props} />
                         ),
-                        blockquote: ({ node, ...props }) => (
+                        blockquote: ({ ...props }) => (
                           <blockquote
                             className="border-l-4 border-indigo-500 pl-4 py-1 italic text-stone-400 my-6 bg-stone-950/30 p-4 rounded-r-lg"
                             {...props}
                           />
                         ),
-                        a: ({ node, ...props }) => (
+                        a: ({ ...props }) => (
                           <a
                             className="text-indigo-400 hover:text-indigo-300 underline"
                             {...props}
@@ -790,11 +775,11 @@ export default function GiftReveal({ initialData }) {
                       behavior: "smooth",
                     })
                   }
-                  className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 md:hidden flex items-center gap-1.5 py-2.5 px-4 rounded-full bg-stone-800/95 backdrop-blur border border-stone-700 text-stone-300 text-xs font-medium tracking-wide shadow-lg active:scale-95 transition-transform"
+                  className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 md:hidden flex flex-col items-center gap-1 py-2 px-4 rounded-full bg-stone-800/95 backdrop-blur border border-stone-700 text-stone-300 text-xs font-medium tracking-wide shadow-lg active:scale-95 transition-transform"
                   aria-label="Weiter nach unten scrollen"
                 >
-                  <span>{getMoreBelowLabel()}</span>
-                  <ChevronDown className="h-4 w-4 shrink-0" />
+                  <ChevronDown className="h-5 w-5 animate-bounce" />
+                  <span>Mehr unten</span>
                 </button>
               )}
             </div>
