@@ -2,7 +2,16 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { getGiftById, markGiftAsViewed } from "@/services/gifts";
 import { verifyGiftPin } from "@/services/pinSecurity";
-import { Lock, Play, Loader, Heart, Sparkles, Type, X } from "lucide-react";
+import {
+  Lock,
+  Play,
+  Loader,
+  Heart,
+  Sparkles,
+  Type,
+  X,
+  ChevronDown,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import ReactMarkdown from "react-markdown";
@@ -25,6 +34,7 @@ export default function GiftReveal({ initialData }) {
   const isPreview = !!initialData;
   const messagesEndRef = useRef(null);
   const contentStartRef = useRef(null);
+  const [showMoreHint, setShowMoreHint] = useState(true);
   const albumImages = gift?.albumImages || [];
 
   const scrollToContent = () => {
@@ -33,6 +43,26 @@ export default function GiftReveal({ initialData }) {
       block: "start",
     });
   };
+
+  // Mehr Inhalt unten? (Album + Nachrichten, oder mehrere Nachrichten, oder mehrere Album-Bilder)
+  const hasMoreBelow =
+    (albumImages.length > 0 && (gift?.messages?.length ?? 0) > 0) ||
+    (gift?.messages?.length ?? 0) > 1 ||
+    albumImages.length > 1;
+
+  // "Mehr unten"-Hinweis ausblenden, wenn Nutzer bis zum Ende gescrollt hat
+  useEffect(() => {
+    if (!hasMoreBelow || !messagesEndRef.current) return;
+    const el = messagesEndRef.current;
+    const obs = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) setShowMoreHint(false);
+      },
+      { threshold: 0.1, rootMargin: "0px 0px -80px 0px" }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [hasMoreBelow]);
 
   // Initial Fetch (Only if no initialData)
   useEffect(() => {
@@ -728,6 +758,29 @@ export default function GiftReveal({ initialData }) {
                   </div>
                 );
               })()}
+
+              {/* Mobile: Hinweis "Mehr unten", wenn noch weiterer Inhalt existiert */}
+              {hasMoreBelow && showMoreHint && (
+                <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden pointer-events-none">
+                  <div className="h-24 bg-gradient-to-t from-stone-950 via-stone-950/80 to-transparent" />
+                </div>
+              )}
+              {hasMoreBelow && showMoreHint && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    window.scrollBy({
+                      top: window.innerHeight * 0.75,
+                      behavior: "smooth",
+                    })
+                  }
+                  className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 md:hidden flex flex-col items-center gap-1 py-2 px-4 rounded-full bg-stone-800/95 backdrop-blur border border-stone-700 text-stone-300 text-xs font-medium tracking-wide shadow-lg active:scale-95 transition-transform"
+                  aria-label="Weiter nach unten scrollen"
+                >
+                  <ChevronDown className="h-5 w-5 animate-bounce" />
+                  <span>Mehr unten</span>
+                </button>
+              )}
             </div>
           )}
         </>
