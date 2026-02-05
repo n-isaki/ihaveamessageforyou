@@ -219,12 +219,23 @@ export default function GiftReveal({ initialData }) {
         pinLength: pin.length,
         hasGift: !!gift,
       });
-      const isValid = await verifyGiftPin(id, pin.trim());
+      // RESPONSE CHANGE: Now returns { match, giftData }
+      const response = await verifyGiftPin(id, pin.trim());
+
+      // Handle both old boolean return (just in case) and new object return
+      const isValid = (typeof response === 'boolean') ? response : response.match;
+      const fullGiftData = (typeof response === 'object') ? response.giftData : null;
 
       if (isValid) {
         // Success: Reset rate limit
         resetRateLimit(`pin_${id}`);
         setUnlocked(true);
+
+        // UPDATE GIFT STATE WITH FULL DATA
+        // This is critical because previously we couldn't read the data due to firestore rules
+        if (fullGiftData) {
+          setGift(fullGiftData);
+        }
 
         // Mark as viewed when unlocked with PIN
         if (!gift.viewed && !isPreview) {
@@ -242,8 +253,8 @@ export default function GiftReveal({ initialData }) {
       }
     } catch (error) {
       console.error("Error verifying PIN:", error);
-      // Fallback to client-side comparison for backward compatibility
-      if (gift && pin === gift.accessCode) {
+      // Fallback to client-side comparison for backward compatibility (ONLY if we have accessCode locally, which we shouldn't for locked gifts anymore)
+      if (gift && gift.accessCode && pin === gift.accessCode) {
         resetRateLimit(`pin_${id}`);
         setUnlocked(true);
         if (!gift.viewed && !isPreview) {
@@ -390,13 +401,12 @@ export default function GiftReveal({ initialData }) {
               title="Schriftgröße ändern"
             >
               <Type
-                className={`transition-all ${
-                  fontSizeLevel === 0
+                className={`transition-all ${fontSizeLevel === 0
                     ? "h-5 w-5"
                     : fontSizeLevel === 1
-                    ? "h-6 w-6"
-                    : "h-7 w-7"
-                }`}
+                      ? "h-6 w-6"
+                      : "h-7 w-7"
+                  }`}
               />
             </button>
           </div>
@@ -527,49 +537,49 @@ export default function GiftReveal({ initialData }) {
               {((typeof gift.headline === "string" && gift.headline.trim()) ||
                 (typeof gift.subheadline === "string" &&
                   gift.subheadline.trim())) && (
-                <div className="min-h-screen flex flex-col items-center justify-center p-8 relative">
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-center space-y-6 max-w-4xl"
-                  >
-                    <div className="inline-flex justify-center mb-4">
-                      <div className="w-px h-16 bg-gradient-to-b from-transparent via-rose-500 to-transparent opacity-50"></div>
-                    </div>
-                    {typeof gift.headline === "string" &&
-                      gift.headline.trim() && (
-                        <h2 className="text-5xl md:text-7xl font-serif italic text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-stone-500 tracking-tight leading-tight">
-                          <ReactMarkdown className="text-2xl md:text-3xl font-bold text-stone-900 leading-tight">
-                            {gift.headline.trim()}
-                          </ReactMarkdown>
-                        </h2>
-                      )}
-                    {typeof gift.subheadline === "string" &&
-                      gift.subheadline.trim() && (
-                        <p className="text-lg text-stone-400 font-light tracking-wide mt-8">
-                          {gift.subheadline.trim()}
-                        </p>
-                      )}
-                  </motion.div>
-
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 1, duration: 1 }}
-                    className="absolute bottom-12 left-0 right-0 flex justify-center"
-                  >
-                    <button
-                      type="button"
-                      onClick={scrollToContent}
-                      className="flex flex-col items-center text-stone-500 text-xs tracking-[0.2em] uppercase animate-bounce hover:text-stone-300 focus:outline-none focus:ring-2 focus:ring-rose-500/50 focus:ring-offset-2 focus:ring-offset-stone-950 rounded-lg py-2 px-3 transition-colors"
-                      aria-label="Zum Inhalt scrollen"
+                  <div className="min-h-screen flex flex-col items-center justify-center p-8 relative">
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-center space-y-6 max-w-4xl"
                     >
-                      <span className="mb-2">Nachricht öffnen</span>
-                      <div className="w-px h-8 bg-gradient-to-b from-stone-500 to-transparent"></div>
-                    </button>
-                  </motion.div>
-                </div>
-              )}
+                      <div className="inline-flex justify-center mb-4">
+                        <div className="w-px h-16 bg-gradient-to-b from-transparent via-rose-500 to-transparent opacity-50"></div>
+                      </div>
+                      {typeof gift.headline === "string" &&
+                        gift.headline.trim() && (
+                          <h2 className="text-5xl md:text-7xl font-serif italic text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-stone-500 tracking-tight leading-tight">
+                            <ReactMarkdown className="text-2xl md:text-3xl font-bold text-stone-900 leading-tight">
+                              {gift.headline.trim()}
+                            </ReactMarkdown>
+                          </h2>
+                        )}
+                      {typeof gift.subheadline === "string" &&
+                        gift.subheadline.trim() && (
+                          <p className="text-lg text-stone-400 font-light tracking-wide mt-8">
+                            {gift.subheadline.trim()}
+                          </p>
+                        )}
+                    </motion.div>
+
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 1, duration: 1 }}
+                      className="absolute bottom-12 left-0 right-0 flex justify-center"
+                    >
+                      <button
+                        type="button"
+                        onClick={scrollToContent}
+                        className="flex flex-col items-center text-stone-500 text-xs tracking-[0.2em] uppercase animate-bounce hover:text-stone-300 focus:outline-none focus:ring-2 focus:ring-rose-500/50 focus:ring-offset-2 focus:ring-offset-stone-950 rounded-lg py-2 px-3 transition-colors"
+                        aria-label="Zum Inhalt scrollen"
+                      >
+                        <span className="mb-2">Nachricht öffnen</span>
+                        <div className="w-px h-8 bg-gradient-to-b from-stone-500 to-transparent"></div>
+                      </button>
+                    </motion.div>
+                  </div>
+                )}
 
               {/* Messages Section – mit Hero: unterhalb; ohne Hero: zentriert, vollflächig */}
               {(() => {
@@ -580,11 +590,10 @@ export default function GiftReveal({ initialData }) {
                 return (
                   <div
                     ref={contentStartRef}
-                    className={`bg-stone-900/50 flex flex-col items-center p-6 md:p-12 space-y-24 ${
-                      hasHero
+                    className={`bg-stone-900/50 flex flex-col items-center p-6 md:p-12 space-y-24 ${hasHero
                         ? "min-h-screen py-32"
                         : "min-h-screen justify-center py-12 md:py-16 relative"
-                    }`}
+                      }`}
                   >
                     {!hasHero && (
                       <div
@@ -709,7 +718,7 @@ export default function GiftReveal({ initialData }) {
                             ) : (
                               <div className="rounded-2xl overflow-hidden shadow-2xl bg-black border border-stone-800 ring-1 ring-white/5">
                                 {msg.content.includes("youtube") ||
-                                msg.content.includes("youtu.be") ? (
+                                  msg.content.includes("youtu.be") ? (
                                   <div className="aspect-w-16 aspect-h-9">
                                     <iframe
                                       src={msg.content

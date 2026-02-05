@@ -1,4 +1,4 @@
-const { onRequest } = require("firebase-functions/v2/https");
+const { onRequest, onCall } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 const crypto = require("crypto");
 const bcrypt = require("bcrypt");
@@ -6,218 +6,80 @@ const bcrypt = require("bcrypt");
 admin.initializeApp();
 const db = admin.firestore();
 
-// HMAC Verification für Shopify Webhooks
-function verifyShopifyWebhook(req) {
-  const hmac = req.get('X-Shopify-Hmac-Sha256');
-  const secret = process.env.SHOPIFY_WEBHOOK_SECRET;
-  
-  if (!secret) {
-    console.error("SHOPIFY_WEBHOOK_SECRET not set!");
-    return false;
-  }
-  
-  if (!hmac) {
-    console.error("No HMAC header found");
-    return false;
-  }
-  
-  const body = JSON.stringify(req.body);
-  const hash = crypto
-    .createHmac('sha256', secret)
-    .update(body, 'utf8')
-    .digest('base64');
-  
-  return crypto.timingSafeEqual(Buffer.from(hmac), Buffer.from(hash));
-}
-
-exports.shopifyOrderCreate = onRequest({ cors: true }, async (req, res) => {
-  // Security: HMAC Verification
-  if (!verifyShopifyWebhook(req)) {
-    console.error("Invalid HMAC signature");
-    res.status(401).send("Unauthorized");
-    return;
-  }
-  
-  const order = req.body;
-  console.log("Webhook Received. Order ID:", order.id, "Number:", order.name);
-
-  if (!order.line_items) {
-    res.status(200).send("No line items");
-    return;
-  }
-
-  const batch = db.batch();
-  let updatesCount = 0;
-
-  for (const item of order.line_items) {
-    // Check properties for _giftId
-    const properties = item.properties || [];
-    
-    // Safety check if properties is object
-    let propsArray = Array.isArray(properties) ? properties : [];
-    if (!Array.isArray(properties) && typeof properties === 'object') {
-      propsArray = Object.keys(properties).map(key => ({ name: key, value: properties[key] }));
-    }
-
-    const giftIdProp = propsArray.find(p => p.name === '_giftId');
-
-    if (giftIdProp && giftIdProp.value) {
-      const giftId = giftIdProp.value;
-      
-      // Security: Validate giftId format (should be Firestore document ID)
-      if (typeof giftId !== 'string' || giftId.length > 50) {
-        console.error(`Invalid giftId format: ${giftId}`);
-        continue;
-      }
-      
-      console.log(`Found Linked Gift: ${giftId}`);
-
-      const giftRef = db.collection('gift_orders').doc(giftId);
-      
-      // Security: Check if document exists before updating
-      const giftDoc = await giftRef.get();
-      if (!giftDoc.exists) {
-        console.error(`Gift ${giftId} does not exist`);
-        continue;
-      }
-
-      batch.update(giftRef, {
-        status: 'paid',
-        orderId: order.name,
-        productVariant: item.variant_title || '',
-        shopifyOrderId: String(order.id),
-        shopifyOrderNumber: String(order.order_number),
-        orderName: order.name,
-        customerName: getCustomerName(order),
-        customerEmail: order.email || (order.customer && order.customer.email),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
-      });
-      updatesCount++;
-    }
-  }
-
-  if (updatesCount > 0) {
-    await batch.commit();
-    console.log(`Updated ${updatesCount} gifts.`);
-  }
-
-  res.status(200).send(`Processed. Updated ${updatesCount} gifts.`);
-});
-
-function getCustomerName(order) {
-  if (order.customer) {
-    return `${order.customer.first_name || ''} ${order.customer.last_name || ''}`.trim();
-  }
-  if (order.shipping_address) {
-    return `${order.shipping_address.first_name || ''} ${order.shipping_address.last_name || ''}`.trim();
-  }
-  return 'Unbekannt';
-}
-
-// ============================================
-// PIN HASHING FUNCTIONS (Server-side Security)
-// ============================================
+// ... existing code ...
 
 /**
  * Hash a PIN code securely (server-side only)
- * POST /hashPin
- * Body: { pin: string }
+ * Callable Function
+ * Data: { pin: string }
  * Returns: { hash: string }
  */
-exports.hashPin = onRequest({ cors: true }, async (req, res) => {
-  if (req.method !== 'POST') {
-    res.status(405).send('Method Not Allowed');
-    return;
-  }
-
+exports.hashPin = onCall({ cors: true }, async (request) => {
   try {
-    // httpsCallable sends data in req.body.data
-    const requestData = req.body.data || req.body;
-    const { pin } = requestData;
+    const { pin } = request.data;
 
     if (!pin || typeof pin !== 'string' || pin.length < 4 || pin.length > 8) {
-      res.status(400).json({ error: 'Invalid PIN format' });
-      return;
+      throw new // Function error handling usually throws specific errors, but simple throw works for now
+        Error('Invalid PIN format');
     }
 
     const saltRounds = 10;
     const hash = await bcrypt.hash(pin, saltRounds);
 
-    // httpsCallable expects response in { data: ... } format
-    res.status(200).json({ data: { hash } });
+    return { hash };
   } catch (error) {
     console.error('Error hashing PIN:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    throw new Error('Internal server error');
   }
 });
 
 /**
  * Compare a PIN with a hash (server-side only)
- * POST /comparePin
- * Body: { pin: string, hash: string }
+ * Callable Function
+ * Data: { pin: string, hash: string }
  * Returns: { match: boolean }
  */
-exports.comparePin = onRequest({ cors: true }, async (req, res) => {
-  if (req.method !== 'POST') {
-    res.status(405).send('Method Not Allowed');
-    return;
-  }
-
+exports.comparePin = onCall({ cors: true }, async (request) => {
   try {
-    // httpsCallable sends data in req.body.data
-    const requestData = req.body.data || req.body;
-    const { pin, hash } = requestData;
+    const { pin, hash } = request.data;
 
     if (!pin || !hash || typeof pin !== 'string' || typeof hash !== 'string') {
-      res.status(400).json({ error: 'Invalid parameters' });
-      return;
+      throw new Error('Invalid parameters');
     }
 
     const match = await bcrypt.compare(pin, hash);
-
-    // httpsCallable expects response in { data: ... } format
-    res.status(200).json({ data: { match } });
+    return { match };
   } catch (error) {
     console.error('Error comparing PIN:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    throw new Error('Internal server error');
   }
 });
 
 /**
  * Verify PIN for a gift (convenience function)
- * POST /verifyGiftPin
- * Body: { giftId: string, pin: string }
- * Returns: { match: boolean }
+ * Callable Function
+ * Data: { giftId: string, pin: string }
+ * Returns: { match: boolean, giftData: object | null }
  */
-exports.verifyGiftPin = onRequest({ cors: true }, async (req, res) => {
-  if (req.method !== 'POST') {
-    res.status(405).send('Method Not Allowed');
-    return;
-  }
-
+exports.verifyGiftPin = onCall({ cors: true }, async (request) => {
   try {
-    // httpsCallable sends data in req.body.data, not req.body directly
-    const requestData = req.body.data || req.body;
-    console.log('verifyGiftPin called with:', JSON.stringify({ body: req.body, requestData }));
-    
-    const { giftId, pin } = requestData;
+    console.log('verifyGiftPin called with data:', request.data);
+
+    const { giftId, pin } = request.data;
 
     if (!giftId || giftId === '') {
       console.error('Missing giftId');
-      res.status(400).json({ error: 'Missing giftId' });
-      return;
+      return { match: false, giftData: null };
     }
 
     if (!pin || pin === '') {
       console.error('Missing pin');
-      res.status(400).json({ error: 'Missing pin' });
-      return;
+      return { match: false, giftData: null };
     }
 
     if (typeof pin !== 'string') {
       console.error('Invalid pin type:', typeof pin);
-      res.status(400).json({ error: 'Invalid pin type' });
-      return;
+      return { match: false, giftData: null };
     }
 
     // Get gift document
@@ -225,33 +87,97 @@ exports.verifyGiftPin = onRequest({ cors: true }, async (req, res) => {
     const giftDoc = await giftRef.get();
 
     if (!giftDoc.exists) {
-      res.status(404).json({ error: 'Gift not found' });
-      return;
+      return { match: false, giftData: null };
     }
 
     const giftData = giftDoc.data();
     const accessCodeHash = giftData.accessCodeHash;
     const accessCode = giftData.accessCode;
 
+    let match = false;
+
     // If hash exists, compare with hash
     if (accessCodeHash) {
-      const match = await bcrypt.compare(pin, accessCodeHash);
-      // httpsCallable expects response in { data: ... } format
-      res.status(200).json({ data: { match } });
-      return;
+      match = await bcrypt.compare(pin, accessCodeHash);
     }
-
     // Fallback: Compare with plain text (backward compatibility)
-    if (accessCode) {
-      // httpsCallable expects response in { data: ... } format
-      res.status(200).json({ data: { match: pin === accessCode } });
-      return;
+    else if (accessCode) {
+      match = (pin === accessCode);
     }
 
-    // No PIN set
-    res.status(200).json({ data: { match: false } });
+    if (match) {
+      // Return full gift data on success, BUT SANITIZED
+      // Remove sensitive fields so they don't leak to client memory
+      const safeGiftData = { ...giftData, id: giftDoc.id };
+      delete safeGiftData.accessCode;
+      delete safeGiftData.accessCodeHash;
+      delete safeGiftData.securityToken; // Also hide token if not needed
+
+      return { match: true, giftData: safeGiftData };
+    } else {
+      // Invalid PIN
+      return { match: false, giftData: null };
+    }
+
   } catch (error) {
     console.error('Error verifying gift PIN:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    throw new Error('Internal server error');
+  }
+});
+
+/**
+ * Get public metadata for a locked gift
+ * Callable Function
+ * Data: { giftId: string }
+ * Returns: { exists: boolean, locked: boolean, publicData: object | null }
+ */
+exports.getPublicGiftData = onCall({ cors: true }, async (request) => {
+  try {
+    const { giftId } = request.data;
+
+    if (!giftId) {
+      return { exists: false };
+    }
+
+    const giftRef = db.collection('gift_orders').doc(giftId);
+    const giftDoc = await giftRef.get();
+
+    if (!giftDoc.exists) {
+      return { exists: false };
+    }
+
+    const data = giftDoc.data();
+    const isLocked = data.locked === true;
+
+    // Define public fields that resemble the "Lock Screen"
+    const publicFields = [
+      'project',
+      'productType',
+      'headline',
+      'subheadline',
+      'openingAnimation',
+      'engravingText', // Needed for bracelet lock screen
+      'designImage', // Maybe needed for preview?
+      'locked'
+    ];
+
+    const publicData = {};
+    publicFields.forEach(field => {
+      if (data[field] !== undefined) {
+        publicData[field] = data[field];
+      }
+    });
+    // Always include ID
+    publicData.id = giftDoc.id;
+
+    return {
+      exists: true,
+      locked: isLocked,
+      publicData: publicData
+    };
+
+  } catch (error) {
+    console.error('Error getting public gift data:', error);
+    throw new Error('Internal server error');
   }
 });

@@ -48,14 +48,14 @@ service cloud.firestore {
     match /gift_orders/{documentId} {
       
       // READ: 
-      // 1. Admin can always read (including unlocked gifts)
-      // 2. With valid token (for setup links) - Note: Only works for queries, not getDoc()
-      // 3. Locked gifts are publicly readable (PIN protects content client-side in Viewer)
-      // 4. Unlocked gifts are readable (for setup links - token validated client-side, no sensitive data yet)
+      // 1. Admin can always read
+      // 2. With valid token (for setup links) - query.limit=1
+      // 3. Unlocked gifts are readable (PUBLIC METADATA ONLY via Cloud Function for locked gifts!)
+      // ⚠️ SECURITY FIXED: Locked gifts are NO LONGER publicly readable via Firestore.
+      // Use getPublicGiftData cloud function for lock screen metadata.
       allow read: if isAdmin() 
                   || isValidToken()
-                  || isLocked() // ⚠️ SECURITY: Gesperrte Geschenke öffentlich lesbar (PIN schützt client-seitig)
-                  || isUnlocked(); // ✅ Erlaube Setup-Links für ungesperrte Geschenke (Token wird client-seitig validiert, keine sensiblen Daten)
+                  || (resource.data.locked == false); // ✅ ONLY unlocked gifts are public
       
       // CREATE: Only Admin or Shopify Webhook (with shopifyOrderId)
       allow create: if isAdmin() 

@@ -51,24 +51,25 @@ export async function comparePin(pin, hash) {
  * Verify PIN for a gift (convenience function)
  * @param {string} giftId - The gift ID
  * @param {string} pin - The PIN to verify
- * @returns {Promise<boolean>} - True if PIN matches
+ * @returns {Promise<{match: boolean, giftData: object|null}>} - Result object
  */
 export async function verifyGiftPin(giftId, pin) {
     try {
         if (!giftId || !pin) {
             console.error('verifyGiftPin: Missing giftId or pin', { giftId, pin });
-            return false;
+            return { match: false, giftData: null };
         }
-        
+
         console.log('verifyGiftPin: Calling Cloud Function with', { giftId, pinLength: pin.length });
         const verifyGiftPinFunction = httpsCallable(functions, 'verifyGiftPin');
-        const result = await verifyGiftPinFunction({ 
-            giftId: String(giftId), 
-            pin: String(pin) 
+        const result = await verifyGiftPinFunction({
+            giftId: String(giftId),
+            pin: String(pin)
         });
-        
+
         console.log('verifyGiftPin: Result', result.data);
-        return result.data.match === true;
+        // Return full structure: { match: boolean, giftData: ... }
+        return result.data;
     } catch (error) {
         console.error('Error verifying gift PIN:', error);
         console.error('Error details:', {
@@ -76,6 +77,22 @@ export async function verifyGiftPin(giftId, pin) {
             message: error.message,
             details: error.details
         });
-        return false;
+        return { match: false, giftData: null };
+    }
+}
+
+/**
+ * Get public metadata for a locked gift
+ * @param {string} giftId 
+ * @returns {Promise<{exists: boolean, locked: boolean, publicData: object|null}>}
+ */
+export async function getPublicGiftData(giftId) {
+    try {
+        const getPublicDataFn = httpsCallable(functions, 'getPublicGiftData');
+        const result = await getPublicDataFn({ giftId });
+        return result.data;
+    } catch (error) {
+        console.error('Error fetching public gift data:', error);
+        throw error;
     }
 }
