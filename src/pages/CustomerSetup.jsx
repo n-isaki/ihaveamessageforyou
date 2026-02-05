@@ -162,15 +162,26 @@ export default function CustomerSetup() {
       };
 
       if (gift.project === "memoria") {
-        updates.deceasedName = memoriaData.deceasedName;
-        updates.lifeDates = memoriaData.lifeDates;
-        updates.meaningText = memoriaData.meaningText;
+        updates.deceasedName = sanitizeInput(
+          memoriaData.deceasedName || "",
+          200
+        );
+        updates.lifeDates = sanitizeInput(memoriaData.lifeDates || "", 100);
+        updates.meaningText = sanitizeInput(
+          memoriaData.meaningText || "",
+          5000
+        );
       } else {
-        updates.messages = messages;
-        // Immer explizit als String speichern (nie undefined), damit Firestore die Felder setzt
-        updates.headline = typeof headline === "string" ? headline.trim() : "";
-        updates.subheadline =
-          typeof subheadline === "string" ? subheadline.trim() : "";
+        const validMessages = messages
+          .filter((m) => isValidMessage(m))
+          .map((m) => ({
+            ...m,
+            content: sanitizeInput(m.content || "", 2000),
+            author: sanitizeInput(m.author || "", 100),
+          }));
+        updates.messages = validMessages;
+        updates.headline = sanitizeInput(headline, 200);
+        updates.subheadline = sanitizeInput(subheadline, 200);
         updates.albumImages = Array.isArray(albumImages) ? albumImages : [];
       }
 
