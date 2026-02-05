@@ -253,27 +253,55 @@ export default function CustomerSetup() {
 
   // MEMORIA SETUP (No Image Upload)
   if (gift.project === "memoria") {
+    const m1 = !!(memoriaData.deceasedName || "").trim();
+    const m2 = !!(memoriaData.lifeDates || "").trim();
+    const m3 = !!(memoriaData.meaningText || "").trim();
+    const memoriaProgress = Math.round(
+      (m1 ? 33 : 0) + (m2 ? 33 : 0) + (m3 ? 34 : 0)
+    );
+
     return (
-      <div className="min-h-screen bg-stone-950 text-stone-200 pb-32 font-sans">
-        <div className="bg-stone-950/80 backdrop-blur-md border-b border-stone-800 sticky top-0 z-20 px-6 py-4">
-          <span className="font-serif text-2xl tracking-widest text-white uppercase">
-            Memoria
-          </span>
+      <div className="min-h-screen bg-stone-950 text-stone-200 pb-36 font-sans">
+        <div className="sticky top-0 z-20 bg-stone-950/95 backdrop-blur-md border-b border-stone-800">
+          <div className="px-4 py-3 sm:px-6 sm:py-4 flex flex-col gap-3">
+            <div className="flex justify-center">
+              <span className="font-serif text-xl sm:text-2xl tracking-widest text-white uppercase">
+                Memoria
+              </span>
+            </div>
+            <div className="w-full max-w-xl mx-auto">
+              <div className="flex items-center justify-between gap-1 mb-1.5">
+                <span className="text-[10px] sm:text-xs font-medium text-stone-500 uppercase tracking-wider">
+                  Fortschritt
+                </span>
+                <span className="text-xs sm:text-sm font-medium text-stone-400 tabular-nums">
+                  {memoriaProgress}%
+                </span>
+              </div>
+              <div className="h-1.5 sm:h-2 w-full bg-stone-800 rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full bg-gradient-to-r from-stone-500 to-stone-400 rounded-full"
+                  initial={false}
+                  transition={{ type: "tween", duration: 0.4 }}
+                  style={{ width: `${memoriaProgress}%` }}
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="max-w-xl mx-auto p-6 space-y-8 mt-4">
-          <div className="bg-stone-900/80 border border-stone-800 rounded-2xl p-6 mb-6">
-            <h2 className="text-lg font-serif font-bold text-white mb-2">
+        <div className="max-w-xl mx-auto px-4 py-6 sm:p-6 space-y-6 sm:space-y-8">
+          <div className="bg-stone-900/80 border border-stone-800 rounded-2xl p-4 sm:p-6">
+            <h2 className="text-base sm:text-lg font-serif font-bold text-white mb-2">
               Willkommen!
             </h2>
             <p className="text-stone-400 text-sm leading-relaxed">
-              Du hast einen persönlichen Link erhalten. Fülle die folgenden
-              Angaben aus. Nach dem Absenden wird die Karte für uns freigegeben
-              und wir starten die Fertigung. Der Link ist nur für dich gültig.
+              Fülle die Angaben aus. Nach dem Absenden wird die Karte für uns
+              freigegeben. Der Link ist nur für dich gültig.
             </p>
           </div>
-          <div className="bg-stone-900 p-6 rounded-3xl border border-stone-800 space-y-6">
-            <h2 className="text-xl font-bold font-serif text-white mb-4">
+          <div className="bg-stone-900 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-stone-800 space-y-5 sm:space-y-6">
+            <h2 className="text-lg sm:text-xl font-bold font-serif text-white">
               Erinnerung teilen
             </h2>
 
@@ -290,7 +318,7 @@ export default function CustomerSetup() {
                     deceasedName: e.target.value,
                   })
                 }
-                className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-white focus:ring-2 focus:ring-stone-600 outline-none"
+                className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3.5 text-white focus:ring-2 focus:ring-stone-600 outline-none min-h-[48px]"
                 placeholder="Vorname Nachname"
               />
             </div>
@@ -305,7 +333,7 @@ export default function CustomerSetup() {
                 onChange={(e) =>
                   setMemoriaData({ ...memoriaData, lifeDates: e.target.value })
                 }
-                className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-white focus:ring-2 focus:ring-stone-600 outline-none"
+                className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3.5 text-white focus:ring-2 focus:ring-stone-600 outline-none min-h-[48px]"
                 placeholder="geb. 01.01.1950 - gest. 10.12.2024"
               />
             </div>
@@ -316,7 +344,7 @@ export default function CustomerSetup() {
                 Audio & Text)
               </label>
               <textarea
-                rows={6}
+                rows={5}
                 value={memoriaData.meaningText}
                 onChange={(e) =>
                   setMemoriaData({
@@ -324,18 +352,19 @@ export default function CustomerSetup() {
                     meaningText: e.target.value,
                   })
                 }
-                className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-white focus:ring-2 focus:ring-stone-600 outline-none"
+                className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3.5 text-white focus:ring-2 focus:ring-stone-600 outline-none min-h-[120px]"
                 placeholder="Erzähle uns etwas über die Person..."
               />
             </div>
           </div>
         </div>
 
-        <div className="fixed bottom-0 left-0 right-0 p-6 bg-stone-950/90 backdrop-blur-xl border-t border-stone-800 flex justify-center z-30">
+        <div className="fixed bottom-0 left-0 right-0 px-4 pt-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] bg-stone-950/95 backdrop-blur-xl border-t border-stone-800 flex justify-center z-30">
           <button
+            type="button"
             onClick={handleSaveAndLockClick}
             disabled={saving}
-            className="w-full max-w-md flex items-center justify-center space-x-3 px-8 py-4 rounded-2xl font-bold text-lg bg-stone-100 text-stone-900 hover:bg-white transition-colors"
+            className="w-full max-w-md min-h-[52px] sm:min-h-[56px] flex items-center justify-center gap-3 px-6 py-4 rounded-2xl font-bold text-base sm:text-lg bg-stone-100 text-stone-900 hover:bg-white transition-colors touch-manipulation active:scale-[0.98]"
           >
             {saving ? (
               <Loader className="animate-spin" />
@@ -385,87 +414,143 @@ export default function CustomerSetup() {
     );
   }
 
+  // Progress: Schritt 1 = Start, 2 = Album (optional), 3 = Inhalte, 4 = Versiegeln
+  const step1Done =
+    !!(typeof headline === "string" && headline.trim()) ||
+    !!(typeof subheadline === "string" && subheadline.trim());
+  const step2Done = true; // Album optional
+  const step3Done = messages.length > 0 || albumImages.length > 0;
+  const progressPercent =
+    25 * (step1Done ? 1 : 0) +
+    25 * (step2Done ? 1 : 0) +
+    25 * (step3Done ? 1 : 0) +
+    25 * (step3Done ? 1 : 0); // 0, 25, 50, 75, 100
+
   // ORIGINAL MUG SETUP VIEW (Fallback) - Same as before
   return (
-    <div className="min-h-screen bg-stone-950 text-stone-200 pb-32 font-sans selection:bg-rose-500/30">
-      {/* Header */}
-      <div className="bg-stone-950/80 backdrop-blur-md border-b border-stone-800 sticky top-0 z-20 px-6 py-4 flex justify-between items-center">
-        <div className="mx-auto">
-          <span className="font-serif text-2xl tracking-widest text-white uppercase">
-            Kamlimos
-          </span>
+    <div className="min-h-screen bg-stone-950 text-stone-200 pb-36 font-sans selection:bg-rose-500/30">
+      {/* Header + Progress */}
+      <div className="sticky top-0 z-20 bg-stone-950/95 backdrop-blur-md border-b border-stone-800">
+        <div className="px-4 py-3 sm:px-6 sm:py-4 flex flex-col gap-3">
+          <div className="flex justify-center">
+            <span className="font-serif text-xl sm:text-2xl tracking-widest text-white uppercase">
+              Kamlimos
+            </span>
+          </div>
+          {/* Progress bar – elegant, mobile-first */}
+          <div className="w-full max-w-xl mx-auto">
+            <div className="flex items-center justify-between gap-1 mb-1.5">
+              <span className="text-[10px] sm:text-xs font-medium text-stone-500 uppercase tracking-wider">
+                Fortschritt
+              </span>
+              <span className="text-xs sm:text-sm font-medium text-stone-400 tabular-nums">
+                {progressPercent}%
+              </span>
+            </div>
+            <div className="h-1.5 sm:h-2 w-full bg-stone-800 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full bg-gradient-to-r from-rose-600 to-rose-500 rounded-full"
+                initial={false}
+                transition={{ type: "tween", duration: 0.4 }}
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            {/* Step dots – 4 Schritte */}
+            <div className="flex justify-between mt-2 px-0.5">
+              {[
+                { label: "Start", done: step1Done },
+                { label: "Album", done: step2Done },
+                { label: "Inhalte", done: step3Done },
+                { label: "Fertig", done: step3Done },
+              ].map((step, i) => (
+                <div key={i} className="flex flex-col items-center gap-0.5">
+                  <div
+                    className={`w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full transition-colors ${
+                      step.done ? "bg-rose-500" : "bg-stone-700"
+                    }`}
+                  />
+                  <span className="text-[10px] sm:text-xs text-stone-500 hidden sm:block">
+                    {step.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto p-6 space-y-8 mt-4">
-        {/* Willkommen & Ablauf */}
-        <div className="bg-stone-900/80 border border-stone-800 rounded-2xl p-6 space-y-4">
-          <h2 className="text-lg font-serif font-bold text-white flex items-center">
-            <Gift className="w-5 h-5 mr-2 text-rose-500" />
+      <div className="max-w-2xl mx-auto px-4 py-6 sm:p-6 space-y-6 sm:space-y-8">
+        {/* Willkommen – kompakt auf Mobile */}
+        <div className="bg-stone-900/80 border border-stone-800 rounded-2xl p-4 sm:p-6 space-y-3 sm:space-y-4">
+          <h2 className="text-base sm:text-lg font-serif font-bold text-white flex items-center">
+            <Gift className="w-5 h-5 mr-2 text-rose-500 shrink-0" />
             Willkommen!
           </h2>
           <p className="text-stone-300 text-sm leading-relaxed">
-            Du hast einen persönlichen Link erhalten. Hier richtest du dein
-            Geschenk in wenigen Schritten ein. Der Link ist nur für dich gültig
-            – niemand sonst kann ihn nutzen.
+            Du hast einen persönlichen Link erhalten. Fülle die Schritte unten
+            aus – der Link ist nur für dich gültig.
           </p>
-          <div className="pt-2 border-t border-stone-800">
-            <p className="text-xs font-bold uppercase tracking-wider text-stone-500 mb-3">
-              So geht’s:
-            </p>
-            <ol className="text-stone-400 text-sm space-y-2 list-decimal list-inside">
+          <details className="group pt-2 border-t border-stone-800">
+            <summary className="text-xs font-bold uppercase tracking-wider text-stone-500 cursor-pointer list-none flex items-center gap-1">
+              So geht’s
+              <span className="group-open:rotate-180 transition-transform inline-block">
+                ▼
+              </span>
+            </summary>
+            <ol className="text-stone-400 text-sm space-y-2 list-decimal list-inside mt-3">
               <li>
                 <strong className="text-stone-300">Start-Bildschirm</strong> –
-                Titel und Untertitel (z.B. „Von Herzen für dich“).
+                Titel & Untertitel.
               </li>
               <li>
                 <strong className="text-stone-300">Album</strong> – Optional bis
-                zu {ALBUM_MAX_FILES} Fotos hochladen.
+                zu {ALBUM_MAX_FILES} Fotos.
               </li>
               <li>
-                <strong className="text-stone-300">Deine Inhalte</strong> –
-                Text-Nachricht oder Video-Link hinzufügen.
+                <strong className="text-stone-300">Inhalte</strong> – Nachricht
+                oder Video-Link.
               </li>
               <li>
-                <strong className="text-stone-300">Versiegeln</strong> – Am Ende
-                auf „Geschenk versiegeln“ klicken. Danach können wir dein
-                Geschenk nicht mehr ändern und starten die Veredelung.
+                <strong className="text-stone-300">Versiegeln</strong> – Fertig
+                klicken, dann starten wir.
               </li>
             </ol>
-          </div>
+          </details>
         </div>
 
-        {/* Greeting Card */}
-        {/* Intro Screen Editor */}
-        <div className="bg-gradient-to-br from-stone-900 to-stone-900/50 p-8 rounded-3xl shadow-xl border border-stone-800 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
-
-          <div className="flex justify-between items-start mb-6">
-            <h2 className="text-xl font-bold font-serif text-white flex items-center">
-              <Edit2 className="w-5 h-5 mr-2 text-rose-500" />
-              1. Start-Bildschirm
-            </h2>
+        {/* Schritt 1: Start-Bildschirm */}
+        <div className="bg-gradient-to-br from-stone-900 to-stone-900/50 p-5 sm:p-8 rounded-2xl sm:rounded-3xl shadow-xl border border-stone-800 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
+          <div className="flex flex-wrap justify-between items-center gap-3 mb-5 sm:mb-6">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center justify-center w-8 h-8 rounded-full bg-rose-500/20 text-rose-400 text-sm font-bold border border-rose-500/30">
+                1
+              </span>
+              <h2 className="text-lg sm:text-xl font-bold font-serif text-white flex items-center">
+                <Edit2 className="w-5 h-5 mr-2 text-rose-500 hidden sm:block" />
+                Start-Bildschirm
+              </h2>
+            </div>
             <button
+              type="button"
               onClick={() => setShowPreview(true)}
-              className="flex items-center px-4 py-2 bg-stone-800 hover:bg-rose-600 rounded-lg text-sm font-medium text-white transition-colors shadow-lg border border-stone-700 group"
+              className="flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 sm:py-2 bg-stone-800 hover:bg-rose-600 rounded-xl text-sm font-medium text-white transition-colors border border-stone-700 touch-manipulation"
             >
-              <Eye className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
-              Live Vorschau
+              <Eye className="w-4 h-4" />
+              Vorschau
             </button>
           </div>
-
-          <div className="space-y-6 relative z-10">
+          <div className="space-y-5 sm:space-y-6 relative z-10">
             <div>
-              <label className="text-xs uppercase tracking-wider text-stone-500 font-bold mb-2 block flex items-center">
+              <label className="text-xs uppercase tracking-wider text-stone-500 font-bold mb-2 block">
                 Titel (z.B. Von Herzen)
-                <Info className="h-3 w-3 ml-2 text-stone-600" />
               </label>
               <input
                 type="text"
                 value={headline}
                 onChange={(e) => setHeadline(e.target.value)}
                 placeholder="Von Herzen für dich"
-                className="w-full bg-stone-950/50 border border-stone-800 rounded-xl p-4 text-2xl font-serif text-white placeholder-stone-700 focus:ring-2 focus:ring-rose-500/50 outline-none transition-all"
+                className="w-full bg-stone-950/50 border border-stone-800 rounded-xl p-3.5 sm:p-4 text-xl sm:text-2xl font-serif text-white placeholder-stone-700 focus:ring-2 focus:ring-rose-500/50 outline-none transition-all min-h-[48px]"
               />
             </div>
             <div>
@@ -479,7 +564,7 @@ export default function CustomerSetup() {
                 placeholder={`Eine Botschaft von ${
                   gift.senderName || gift.customerName
                 }`}
-                className="w-full bg-stone-950/50 border border-stone-800 rounded-xl p-4 text-base text-stone-300 placeholder-stone-700 focus:ring-2 focus:ring-rose-500/50 outline-none transition-all"
+                className="w-full bg-stone-950/50 border border-stone-800 rounded-xl p-3.5 sm:p-4 text-base text-stone-300 placeholder-stone-700 focus:ring-2 focus:ring-rose-500/50 outline-none transition-all min-h-[48px]"
               />
             </div>
 
@@ -499,38 +584,43 @@ export default function CustomerSetup() {
           </div>
         </div>
 
-        {/* Album (bis zu 7 Bilder) */}
-        <div className="bg-stone-900 p-1 rounded-3xl shadow-xl border border-stone-800">
-          <div className="bg-stone-950/50 p-6 rounded-[20px]">
-            <h2 className="text-lg font-bold font-serif text-white mb-2 flex items-center">
-              <ImageIcon className="w-5 h-5 mr-2 text-rose-500" />
-              Album (bis zu {ALBUM_MAX_FILES} Bilder)
-            </h2>
-            <p className="text-xs text-stone-500 mb-4">
-              JPG, PNG oder WebP, max. 5 MB. Werden automatisch verkleinert.
+        {/* Schritt 2: Album */}
+        <div className="bg-stone-900 p-1 rounded-2xl sm:rounded-3xl shadow-xl border border-stone-800">
+          <div className="bg-stone-950/50 p-4 sm:p-6 rounded-[18px] sm:rounded-[20px]">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="flex items-center justify-center w-8 h-8 rounded-full bg-rose-500/20 text-rose-400 text-sm font-bold border border-rose-500/30">
+                2
+              </span>
+              <h2 className="text-lg font-bold font-serif text-white flex items-center">
+                <ImageIcon className="w-5 h-5 mr-2 text-rose-500" />
+                Album (bis zu {ALBUM_MAX_FILES} Bilder)
+              </h2>
+            </div>
+            <p className="text-xs text-stone-500 mb-4 pl-10">
+              Optional. JPG, PNG oder WebP, max. 5 MB.
             </p>
-            <div className="flex flex-wrap gap-3 items-start mb-6">
+            <div className="flex flex-wrap gap-3 items-start">
               {albumImages.map((url, index) => (
                 <div key={url} className="relative group">
                   <img
                     src={url}
                     alt=""
-                    className="w-20 h-20 object-cover rounded-xl border border-stone-700"
+                    className="w-20 h-20 sm:w-20 sm:h-20 object-cover rounded-xl border border-stone-700"
                   />
                   {!locked && (
                     <button
                       type="button"
                       onClick={() => removeAlbumImage(index)}
-                      className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-red-600 text-white flex items-center justify-center opacity-90 hover:opacity-100 shadow"
+                      className="absolute -top-1 -right-1 w-7 h-7 rounded-full bg-red-600 text-white flex items-center justify-center opacity-90 hover:opacity-100 shadow touch-manipulation"
                       aria-label="Bild entfernen"
                     >
-                      <X className="h-3 w-3" />
+                      <X className="h-3.5 w-3.5" />
                     </button>
                   )}
                 </div>
               ))}
               {albumImages.length < ALBUM_MAX_FILES && !locked && (
-                <label className="w-20 h-20 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-stone-700 text-stone-500 hover:border-rose-500/50 hover:bg-stone-800/50 cursor-pointer transition-colors">
+                <label className="w-20 h-20 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-stone-700 text-stone-500 hover:border-rose-500/50 hover:bg-stone-800/50 cursor-pointer transition-colors touch-manipulation active:scale-95">
                   <input
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
@@ -543,23 +633,26 @@ export default function CustomerSetup() {
                   ) : (
                     <ImageIcon className="h-6 w-6 mb-0.5" />
                   )}
-                  <span className="text-xs">Hinzufügen</span>
+                  <span className="text-xs">+</span>
                 </label>
               )}
             </div>
           </div>
         </div>
 
-        {/* Editor */}
-        <div className="bg-stone-900 p-1 rounded-3xl shadow-xl border border-stone-800">
-          <div className="bg-stone-950/50 p-6 rounded-[20px]">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold font-serif text-white">
+        {/* Schritt 3: Deine Inhalte */}
+        <div className="bg-stone-900 p-1 rounded-2xl sm:rounded-3xl shadow-xl border border-stone-800">
+          <div className="bg-stone-950/50 p-4 sm:p-6 rounded-[18px] sm:rounded-[20px]">
+            <div className="flex items-center gap-2 mb-4 sm:mb-6">
+              <span className="flex items-center justify-center w-8 h-8 rounded-full bg-rose-500/20 text-rose-400 text-sm font-bold border border-rose-500/30">
+                3
+              </span>
+              <h2 className="text-lg sm:text-xl font-bold font-serif text-white">
                 Deine Inhalte
               </h2>
-              <div className="flex items-center text-xs text-stone-500 bg-stone-900 px-3 py-1 rounded-full border border-stone-800">
-                <HelpCircle className="w-3 h-3 mr-1.5" />
-                <span>Multimedia Inhalte</span>
+              <div className="ml-auto flex items-center text-xs text-stone-500 bg-stone-900 px-2.5 py-1 rounded-full border border-stone-800">
+                <HelpCircle className="w-3 h-3 mr-1" />
+                <span className="hidden sm:inline">Text oder Video</span>
               </div>
             </div>
 
@@ -574,7 +667,7 @@ export default function CustomerSetup() {
           </div>
         </div>
 
-        <div className="text-center text-xs text-stone-600 pb-20 px-10 leading-relaxed">
+        <div className="text-center text-xs text-stone-600 pb-24 sm:pb-20 px-4 sm:px-10 leading-relaxed">
           <Lock className="inline h-3 w-3 mr-1 mb-0.5" />
           <span>
             Nach dem Absenden wird das Geschenk finalisiert und kann nicht mehr
@@ -583,28 +676,29 @@ export default function CustomerSetup() {
         </div>
       </div>
 
-      {/* Bottom Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 p-6 bg-stone-950/90 backdrop-blur-xl border-t border-stone-800 flex justify-center z-30">
+      {/* Bottom Action Bar – mobile-optimiert, safe-area */}
+      <div className="fixed bottom-0 left-0 right-0 px-4 pt-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] bg-stone-950/95 backdrop-blur-xl border-t border-stone-800 flex justify-center z-30">
         <button
+          type="button"
           onClick={handleSaveAndLockClick}
           disabled={
             saving || (messages.length === 0 && albumImages.length === 0)
           }
           className={`
-                        w-full max-w-md flex items-center justify-center space-x-3 px-8 py-4 rounded-2xl font-bold text-lg shadow-2xl transition-all
-                        ${
-                          messages.length === 0 && albumImages.length === 0
-                            ? "bg-stone-900 text-stone-600 cursor-not-allowed border border-stone-800"
-                            : "bg-gradient-to-r from-rose-700 to-rose-600 hover:from-rose-600 hover:to-rose-500 text-white shadow-rose-900/20 border border-rose-500/20"
-                        }
-                    `}
+            w-full max-w-md flex items-center justify-center gap-3 min-h-[52px] sm:min-h-[56px] px-6 py-4 rounded-2xl font-bold text-base sm:text-lg shadow-2xl transition-all touch-manipulation active:scale-[0.98]
+            ${
+              messages.length === 0 && albumImages.length === 0
+                ? "bg-stone-900 text-stone-600 cursor-not-allowed border border-stone-800"
+                : "bg-gradient-to-r from-rose-700 to-rose-600 hover:from-rose-600 hover:to-rose-500 text-white shadow-rose-900/20 border border-rose-500/20"
+            }
+          `}
         >
           {saving ? (
             <Loader className="h-6 w-6 animate-spin text-white/50" />
           ) : (
             <>
-              <span>Geschenk Versiegeln</span>
-              <Save className="h-5 w-5 opacity-80" />
+              <span>Geschenk versiegeln</span>
+              <Save className="h-5 w-5 opacity-80 shrink-0" />
             </>
           )}
         </button>
