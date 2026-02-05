@@ -42,8 +42,8 @@ export default function WizardMessageEditor({
   };
 
   const styles = {
-    input: `w-full p-3 rounded-xl border focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500/40 outline-none transition-all resize-none ${theme.input} ${theme.border}`,
-    inputSm: `w-full p-2 rounded-lg border focus:ring-2 focus:ring-rose-500 focus:border-transparent outline-none transition-all text-sm mb-2 ${theme.input} ${theme.border}`,
+    input: `w-full p-3 sm:p-4 rounded-xl border focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500/40 outline-none transition-all resize-none text-base leading-relaxed ${theme.input} ${theme.border}`,
+    inputSm: `w-full p-2.5 rounded-lg border focus:ring-2 focus:ring-rose-500 focus:border-transparent outline-none transition-all text-base mb-2 leading-relaxed ${theme.input} ${theme.border}`,
   };
 
   const iconOnlyMode = !widgetMode && darkMode;
@@ -97,7 +97,7 @@ export default function WizardMessageEditor({
                       key={type}
                       type="button"
                       onClick={() => handleAdd(type)}
-                      className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm text-stone-300 hover:bg-stone-800 hover:text-white transition-colors"
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left text-base text-stone-300 hover:bg-stone-800 hover:text-white transition-colors"
                     >
                       <Icon className="w-4 h-4 text-stone-500" />
                       {label} hinzufügen
@@ -155,7 +155,7 @@ export default function WizardMessageEditor({
 
             <div className="flex justify-between items-center mb-3">
               <span
-                className={`text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-lg ${
+                className={`text-xs font-semibold uppercase tracking-wider px-2.5 py-1 rounded-lg ${
                   msg.type === "video"
                     ? "bg-red-500/10 text-red-400"
                     : msg.type === "image"
@@ -175,7 +175,7 @@ export default function WizardMessageEditor({
 
             <div className="mb-3">
               <label
-                className={`block text-xs font-medium ${theme.subText} mb-1`}
+                className={`block text-sm font-medium ${theme.subText} mb-1.5`}
               >
                 Von
               </label>
@@ -194,7 +194,7 @@ export default function WizardMessageEditor({
 
             <div>
               <label
-                className={`block text-xs font-medium ${theme.subText} mb-1`}
+                className={`block text-sm font-medium ${theme.subText} mb-1.5`}
               >
                 {msg.type === "video"
                   ? "YouTube / Video-Link"
@@ -235,8 +235,8 @@ export default function WizardMessageEditor({
             <MessageSquare
               className={`h-10 w-10 ${theme.subText} mx-auto mb-3 opacity-60`}
             />
-            <p className={`${theme.subText} text-sm`}>Noch keine Inhalte.</p>
-            <p className={`${theme.subText} text-xs mt-1 opacity-70`}>
+            <p className={`${theme.subText} text-base`}>Noch keine Inhalte.</p>
+            <p className={`${theme.subText} text-sm mt-1 opacity-80`}>
               Tippe auf die Symbole oben oder auf + um hinzuzufügen.
             </p>
           </div>

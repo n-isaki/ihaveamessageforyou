@@ -256,7 +256,7 @@ export default function CustomerSetup() {
       <div className="min-h-screen bg-stone-950 text-stone-200 pb-36 font-setup">
         <div className="sticky top-0 z-20 bg-stone-950/95 backdrop-blur-md border-b border-stone-800">
           <div className="px-4 py-4 sm:px-6 sm:py-5 flex justify-center">
-            <span className="font-setup-heading text-xl sm:text-2xl text-white tracking-tight">
+            <span className="font-setup-heading text-2xl sm:text-3xl text-white">
               Memoria
             </span>
           </div>
@@ -264,21 +264,21 @@ export default function CustomerSetup() {
 
         <div className="max-w-xl mx-auto px-4 py-8 sm:p-8 space-y-8">
           <div className="bg-stone-900/60 border border-stone-800/80 rounded-2xl p-5 sm:p-6">
-            <h2 className="font-setup-heading text-lg sm:text-xl text-white mb-2">
+            <h2 className="font-setup-heading text-xl sm:text-2xl text-white mb-2">
               Willkommen
             </h2>
-            <p className="text-stone-400 text-sm leading-relaxed">
+            <p className="text-stone-400 text-base leading-relaxed">
               Fülle die Angaben aus. Nach dem Absenden wird die Karte für uns
               freigegeben. Der Link ist nur für dich gültig.
             </p>
           </div>
           <div className="bg-stone-900/40 border border-stone-800/80 p-5 sm:p-6 rounded-2xl space-y-5 sm:space-y-6">
-            <h2 className="font-setup-heading text-xl text-white">
+            <h2 className="font-setup-heading text-xl sm:text-2xl text-white">
               Erinnerung teilen
             </h2>
 
             <div>
-              <label className="block text-xs uppercase font-bold text-stone-500 mb-2 flex items-center">
+              <label className="block text-sm font-semibold text-stone-500 mb-2 flex items-center">
                 <User className="w-4 h-4 mr-2" /> Name des Verstorbenen
               </label>
               <input
@@ -290,13 +290,13 @@ export default function CustomerSetup() {
                     deceasedName: e.target.value,
                   })
                 }
-                className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3.5 text-white focus:ring-2 focus:ring-stone-600 outline-none min-h-[48px]"
+                className="w-full bg-stone-950 border border-stone-800 rounded-xl p-4 text-base text-white focus:ring-2 focus:ring-stone-600 outline-none min-h-[52px] leading-relaxed"
                 placeholder="Vorname Nachname"
               />
             </div>
 
             <div>
-              <label className="block text-xs uppercase font-bold text-stone-500 mb-2 flex items-center">
+              <label className="block text-sm font-semibold text-stone-500 mb-2 flex items-center">
                 <Calendar className="w-4 h-4 mr-2" /> Lebensdaten
               </label>
               <input
@@ -305,13 +305,13 @@ export default function CustomerSetup() {
                 onChange={(e) =>
                   setMemoriaData({ ...memoriaData, lifeDates: e.target.value })
                 }
-                className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3.5 text-white focus:ring-2 focus:ring-stone-600 outline-none min-h-[48px]"
+                className="w-full bg-stone-950 border border-stone-800 rounded-xl p-4 text-base text-white focus:ring-2 focus:ring-stone-600 outline-none min-h-[52px] leading-relaxed"
                 placeholder="geb. 01.01.1950 - gest. 10.12.2024"
               />
             </div>
 
             <div>
-              <label className="block text-xs uppercase font-bold text-stone-500 mb-2 flex items-center">
+              <label className="block text-sm font-semibold text-stone-500 mb-2 flex items-center">
                 <FileText className="w-4 h-4 mr-2" /> Deine Geschichte (für
                 Audio & Text)
               </label>
@@ -324,7 +324,7 @@ export default function CustomerSetup() {
                     meaningText: e.target.value,
                   })
                 }
-                className="w-full bg-stone-950 border border-stone-800 rounded-xl p-3.5 text-white focus:ring-2 focus:ring-stone-600 outline-none min-h-[120px]"
+                className="w-full bg-stone-950 border border-stone-800 rounded-xl p-4 text-base text-white focus:ring-2 focus:ring-stone-600 outline-none min-h-[140px] leading-relaxed"
                 placeholder="Erzähle uns etwas über die Person..."
               />
             </div>
@@ -367,7 +367,7 @@ export default function CustomerSetup() {
                     <h3 className="font-setup-heading text-2xl text-white mb-2">
                       Versiegeln?
                     </h3>
-                    <p className="text-stone-400 text-sm">
+                    <p className="text-stone-400 text-base leading-relaxed">
                       Änderungen sind danach nicht mehr möglich.
                     </p>
                   </div>
@@ -392,7 +392,7 @@ export default function CustomerSetup() {
       {/* Header – minimal */}
       <div className="sticky top-0 z-20 bg-stone-950/95 backdrop-blur-md border-b border-stone-800/80">
         <div className="px-4 py-4 sm:px-6 sm:py-5 flex justify-center">
-          <span className="font-setup-heading text-xl sm:text-2xl text-white tracking-tight">
+          <span className="font-setup-heading text-2xl sm:text-3xl text-white">
             Kamlimos
           </span>
         </div>
@@ -409,13 +409,13 @@ export default function CustomerSetup() {
             aus – der Link ist nur für dich gültig.
           </p>
           <details className="group mt-4 pt-4 border-t border-stone-800/60">
-            <summary className="text-xs font-medium tracking-wide text-stone-500 cursor-pointer list-none flex items-center gap-1.5">
+            <summary className="text-sm font-medium text-stone-500 cursor-pointer list-none flex items-center gap-1.5">
               So geht’s
-              <span className="group-open:rotate-180 transition-transform text-[10px]">
+              <span className="group-open:rotate-180 transition-transform text-xs">
                 ▼
               </span>
             </summary>
-            <ol className="text-stone-500 text-sm space-y-1.5 list-decimal list-inside mt-3">
+            <ol className="text-stone-500 text-base space-y-1.5 list-decimal list-inside mt-3 leading-relaxed">
               <li>Start: Titel & Untertitel</li>
               <li>Album: optional bis zu {ALBUM_MAX_FILES} Fotos</li>
               <li>Inhalte: Nachricht oder Video</li>
@@ -428,7 +428,7 @@ export default function CustomerSetup() {
         <section className="bg-stone-900/40 border border-stone-800/80 rounded-2xl p-5 sm:p-8 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-40 h-40 bg-rose-500/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
           <div className="flex flex-wrap justify-between items-center gap-3 mb-6 relative z-10">
-            <h2 className="font-setup-heading text-xl sm:text-2xl text-white">
+            <h2 className="font-setup-heading text-xl sm:text-2xl text-white leading-tight">
               Start-Bildschirm
             </h2>
             <button
@@ -442,7 +442,7 @@ export default function CustomerSetup() {
           </div>
           <div className="space-y-5 relative z-10">
             <div>
-              <label className="text-xs font-medium tracking-wide text-stone-500 mb-1.5 block">
+              <label className="text-sm font-semibold text-stone-500 mb-2 block">
                 Titel
               </label>
               <input
@@ -450,11 +450,11 @@ export default function CustomerSetup() {
                 value={headline}
                 onChange={(e) => setHeadline(e.target.value)}
                 placeholder="Von Herzen für dich"
-                className="w-full bg-stone-950/50 border border-stone-800 rounded-xl p-3.5 sm:p-4 text-lg sm:text-xl font-setup-heading text-white placeholder-stone-600 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500/40 outline-none transition-all min-h-[48px]"
+                className="w-full bg-stone-950/50 border border-stone-800 rounded-xl p-4 text-lg text-white placeholder-stone-600 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500/40 outline-none transition-all min-h-[52px] leading-relaxed"
               />
             </div>
             <div>
-              <label className="text-xs font-medium tracking-wide text-stone-500 mb-1.5 block">
+              <label className="text-sm font-semibold text-stone-500 mb-2 block">
                 Untertitel / Absender
               </label>
               <input
@@ -464,18 +464,18 @@ export default function CustomerSetup() {
                 placeholder={`Eine Botschaft von ${
                   gift.senderName || gift.customerName
                 }`}
-                className="w-full bg-stone-950/50 border border-stone-800 rounded-xl p-3.5 sm:p-4 text-base text-stone-300 placeholder-stone-600 focus:ring-2 focus:ring-rose-500/30 outline-none transition-all min-h-[48px]"
+                className="w-full bg-stone-950/50 border border-stone-800 rounded-xl p-4 text-base text-stone-300 placeholder-stone-600 focus:ring-2 focus:ring-rose-500/30 outline-none transition-all min-h-[52px] leading-relaxed"
               />
             </div>
 
             {gift.personalizationText && (
-              <div className="mt-4 p-4 bg-stone-950/50 rounded-xl text-sm border border-stone-800 flex items-start gap-3">
+              <div className="mt-4 p-4 bg-stone-950/50 rounded-xl text-base border border-stone-800 flex items-start gap-3 leading-relaxed">
                 <Info className="h-5 w-5 text-rose-500 mt-0.5 shrink-0" />
                 <div>
-                  <span className="block font-bold text-stone-500 text-xs uppercase tracking-wider mb-1">
+                  <span className="block font-semibold text-stone-500 text-sm mb-1">
                     Deine Etsy Gravur
                   </span>
-                  <span className="text-stone-200 font-medium text-base font-serif italic">
+                  <span className="text-stone-200 font-medium text-base italic">
                     "{gift.personalizationText}"
                   </span>
                 </div>
@@ -490,7 +490,7 @@ export default function CustomerSetup() {
             <h2 className="font-setup-heading text-xl sm:text-2xl text-white mb-1">
               Album
             </h2>
-            <p className="text-xs text-stone-500 mb-4">
+            <p className="text-sm text-stone-500 mb-4 leading-relaxed">
               Optional, bis zu {ALBUM_MAX_FILES} Fotos. JPG, PNG oder WebP, max.
               5 MB.
             </p>
@@ -538,7 +538,7 @@ export default function CustomerSetup() {
         {/* Deine Inhalte */}
         <section className="bg-stone-900/40 border border-stone-800/80 rounded-2xl overflow-hidden">
           <div className="p-5 sm:p-6">
-            <h2 className="font-setup-heading text-xl sm:text-2xl text-white mb-6">
+            <h2 className="font-setup-heading text-xl sm:text-2xl text-white mb-6 leading-tight">
               Deine Inhalte
             </h2>
 
@@ -553,8 +553,8 @@ export default function CustomerSetup() {
           </div>
         </section>
 
-        <p className="text-center text-xs text-stone-500 pb-24 sm:pb-20 px-4 leading-relaxed">
-          <Lock className="inline h-3 w-3 mr-1 mb-0.5 opacity-70" />
+        <p className="text-center text-sm text-stone-500 pb-24 sm:pb-20 px-4 leading-relaxed">
+          <Lock className="inline h-4 w-4 mr-1.5 mb-0.5 opacity-70" />
           Nach dem Versiegeln kann das Geschenk nicht mehr bearbeitet werden.
         </p>
       </div>
@@ -616,7 +616,7 @@ export default function CustomerSetup() {
                   <h3 className="font-setup-heading text-2xl text-white mb-2">
                     Bist du fertig?
                   </h3>
-                  <p className="text-stone-400 text-sm leading-relaxed">
+                  <p className="text-stone-400 text-base leading-relaxed">
                     Wenn du jetzt speicherst, wird dein Geschenk{" "}
                     <strong>versiegelt</strong>. Änderungen sind danach nicht
                     mehr möglich.
