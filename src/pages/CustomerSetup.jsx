@@ -166,9 +166,11 @@ export default function CustomerSetup() {
         updates.meaningText = memoriaData.meaningText;
       } else {
         updates.messages = messages;
-        updates.headline = headline;
-        updates.subheadline = subheadline;
-        updates.albumImages = albumImages;
+        // Immer explizit als String speichern (nie undefined), damit Firestore die Felder setzt
+        updates.headline = typeof headline === "string" ? headline.trim() : "";
+        updates.subheadline =
+          typeof subheadline === "string" ? subheadline.trim() : "";
+        updates.albumImages = Array.isArray(albumImages) ? albumImages : [];
       }
 
       // Include securityToken in update to validate ownership in Firestore rules
@@ -177,7 +179,7 @@ export default function CustomerSetup() {
         securityToken: gift.securityToken, // Include token for Firestore rule validation
       });
       setLocked(true);
-      setGift((prev) => ({ ...prev, locked: true }));
+      setGift((prev) => ({ ...prev, locked: true, ...updates }));
     } catch (err) {
       console.error("Failed to save", err);
       alert("Fehler beim Speichern. Bitte überprüfe deine Internetverbindung.");
@@ -521,7 +523,9 @@ export default function CustomerSetup() {
       <div className="fixed bottom-0 left-0 right-0 p-6 bg-stone-950/90 backdrop-blur-xl border-t border-stone-800 flex justify-center z-30">
         <button
           onClick={handleSaveAndLockClick}
-          disabled={saving || (messages.length === 0 && albumImages.length === 0)}
+          disabled={
+            saving || (messages.length === 0 && albumImages.length === 0)
+          }
           className={`
                         w-full max-w-md flex items-center justify-center space-x-3 px-8 py-4 rounded-2xl font-bold text-lg shadow-2xl transition-all
                         ${

@@ -480,8 +480,10 @@ export default function GiftReveal({ initialData }) {
           ) : (
             /* MUG MODE (Cinematic Dark Theme) */
             <div className="min-h-screen bg-stone-950 flex flex-col">
-              {/* Hero Section – nur wenn Headline oder Subheadline da sind */}
-              {(gift.headline || gift.subheadline) && (
+              {/* Hero Section – nur wenn Headline oder Subheadline Inhalt haben (nach Trim) */}
+              {((typeof gift.headline === "string" && gift.headline.trim()) ||
+                (typeof gift.subheadline === "string" &&
+                  gift.subheadline.trim())) && (
                 <div className="min-h-screen flex flex-col items-center justify-center p-8 relative">
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -491,18 +493,20 @@ export default function GiftReveal({ initialData }) {
                     <div className="inline-flex justify-center mb-4">
                       <div className="w-px h-16 bg-gradient-to-b from-transparent via-rose-500 to-transparent opacity-50"></div>
                     </div>
-                    {gift.headline && (
-                      <h2 className="text-5xl md:text-7xl font-serif italic text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-stone-500 tracking-tight leading-tight">
-                        <ReactMarkdown className="text-2xl md:text-3xl font-bold text-stone-900 leading-tight">
-                          {gift.headline}
-                        </ReactMarkdown>
-                      </h2>
-                    )}
-                    {gift.subheadline && (
-                      <p className="text-lg text-stone-400 font-light tracking-wide mt-8">
-                        {gift.subheadline}
-                      </p>
-                    )}
+                    {typeof gift.headline === "string" &&
+                      gift.headline.trim() && (
+                        <h2 className="text-5xl md:text-7xl font-serif italic text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-stone-500 tracking-tight leading-tight">
+                          <ReactMarkdown className="text-2xl md:text-3xl font-bold text-stone-900 leading-tight">
+                            {gift.headline.trim()}
+                          </ReactMarkdown>
+                        </h2>
+                      )}
+                    {typeof gift.subheadline === "string" &&
+                      gift.subheadline.trim() && (
+                        <p className="text-lg text-stone-400 font-light tracking-wide mt-8">
+                          {gift.subheadline.trim()}
+                        </p>
+                      )}
                   </motion.div>
 
                   <motion.div
@@ -520,166 +524,177 @@ export default function GiftReveal({ initialData }) {
               )}
 
               {/* Messages Section – mit Hero: unterhalb; ohne Hero: zentriert, vollflächig */}
-              <div
-                className={`bg-stone-900/50 flex flex-col items-center p-6 md:p-12 space-y-24 ${
-                  gift.headline || gift.subheadline
-                    ? "min-h-screen py-32"
-                    : "min-h-screen justify-center py-12 md:py-16 relative"
-                }`}
-              >
-                {!(gift.headline || gift.subheadline) && (
+              {(() => {
+                const hasHero =
+                  (typeof gift.headline === "string" && gift.headline.trim()) ||
+                  (typeof gift.subheadline === "string" &&
+                    gift.subheadline.trim());
+                return (
                   <div
-                    className="absolute top-8 left-1/2 -translate-x-1/2 w-px h-12 bg-gradient-to-b from-transparent via-rose-500/40 to-transparent opacity-60 pointer-events-none"
-                    aria-hidden="true"
-                  />
-                )}
-
-                {/* Album Gallery */}
-                {albumImages.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    className="max-w-4xl w-full"
+                    className={`bg-stone-900/50 flex flex-col items-center p-6 md:p-12 space-y-24 ${
+                      hasHero
+                        ? "min-h-screen py-32"
+                        : "min-h-screen justify-center py-12 md:py-16 relative"
+                    }`}
                   >
-                    <div className="bg-stone-900/80 backdrop-blur-sm rounded-[2rem] p-6 md:p-10 border border-stone-800 shadow-2xl">
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4">
-                        {albumImages.map((url, index) => (
-                          <button
-                            key={url}
-                            type="button"
-                            onClick={() => setLightboxIndex(index)}
-                            className="relative aspect-square rounded-xl overflow-hidden border border-stone-700/80 hover:border-rose-500/40 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500/50"
-                          >
-                            <img
-                              src={url}
-                              alt=""
-                              loading="lazy"
-                              className="w-full h-full object-cover"
-                            />
-                          </button>
-                        ))}
+                    {!hasHero && (
+                      <div
+                        className="absolute top-8 left-1/2 -translate-x-1/2 w-px h-12 bg-gradient-to-b from-transparent via-rose-500/40 to-transparent opacity-60 pointer-events-none"
+                        aria-hidden="true"
+                      />
+                    )}
+
+                    {/* Album Gallery */}
+                    {albumImages.length > 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="max-w-4xl w-full"
+                      >
+                        <div className="bg-stone-900/80 backdrop-blur-sm rounded-[2rem] p-6 md:p-10 border border-stone-800 shadow-2xl">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4">
+                            {albumImages.map((url, index) => (
+                              <button
+                                key={url}
+                                type="button"
+                                onClick={() => setLightboxIndex(index)}
+                                className="relative aspect-square rounded-xl overflow-hidden border border-stone-700/80 hover:border-rose-500/40 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500/50"
+                              >
+                                <img
+                                  src={url}
+                                  alt=""
+                                  loading="lazy"
+                                  className="w-full h-full object-cover"
+                                />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {/* Lightbox */}
+                    {lightboxIndex !== null && albumImages[lightboxIndex] && (
+                      <div
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm"
+                        onClick={() => setLightboxIndex(null)}
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label="Bild vergrößert"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setLightboxIndex(null)}
+                          className="absolute top-4 right-4 w-10 h-10 rounded-full bg-stone-800 text-white flex items-center justify-center hover:bg-stone-700 transition-colors"
+                          aria-label="Schließen"
+                        >
+                          <X className="h-5 w-5" />
+                        </button>
+                        <img
+                          src={albumImages[lightboxIndex]}
+                          alt=""
+                          className="max-w-full max-h-[90vh] w-auto h-auto object-contain rounded-lg"
+                          onClick={(e) => e.stopPropagation()}
+                        />
                       </div>
-                    </div>
-                  </motion.div>
-                )}
+                    )}
 
-                {/* Lightbox */}
-                {lightboxIndex !== null && albumImages[lightboxIndex] && (
-                  <div
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm"
-                    onClick={() => setLightboxIndex(null)}
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label="Bild vergrößert"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setLightboxIndex(null)}
-                      className="absolute top-4 right-4 w-10 h-10 rounded-full bg-stone-800 text-white flex items-center justify-center hover:bg-stone-700 transition-colors"
-                      aria-label="Schließen"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
-                    <img
-                      src={albumImages[lightboxIndex]}
-                      alt=""
-                      className="max-w-full max-h-[90vh] w-auto h-auto object-contain rounded-lg"
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </div>
-                )}
+                    {gift.messages?.map((msg, index) => (
+                      <motion.div
+                        key={index}
+                        initial={{ opacity: 0, y: 30 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, margin: "-100px" }}
+                        transition={{ duration: 0.8, delay: index * 0.1 }}
+                        className="max-w-2xl w-full"
+                      >
+                        <div className="bg-stone-900 backdrop-blur-sm rounded-[2rem] p-8 md:p-12 border border-stone-800 shadow-2xl relative overflow-hidden group hover:border-stone-700/50 transition-colors">
+                          {/* Glow Effect */}
+                          <div className="absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 bg-rose-500/10 rounded-full blur-3xl group-hover:bg-rose-500/20 transition-all duration-700"></div>
 
-                {gift.messages?.map((msg, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-100px" }}
-                    transition={{ duration: 0.8, delay: index * 0.1 }}
-                    className="max-w-2xl w-full"
-                  >
-                    <div className="bg-stone-900 backdrop-blur-sm rounded-[2rem] p-8 md:p-12 border border-stone-800 shadow-2xl relative overflow-hidden group hover:border-stone-700/50 transition-colors">
-                      {/* Glow Effect */}
-                      <div className="absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 bg-rose-500/10 rounded-full blur-3xl group-hover:bg-rose-500/20 transition-all duration-700"></div>
+                          <div className="relative z-10">
+                            {/* Author only when present */}
+                            {msg.author && msg.author.trim() && (
+                              <div className="flex items-center space-x-3 mb-6">
+                                <div className="h-10 w-10 rounded-full bg-stone-800 border border-stone-700 flex items-center justify-center text-stone-300 font-serif italic text-lg shadow-inner">
+                                  {msg.author.trim().charAt(0)}
+                                </div>
+                                <span className="text-xs font-bold uppercase tracking-[0.2em] text-rose-500/80">
+                                  {msg.author.trim()}
+                                </span>
+                              </div>
+                            )}
 
-                      <div className="relative z-10">
-                        {/* Author only when present */}
-                        {msg.author && msg.author.trim() && (
-                          <div className="flex items-center space-x-3 mb-6">
-                            <div className="h-10 w-10 rounded-full bg-stone-800 border border-stone-700 flex items-center justify-center text-stone-300 font-serif italic text-lg shadow-inner">
-                              {msg.author.trim().charAt(0)}
-                            </div>
-                            <span className="text-xs font-bold uppercase tracking-[0.2em] text-rose-500/80">
-                              {msg.author.trim()}
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Content – nur Inhalt, keine generischen Labels */}
-                        {msg.type === "text" ? (
-                          <div className="relative">
-                            <span className="absolute -top-4 -left-2 text-6xl text-stone-800 font-serif opacity-50 user-select-none">
-                              "
-                            </span>
-                            <p
-                              className={`${getFontSizeClass()} text-stone-200 font-light leading-loose whitespace-pre-wrap pl-4 border-l-2 border-stone-800`}
-                            >
-                              {msg.content}
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="rounded-2xl overflow-hidden shadow-2xl bg-black border border-stone-800 ring-1 ring-white/5">
-                            {msg.content.includes("youtube") ||
-                            msg.content.includes("youtu.be") ? (
-                              <div className="aspect-w-16 aspect-h-9">
-                                <iframe
-                                  src={msg.content
-                                    .replace("watch?v=", "embed/")
-                                    .replace("youtu.be/", "youtube.com/embed/")}
-                                  title="Video"
-                                  className="w-full h-full min-h-[250px]"
-                                  allowFullScreen
-                                  frameBorder="0"
-                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                ></iframe>
+                            {/* Content – nur Inhalt, keine generischen Labels */}
+                            {msg.type === "text" ? (
+                              <div className="relative">
+                                <span className="absolute -top-4 -left-2 text-6xl text-stone-800 font-serif opacity-50 user-select-none">
+                                  "
+                                </span>
+                                <p
+                                  className={`${getFontSizeClass()} text-stone-200 font-light leading-loose whitespace-pre-wrap pl-4 border-l-2 border-stone-800`}
+                                >
+                                  {msg.content}
+                                </p>
                               </div>
                             ) : (
-                              <a
-                                href={msg.content}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex flex-col items-center justify-center p-16 text-stone-400 hover:text-white transition-colors group/video"
-                              >
-                                <div className="w-16 h-16 rounded-full bg-stone-800 flex items-center justify-center mb-4 group-hover/video:scale-110 group-hover/video:bg-rose-600 transition-all duration-300">
-                                  <Play className="h-6 w-6 ml-1 text-inherit" />
-                                </div>
-                                <span className="uppercase tracking-widest text-xs font-bold">
-                                  Video öffnen
-                                </span>
-                              </a>
+                              <div className="rounded-2xl overflow-hidden shadow-2xl bg-black border border-stone-800 ring-1 ring-white/5">
+                                {msg.content.includes("youtube") ||
+                                msg.content.includes("youtu.be") ? (
+                                  <div className="aspect-w-16 aspect-h-9">
+                                    <iframe
+                                      src={msg.content
+                                        .replace("watch?v=", "embed/")
+                                        .replace(
+                                          "youtu.be/",
+                                          "youtube.com/embed/"
+                                        )}
+                                      title="Video"
+                                      className="w-full h-full min-h-[250px]"
+                                      allowFullScreen
+                                      frameBorder="0"
+                                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    ></iframe>
+                                  </div>
+                                ) : (
+                                  <a
+                                    href={msg.content}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex flex-col items-center justify-center p-16 text-stone-400 hover:text-white transition-colors group/video"
+                                  >
+                                    <div className="w-16 h-16 rounded-full bg-stone-800 flex items-center justify-center mb-4 group-hover/video:scale-110 group-hover/video:bg-rose-600 transition-all duration-300">
+                                      <Play className="h-6 w-6 ml-1 text-inherit" />
+                                    </div>
+                                    <span className="uppercase tracking-widest text-xs font-bold">
+                                      Video öffnen
+                                    </span>
+                                  </a>
+                                )}
+                              </div>
                             )}
                           </div>
-                        )}
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
+                        </div>
+                      </motion.div>
+                    ))}
 
-                {/* Footer */}
-                <div className="mt-20 text-center opacity-30 hover:opacity-100 transition-opacity">
-                  <Sparkles className="h-6 w-6 mx-auto mb-4 animate-pulse text-stone-500" />
-                  <a
-                    href="https://www.kamlimos.de"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs uppercase tracking-[0.2em] font-light hover:text-white transition-colors"
-                  >
-                    www.kamlimos.de
-                  </a>
-                </div>
-                <div ref={messagesEndRef} />
-              </div>
+                    {/* Footer */}
+                    <div className="mt-20 text-center opacity-30 hover:opacity-100 transition-opacity">
+                      <Sparkles className="h-6 w-6 mx-auto mb-4 animate-pulse text-stone-500" />
+                      <a
+                        href="https://www.kamlimos.de"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs uppercase tracking-[0.2em] font-light hover:text-white transition-colors"
+                      >
+                        www.kamlimos.de
+                      </a>
+                    </div>
+                    <div ref={messagesEndRef} />
+                  </div>
+                );
+              })()}
             </div>
           )}
         </>
