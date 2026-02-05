@@ -5,3 +5,11 @@
     @apply bg-stone-50 text-stone-900;
   }
 }
+
+/* Elegant typography for Setup / premium flows */
+.font-setup {
+  font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+}
+.font-setup-heading {
+  font-family: "Instrument Serif", Georgia, serif;
+}

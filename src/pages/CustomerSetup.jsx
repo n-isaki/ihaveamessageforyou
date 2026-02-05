@@ -10,7 +10,6 @@ import {
   Info,
   ShieldAlert,
   X,
-  HelpCircle,
   Eye,
   Edit2,
   User,
@@ -253,55 +252,28 @@ export default function CustomerSetup() {
 
   // MEMORIA SETUP (No Image Upload)
   if (gift.project === "memoria") {
-    const m1 = !!(memoriaData.deceasedName || "").trim();
-    const m2 = !!(memoriaData.lifeDates || "").trim();
-    const m3 = !!(memoriaData.meaningText || "").trim();
-    const memoriaProgress = Math.round(
-      (m1 ? 33 : 0) + (m2 ? 33 : 0) + (m3 ? 34 : 0)
-    );
-
     return (
-      <div className="min-h-screen bg-stone-950 text-stone-200 pb-36 font-sans">
+      <div className="min-h-screen bg-stone-950 text-stone-200 pb-36 font-setup">
         <div className="sticky top-0 z-20 bg-stone-950/95 backdrop-blur-md border-b border-stone-800">
-          <div className="px-4 py-3 sm:px-6 sm:py-4 flex flex-col gap-3">
-            <div className="flex justify-center">
-              <span className="font-serif text-xl sm:text-2xl tracking-widest text-white uppercase">
-                Memoria
-              </span>
-            </div>
-            <div className="w-full max-w-xl mx-auto">
-              <div className="flex items-center justify-between gap-1 mb-1.5">
-                <span className="text-[10px] sm:text-xs font-medium text-stone-500 uppercase tracking-wider">
-                  Fortschritt
-                </span>
-                <span className="text-xs sm:text-sm font-medium text-stone-400 tabular-nums">
-                  {memoriaProgress}%
-                </span>
-              </div>
-              <div className="h-1.5 sm:h-2 w-full bg-stone-800 rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full bg-gradient-to-r from-stone-500 to-stone-400 rounded-full"
-                  initial={false}
-                  transition={{ type: "tween", duration: 0.4 }}
-                  style={{ width: `${memoriaProgress}%` }}
-                />
-              </div>
-            </div>
+          <div className="px-4 py-4 sm:px-6 sm:py-5 flex justify-center">
+            <span className="font-setup-heading text-xl sm:text-2xl text-white tracking-tight">
+              Memoria
+            </span>
           </div>
         </div>
 
-        <div className="max-w-xl mx-auto px-4 py-6 sm:p-6 space-y-6 sm:space-y-8">
-          <div className="bg-stone-900/80 border border-stone-800 rounded-2xl p-4 sm:p-6">
-            <h2 className="text-base sm:text-lg font-serif font-bold text-white mb-2">
-              Willkommen!
+        <div className="max-w-xl mx-auto px-4 py-8 sm:p-8 space-y-8">
+          <div className="bg-stone-900/60 border border-stone-800/80 rounded-2xl p-5 sm:p-6">
+            <h2 className="font-setup-heading text-lg sm:text-xl text-white mb-2">
+              Willkommen
             </h2>
             <p className="text-stone-400 text-sm leading-relaxed">
               Fülle die Angaben aus. Nach dem Absenden wird die Karte für uns
               freigegeben. Der Link ist nur für dich gültig.
             </p>
           </div>
-          <div className="bg-stone-900 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-stone-800 space-y-5 sm:space-y-6">
-            <h2 className="text-lg sm:text-xl font-bold font-serif text-white">
+          <div className="bg-stone-900/40 border border-stone-800/80 p-5 sm:p-6 rounded-2xl space-y-5 sm:space-y-6">
+            <h2 className="font-setup-heading text-xl text-white">
               Erinnerung teilen
             </h2>
 
@@ -392,7 +364,7 @@ export default function CustomerSetup() {
                 <div className="text-center space-y-6">
                   <Lock className="h-10 w-10 text-stone-100 mx-auto" />
                   <div>
-                    <h3 className="text-2xl font-serif font-bold text-white mb-2">
+                    <h3 className="font-setup-heading text-2xl text-white mb-2">
                       Versiegeln?
                     </h3>
                     <p className="text-stone-400 text-sm">
@@ -414,147 +386,75 @@ export default function CustomerSetup() {
     );
   }
 
-  // Progress: Schritt 1 = Start, 2 = Album (optional), 3 = Inhalte, 4 = Versiegeln
-  const step1Done =
-    !!(typeof headline === "string" && headline.trim()) ||
-    !!(typeof subheadline === "string" && subheadline.trim());
-  const step2Done = true; // Album optional
-  const step3Done = messages.length > 0 || albumImages.length > 0;
-  const progressPercent =
-    25 * (step1Done ? 1 : 0) +
-    25 * (step2Done ? 1 : 0) +
-    25 * (step3Done ? 1 : 0) +
-    25 * (step3Done ? 1 : 0); // 0, 25, 50, 75, 100
-
-  // ORIGINAL MUG SETUP VIEW (Fallback) - Same as before
+  // MUG SETUP VIEW
   return (
-    <div className="min-h-screen bg-stone-950 text-stone-200 pb-36 font-sans selection:bg-rose-500/30">
-      {/* Header + Progress */}
-      <div className="sticky top-0 z-20 bg-stone-950/95 backdrop-blur-md border-b border-stone-800">
-        <div className="px-4 py-3 sm:px-6 sm:py-4 flex flex-col gap-3">
-          <div className="flex justify-center">
-            <span className="font-serif text-xl sm:text-2xl tracking-widest text-white uppercase">
-              Kamlimos
-            </span>
-          </div>
-          {/* Progress bar – elegant, mobile-first */}
-          <div className="w-full max-w-xl mx-auto">
-            <div className="flex items-center justify-between gap-1 mb-1.5">
-              <span className="text-[10px] sm:text-xs font-medium text-stone-500 uppercase tracking-wider">
-                Fortschritt
-              </span>
-              <span className="text-xs sm:text-sm font-medium text-stone-400 tabular-nums">
-                {progressPercent}%
-              </span>
-            </div>
-            <div className="h-1.5 sm:h-2 w-full bg-stone-800 rounded-full overflow-hidden">
-              <motion.div
-                className="h-full bg-gradient-to-r from-rose-600 to-rose-500 rounded-full"
-                initial={false}
-                transition={{ type: "tween", duration: 0.4 }}
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-            {/* Step dots – 4 Schritte */}
-            <div className="flex justify-between mt-2 px-0.5">
-              {[
-                { label: "Start", done: step1Done },
-                { label: "Album", done: step2Done },
-                { label: "Inhalte", done: step3Done },
-                { label: "Fertig", done: step3Done },
-              ].map((step, i) => (
-                <div key={i} className="flex flex-col items-center gap-0.5">
-                  <div
-                    className={`w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full transition-colors ${
-                      step.done ? "bg-rose-500" : "bg-stone-700"
-                    }`}
-                  />
-                  <span className="text-[10px] sm:text-xs text-stone-500 hidden sm:block">
-                    {step.label}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
+    <div className="min-h-screen bg-stone-950 text-stone-200 pb-36 font-setup selection:bg-rose-500/30">
+      {/* Header – minimal */}
+      <div className="sticky top-0 z-20 bg-stone-950/95 backdrop-blur-md border-b border-stone-800/80">
+        <div className="px-4 py-4 sm:px-6 sm:py-5 flex justify-center">
+          <span className="font-setup-heading text-xl sm:text-2xl text-white tracking-tight">
+            Kamlimos
+          </span>
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 py-6 sm:p-6 space-y-6 sm:space-y-8">
-        {/* Willkommen – kompakt auf Mobile */}
-        <div className="bg-stone-900/80 border border-stone-800 rounded-2xl p-4 sm:p-6 space-y-3 sm:space-y-4">
-          <h2 className="text-base sm:text-lg font-serif font-bold text-white flex items-center">
-            <Gift className="w-5 h-5 mr-2 text-rose-500 shrink-0" />
-            Willkommen!
+      <div className="max-w-2xl mx-auto px-4 py-8 sm:p-8 space-y-10 sm:space-y-12">
+        {/* Willkommen */}
+        <div className="bg-stone-900/50 border border-stone-800/80 rounded-2xl p-5 sm:p-6">
+          <h2 className="font-setup-heading text-lg sm:text-xl text-white mb-2">
+            Willkommen
           </h2>
-          <p className="text-stone-300 text-sm leading-relaxed">
-            Du hast einen persönlichen Link erhalten. Fülle die Schritte unten
+          <p className="text-stone-400 text-sm leading-relaxed">
+            Du hast einen persönlichen Link erhalten. Fülle die Bereiche unten
             aus – der Link ist nur für dich gültig.
           </p>
-          <details className="group pt-2 border-t border-stone-800">
-            <summary className="text-xs font-bold uppercase tracking-wider text-stone-500 cursor-pointer list-none flex items-center gap-1">
+          <details className="group mt-4 pt-4 border-t border-stone-800/60">
+            <summary className="text-xs font-medium tracking-wide text-stone-500 cursor-pointer list-none flex items-center gap-1.5">
               So geht’s
-              <span className="group-open:rotate-180 transition-transform inline-block">
+              <span className="group-open:rotate-180 transition-transform text-[10px]">
                 ▼
               </span>
             </summary>
-            <ol className="text-stone-400 text-sm space-y-2 list-decimal list-inside mt-3">
-              <li>
-                <strong className="text-stone-300">Start-Bildschirm</strong> –
-                Titel & Untertitel.
-              </li>
-              <li>
-                <strong className="text-stone-300">Album</strong> – Optional bis
-                zu {ALBUM_MAX_FILES} Fotos.
-              </li>
-              <li>
-                <strong className="text-stone-300">Inhalte</strong> – Nachricht
-                oder Video-Link.
-              </li>
-              <li>
-                <strong className="text-stone-300">Versiegeln</strong> – Fertig
-                klicken, dann starten wir.
-              </li>
+            <ol className="text-stone-500 text-sm space-y-1.5 list-decimal list-inside mt-3">
+              <li>Start: Titel & Untertitel</li>
+              <li>Album: optional bis zu {ALBUM_MAX_FILES} Fotos</li>
+              <li>Inhalte: Nachricht oder Video</li>
+              <li>Zum Schluss: Versiegeln klicken</li>
             </ol>
           </details>
         </div>
 
-        {/* Schritt 1: Start-Bildschirm */}
-        <div className="bg-gradient-to-br from-stone-900 to-stone-900/50 p-5 sm:p-8 rounded-2xl sm:rounded-3xl shadow-xl border border-stone-800 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
-          <div className="flex flex-wrap justify-between items-center gap-3 mb-5 sm:mb-6">
-            <div className="flex items-center gap-2">
-              <span className="flex items-center justify-center w-8 h-8 rounded-full bg-rose-500/20 text-rose-400 text-sm font-bold border border-rose-500/30">
-                1
-              </span>
-              <h2 className="text-lg sm:text-xl font-bold font-serif text-white flex items-center">
-                <Edit2 className="w-5 h-5 mr-2 text-rose-500 hidden sm:block" />
-                Start-Bildschirm
-              </h2>
-            </div>
+        {/* Start-Bildschirm */}
+        <section className="bg-stone-900/40 border border-stone-800/80 rounded-2xl p-5 sm:p-8 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-40 h-40 bg-rose-500/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+          <div className="flex flex-wrap justify-between items-center gap-3 mb-6 relative z-10">
+            <h2 className="font-setup-heading text-xl sm:text-2xl text-white">
+              Start-Bildschirm
+            </h2>
             <button
               type="button"
               onClick={() => setShowPreview(true)}
-              className="flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 sm:py-2 bg-stone-800 hover:bg-rose-600 rounded-xl text-sm font-medium text-white transition-colors border border-stone-700 touch-manipulation"
+              className="flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 bg-stone-800/80 hover:bg-stone-700 rounded-xl text-sm font-medium text-stone-200 transition-colors border border-stone-700/80 touch-manipulation"
             >
               <Eye className="w-4 h-4" />
               Vorschau
             </button>
           </div>
-          <div className="space-y-5 sm:space-y-6 relative z-10">
+          <div className="space-y-5 relative z-10">
             <div>
-              <label className="text-xs uppercase tracking-wider text-stone-500 font-bold mb-2 block">
-                Titel (z.B. Von Herzen)
+              <label className="text-xs font-medium tracking-wide text-stone-500 mb-1.5 block">
+                Titel
               </label>
               <input
                 type="text"
                 value={headline}
                 onChange={(e) => setHeadline(e.target.value)}
                 placeholder="Von Herzen für dich"
-                className="w-full bg-stone-950/50 border border-stone-800 rounded-xl p-3.5 sm:p-4 text-xl sm:text-2xl font-serif text-white placeholder-stone-700 focus:ring-2 focus:ring-rose-500/50 outline-none transition-all min-h-[48px]"
+                className="w-full bg-stone-950/50 border border-stone-800 rounded-xl p-3.5 sm:p-4 text-lg sm:text-xl font-setup-heading text-white placeholder-stone-600 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500/40 outline-none transition-all min-h-[48px]"
               />
             </div>
             <div>
-              <label className="text-xs uppercase tracking-wider text-stone-500 font-bold mb-2 block">
+              <label className="text-xs font-medium tracking-wide text-stone-500 mb-1.5 block">
                 Untertitel / Absender
               </label>
               <input
@@ -564,7 +464,7 @@ export default function CustomerSetup() {
                 placeholder={`Eine Botschaft von ${
                   gift.senderName || gift.customerName
                 }`}
-                className="w-full bg-stone-950/50 border border-stone-800 rounded-xl p-3.5 sm:p-4 text-base text-stone-300 placeholder-stone-700 focus:ring-2 focus:ring-rose-500/50 outline-none transition-all min-h-[48px]"
+                className="w-full bg-stone-950/50 border border-stone-800 rounded-xl p-3.5 sm:p-4 text-base text-stone-300 placeholder-stone-600 focus:ring-2 focus:ring-rose-500/30 outline-none transition-all min-h-[48px]"
               />
             </div>
 
@@ -582,22 +482,17 @@ export default function CustomerSetup() {
               </div>
             )}
           </div>
-        </div>
+        </section>
 
-        {/* Schritt 2: Album */}
-        <div className="bg-stone-900 p-1 rounded-2xl sm:rounded-3xl shadow-xl border border-stone-800">
-          <div className="bg-stone-950/50 p-4 sm:p-6 rounded-[18px] sm:rounded-[20px]">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="flex items-center justify-center w-8 h-8 rounded-full bg-rose-500/20 text-rose-400 text-sm font-bold border border-rose-500/30">
-                2
-              </span>
-              <h2 className="text-lg font-bold font-serif text-white flex items-center">
-                <ImageIcon className="w-5 h-5 mr-2 text-rose-500" />
-                Album (bis zu {ALBUM_MAX_FILES} Bilder)
-              </h2>
-            </div>
-            <p className="text-xs text-stone-500 mb-4 pl-10">
-              Optional. JPG, PNG oder WebP, max. 5 MB.
+        {/* Album */}
+        <section className="bg-stone-900/40 border border-stone-800/80 rounded-2xl overflow-hidden">
+          <div className="p-5 sm:p-6">
+            <h2 className="font-setup-heading text-xl sm:text-2xl text-white mb-1">
+              Album
+            </h2>
+            <p className="text-xs text-stone-500 mb-4">
+              Optional, bis zu {ALBUM_MAX_FILES} Fotos. JPG, PNG oder WebP, max.
+              5 MB.
             </p>
             <div className="flex flex-wrap gap-3 items-start">
               {albumImages.map((url, index) => (
@@ -638,23 +533,14 @@ export default function CustomerSetup() {
               )}
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Schritt 3: Deine Inhalte */}
-        <div className="bg-stone-900 p-1 rounded-2xl sm:rounded-3xl shadow-xl border border-stone-800">
-          <div className="bg-stone-950/50 p-4 sm:p-6 rounded-[18px] sm:rounded-[20px]">
-            <div className="flex items-center gap-2 mb-4 sm:mb-6">
-              <span className="flex items-center justify-center w-8 h-8 rounded-full bg-rose-500/20 text-rose-400 text-sm font-bold border border-rose-500/30">
-                3
-              </span>
-              <h2 className="text-lg sm:text-xl font-bold font-serif text-white">
-                Deine Inhalte
-              </h2>
-              <div className="ml-auto flex items-center text-xs text-stone-500 bg-stone-900 px-2.5 py-1 rounded-full border border-stone-800">
-                <HelpCircle className="w-3 h-3 mr-1" />
-                <span className="hidden sm:inline">Text oder Video</span>
-              </div>
-            </div>
+        {/* Deine Inhalte */}
+        <section className="bg-stone-900/40 border border-stone-800/80 rounded-2xl overflow-hidden">
+          <div className="p-5 sm:p-6">
+            <h2 className="font-setup-heading text-xl sm:text-2xl text-white mb-6">
+              Deine Inhalte
+            </h2>
 
             <WizardMessageEditor
               messages={messages}
@@ -665,15 +551,12 @@ export default function CustomerSetup() {
               darkMode={true}
             />
           </div>
-        </div>
+        </section>
 
-        <div className="text-center text-xs text-stone-600 pb-24 sm:pb-20 px-4 sm:px-10 leading-relaxed">
-          <Lock className="inline h-3 w-3 mr-1 mb-0.5" />
-          <span>
-            Nach dem Absenden wird das Geschenk finalisiert und kann nicht mehr
-            bearbeitet werden.
-          </span>
-        </div>
+        <p className="text-center text-xs text-stone-500 pb-24 sm:pb-20 px-4 leading-relaxed">
+          <Lock className="inline h-3 w-3 mr-1 mb-0.5 opacity-70" />
+          Nach dem Versiegeln kann das Geschenk nicht mehr bearbeitet werden.
+        </p>
       </div>
 
       {/* Bottom Action Bar – mobile-optimiert, safe-area */}
@@ -730,7 +613,7 @@ export default function CustomerSetup() {
                 </div>
 
                 <div>
-                  <h3 className="text-2xl font-serif font-bold text-white mb-2">
+                  <h3 className="font-setup-heading text-2xl text-white mb-2">
                     Bist du fertig?
                   </h3>
                   <p className="text-stone-400 text-sm leading-relaxed">
