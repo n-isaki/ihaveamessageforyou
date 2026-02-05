@@ -24,7 +24,15 @@ export default function GiftReveal({ initialData }) {
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const isPreview = !!initialData;
   const messagesEndRef = useRef(null);
+  const contentStartRef = useRef(null);
   const albumImages = gift?.albumImages || [];
+
+  const scrollToContent = () => {
+    contentStartRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
 
   // Initial Fetch (Only if no initialData)
   useEffect(() => {
@@ -515,10 +523,15 @@ export default function GiftReveal({ initialData }) {
                     transition={{ delay: 1, duration: 1 }}
                     className="absolute bottom-12 left-0 right-0 flex justify-center"
                   >
-                    <div className="flex flex-col items-center text-stone-500 text-xs tracking-[0.2em] uppercase animate-bounce">
+                    <button
+                      type="button"
+                      onClick={scrollToContent}
+                      className="flex flex-col items-center text-stone-500 text-xs tracking-[0.2em] uppercase animate-bounce hover:text-stone-300 focus:outline-none focus:ring-2 focus:ring-rose-500/50 focus:ring-offset-2 focus:ring-offset-stone-950 rounded-lg py-2 px-3 transition-colors"
+                      aria-label="Zum Inhalt scrollen"
+                    >
                       <span className="mb-2">Nachricht öffnen</span>
                       <div className="w-px h-8 bg-gradient-to-b from-stone-500 to-transparent"></div>
-                    </div>
+                    </button>
                   </motion.div>
                 </div>
               )}
@@ -531,6 +544,7 @@ export default function GiftReveal({ initialData }) {
                     gift.subheadline.trim());
                 return (
                   <div
+                    ref={contentStartRef}
                     className={`bg-stone-900/50 flex flex-col items-center p-6 md:p-12 space-y-24 ${
                       hasHero
                         ? "min-h-screen py-32"
@@ -544,32 +558,51 @@ export default function GiftReveal({ initialData }) {
                       />
                     )}
 
-                    {/* Album Gallery */}
+                    {/* Album: 1 Bild = groß mittig, mehrere = horizontal scrollbar (Mobile) */}
                     {albumImages.length > 0 && (
                       <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        className="max-w-4xl w-full"
+                        className="w-full max-w-4xl"
                       >
-                        <div className="bg-stone-900/80 backdrop-blur-sm rounded-[2rem] p-6 md:p-10 border border-stone-800 shadow-2xl">
-                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 md:gap-4">
-                            {albumImages.map((url, index) => (
+                        <div className="bg-stone-900/80 backdrop-blur-sm rounded-[2rem] p-4 md:p-10 border border-stone-800 shadow-2xl">
+                          {albumImages.length === 1 ? (
+                            /* Ein Bild: groß, mittig, schön auf Mobile */
+                            <div className="flex justify-center">
                               <button
-                                key={url}
                                 type="button"
-                                onClick={() => setLightboxIndex(index)}
-                                className="relative aspect-square rounded-xl overflow-hidden border border-stone-700/80 hover:border-rose-500/40 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500/50"
+                                onClick={() => setLightboxIndex(0)}
+                                className="block w-full max-w-2xl focus:outline-none focus:ring-2 focus:ring-rose-500/50 focus:ring-offset-2 focus:ring-offset-stone-900 rounded-2xl overflow-hidden"
                               >
                                 <img
-                                  src={url}
+                                  src={albumImages[0]}
                                   alt=""
-                                  loading="lazy"
-                                  className="w-full h-full object-cover"
+                                  loading="eager"
+                                  className="w-full h-auto max-h-[75vh] object-contain rounded-2xl"
                                 />
                               </button>
-                            ))}
-                          </div>
+                            </div>
+                          ) : (
+                            /* Mehrere Bilder: horizontal scroll (Mobile: wischen), Desktop: Grid */
+                            <div className="flex flex-nowrap gap-4 overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth pb-2 -mx-1 px-1 md:flex-none md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4 md:overflow-visible md:pb-0">
+                              {albumImages.map((url, index) => (
+                                <button
+                                  key={url}
+                                  type="button"
+                                  onClick={() => setLightboxIndex(index)}
+                                  className="flex-shrink-0 w-[82vw] max-w-[320px] aspect-square snap-center rounded-xl overflow-hidden border border-stone-700/80 hover:border-rose-500/40 transition-colors focus:outline-none focus:ring-2 focus:ring-rose-500/50 md:w-full md:max-w-none"
+                                >
+                                  <img
+                                    src={url}
+                                    alt=""
+                                    loading={index < 3 ? "eager" : "lazy"}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </button>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </motion.div>
                     )}
