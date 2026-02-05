@@ -267,8 +267,18 @@ export const getGiftById = async (id, retries = 3) => {
         return null; // Not found
       }
     } catch (error) {
+      // Log the actual error code for debugging on Staging
+      console.warn('Firestore error caught in getGiftById:', error.code, error.message);
+
       // SECURITY UPDATE: Handle locked gifts (PERMISSION_DENIED)
-      if (error.code === 'permission-denied') {
+      // Check for multiple variations of permission denied error
+      if (
+        error.code === 'permission-denied' ||
+        error.code === 'PERMISSION_DENIED' ||
+        (error.code && error.code.toLowerCase().includes('permission')) ||
+        (error.message && error.message.toLowerCase().includes('permission')) ||
+        (error.message && error.message.toLowerCase().includes('privilege'))
+      ) {
         console.warn("🔒 Gift is locked (PERMISSION_DENIED). Attempting to fetch public data...");
         try {
           // Import dynamically to avoid circular dependencies if any, 
