@@ -50,6 +50,22 @@ export default function GiftReveal({ initialData }) {
     (gift?.messages?.length ?? 0) > 1 ||
     albumImages.length > 1;
 
+  // Einzeiliger Text: wie viel noch zum Scrollen (z. B. "Noch 2 Nachrichten", "Noch 1 Bild, 1 Nachricht")
+  const getMoreBelowLabel = () => {
+    const a = albumImages.length;
+    const m = gift?.messages?.length ?? 0;
+    if (a > 1 && m === 0) return `Noch ${a - 1} Bild${a - 1 > 1 ? "er" : ""}`;
+    if (a === 0 && m > 1)
+      return `Noch ${m - 1} Nachricht${m - 1 > 1 ? "en" : ""}`;
+    if (a === 1 && m > 0)
+      return `Noch 1 Bild, ${m} Nachricht${m > 1 ? "en" : ""}`;
+    if (a > 1 && m > 0)
+      return `Noch ${a - 1} Bild${a - 1 > 1 ? "er" : ""}, ${m} Nachricht${
+        m > 1 ? "en" : ""
+      }`;
+    return "Noch mehr unten";
+  };
+
   // "Mehr unten"-Hinweis ausblenden, wenn Nutzer bis zum Ende gescrollt hat
   useEffect(() => {
     if (!hasMoreBelow || !messagesEndRef.current) return;
@@ -774,11 +790,11 @@ export default function GiftReveal({ initialData }) {
                       behavior: "smooth",
                     })
                   }
-                  className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 md:hidden flex flex-col items-center gap-1 py-2 px-4 rounded-full bg-stone-800/95 backdrop-blur border border-stone-700 text-stone-300 text-xs font-medium tracking-wide shadow-lg active:scale-95 transition-transform"
+                  className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 md:hidden flex items-center gap-1.5 py-2.5 px-4 rounded-full bg-stone-800/95 backdrop-blur border border-stone-700 text-stone-300 text-xs font-medium tracking-wide shadow-lg active:scale-95 transition-transform"
                   aria-label="Weiter nach unten scrollen"
                 >
-                  <ChevronDown className="h-5 w-5 animate-bounce" />
-                  <span>Mehr unten</span>
+                  <span>{getMoreBelowLabel()}</span>
+                  <ChevronDown className="h-4 w-4 shrink-0" />
                 </button>
               )}
             </div>
