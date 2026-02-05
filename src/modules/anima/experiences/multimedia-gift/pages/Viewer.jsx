@@ -521,12 +521,12 @@ export default function GiftReveal({ initialData }) {
                 {/* Footer */}
                 <div className="mt-20 text-center opacity-30 hover:opacity-100 transition-opacity pb-20">
                   <a
-                    href="https://www.kamlimos.de"
+                    href="https://www.kamlimos.com"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs uppercase tracking-[0.2em] font-light hover:text-white transition-colors"
                   >
-                    www.kamlimos.de
+                    www.kamlimos.com
                   </a>
                 </div>
               </div>
@@ -762,12 +762,12 @@ export default function GiftReveal({ initialData }) {
                     <div className="mt-20 text-center opacity-30 hover:opacity-100 transition-opacity">
                       <Sparkles className="h-6 w-6 mx-auto mb-4 animate-pulse text-stone-500" />
                       <a
-                        href="https://www.kamlimos.de"
+                        href="https://www.kamlimos.com"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-xs uppercase tracking-[0.2em] font-light hover:text-white transition-colors"
                       >
-                        www.kamlimos.de
+                        www.kamlimos.com
                       </a>
                     </div>
                     <div ref={messagesEndRef} />
