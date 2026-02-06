@@ -1,11 +1,13 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { useParams } from 'react-router-dom';
 import { getGiftById, markGiftAsViewed } from '@/services/gifts';
 import { Loader } from 'lucide-react';
-import MugViewer from '../experiences/multimedia-gift/pages/Viewer';
-import NoorViewer from '../experiences/noor/pages/NoorViewer';
-import MemoryViewer from '../experiences/memoria/pages/MemoryViewer';
+
+// Lazy Load Experience Viewers
+const MugViewer = lazy(() => import('../experiences/multimedia-gift/pages/Viewer'));
+const NoorViewer = lazy(() => import('../experiences/noor/pages/NoorViewer'));
+const MemoryViewer = lazy(() => import('../experiences/memoria/pages/MemoryViewer'));
 
 export default function UniversalViewer() {
     const { id } = useParams();
@@ -48,8 +50,19 @@ export default function UniversalViewer() {
         </div>
     );
 
-    if (gift.project === 'memoria') return <MemoryViewer gift={gift} />;
-    if (gift.project === 'noor' || gift.project === 'dua' || gift.productType === 'dua-audio' || gift.productType === 'noor-audio') return <NoorViewer gift={gift} />;
-
-    return <MugViewer gift={gift} />;
+    // Note: Using an IIFE or separate component renders cleaner with Suspense than multiple return statements outside
+    // Provide a Suspense fallback specifically for the experience loading
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+                <Loader className="h-8 w-8 animate-spin text-stone-400" />
+            </div>
+        }>
+            {(() => {
+                if (gift.project === 'memoria') return <MemoryViewer gift={gift} />;
+                if (gift.project === 'noor' || gift.project === 'dua' || gift.productType === 'dua-audio' || gift.productType === 'noor-audio') return <NoorViewer gift={gift} />;
+                return <MugViewer gift={gift} />;
+            })()}
+        </Suspense>
+    );
 }
