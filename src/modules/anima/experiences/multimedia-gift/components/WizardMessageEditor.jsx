@@ -148,7 +148,7 @@ export default function WizardMessageEditor({
           >
             <button
               onClick={() => onRemove(msg.id)}
-              className="absolute top-3 right-3 p-1.5 text-stone-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all z-10 hover:bg-red-500/10 rounded-lg"
+              className="absolute top-3 right-3 p-1.5 text-stone-300 hover:text-red-400 opacity-100 transition-all z-10 hover:bg-red-500/10 rounded-lg"
               title="Löschen"
               aria-label="Löschen"
             >
@@ -157,21 +157,20 @@ export default function WizardMessageEditor({
 
             <div className="flex justify-between items-center mb-3">
               <span
-                className={`text-xs font-semibold uppercase tracking-wider px-2.5 py-1 rounded-lg ${
-                  msg.type === "video"
+                className={`text-xs font-semibold uppercase tracking-wider px-2.5 py-1 rounded-lg ${msg.type === "video"
                     ? "bg-red-500/10 text-red-400"
                     : msg.type === "image"
-                    ? "bg-blue-500/10 text-blue-400"
-                    : darkMode
-                    ? "bg-stone-800 text-stone-400"
-                    : "bg-stone-100 text-stone-600"
-                }`}
+                      ? "bg-blue-500/10 text-blue-400"
+                      : darkMode
+                        ? "bg-stone-800 text-stone-400"
+                        : "bg-stone-100 text-stone-600"
+                  }`}
               >
                 {msg.type === "video"
                   ? "Video"
                   : msg.type === "image"
-                  ? "Bild"
-                  : "Text"}
+                    ? "Bild"
+                    : "Text"}
               </span>
             </div>
 
@@ -201,10 +200,10 @@ export default function WizardMessageEditor({
                 {msg.type === "video"
                   ? "YouTube / Video-Link"
                   : msg.type === "image"
-                  ? "Bild-URL"
-                  : msg.type === "link"
-                  ? "Link"
-                  : "Nachricht"}
+                    ? "Bild-URL"
+                    : msg.type === "link"
+                      ? "Link"
+                      : "Nachricht"}
               </label>
               {msg.type === "text" ? (
                 <textarea
