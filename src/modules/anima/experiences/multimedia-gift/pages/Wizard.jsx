@@ -58,6 +58,7 @@ export default function GiftWizard() {
     orderId: "",
 
     // Kamlimos Specific (Mug/Bracelet)
+    subheadline: "", // Added for custom subheadline override
     accessCode: "",
     unlockDate: "", // Time Capsule Date (ISO String for Input)
     openingAnimation: "none",
@@ -108,6 +109,7 @@ export default function GiftWizard() {
               customerName: data.customerName || "",
               customerEmail: data.customerEmail || "",
               orderId: data.orderId || "",
+              subheadline: data.subheadline || "",
               accessCode: data.accessCode || "",
               unlockDate: formattedUnlockDate,
               openingAnimation: data.openingAnimation || "none",
@@ -352,12 +354,12 @@ export default function GiftWizard() {
               {isEditMode
                 ? "Auftrag bearbeiten"
                 : isNoor
-                ? "Neues Noor"
-                : isMemoria
-                ? "Neues Memoria"
-                : isBracelet
-                ? "Neues Armband"
-                : "Neue Tasse"}
+                  ? "Neues Noor"
+                  : isMemoria
+                    ? "Neues Memoria"
+                    : isBracelet
+                      ? "Neues Armband"
+                      : "Neue Tasse"}
             </h1>
             <button
               onClick={() =>
@@ -379,30 +381,28 @@ export default function GiftWizard() {
           {/* Progress Steps */}
           <div className="mb-8 flex space-x-2">
             <div
-              className={`h-2 flex-1 rounded-full ${
-                step >= 1
+              className={`h-2 flex-1 rounded-full ${step >= 1
                   ? isNoor
                     ? "bg-emerald-500"
                     : isMemoria
-                    ? "bg-stone-600"
-                    : isRitual
-                    ? "bg-indigo-500"
-                    : "bg-rose-500"
+                      ? "bg-stone-600"
+                      : isRitual
+                        ? "bg-indigo-500"
+                        : "bg-rose-500"
                   : "bg-stone-200"
-              }`}
+                }`}
             ></div>
             <div
-              className={`h-2 flex-1 rounded-full ${
-                step >= 2
+              className={`h-2 flex-1 rounded-full ${step >= 2
                   ? isNoor
                     ? "bg-emerald-500"
                     : isMemoria
-                    ? "bg-stone-600"
-                    : isRitual
-                    ? "bg-indigo-500"
-                    : "bg-rose-500"
+                      ? "bg-stone-600"
+                      : isRitual
+                        ? "bg-indigo-500"
+                        : "bg-rose-500"
                   : "bg-stone-200"
-              }`}
+                }`}
             ></div>
           </div>
 
@@ -722,6 +722,17 @@ export default function GiftWizard() {
                         className={styles.input}
                       />
                     </div>
+                    <div>
+                      <label className={styles.label}>Absender (Untertitel)</label>
+                      <input
+                        type="text"
+                        name="subheadline"
+                        value={formData.subheadline}
+                        onChange={handleInputChange}
+                        className={styles.input}
+                        placeholder="Zweite Zeile auf dem Cover"
+                      />
+                    </div>
                     {/* ... other standard fields ... */}
                     {isBracelet ? (
                       <div className="md:col-span-2 space-y-4">
@@ -857,22 +868,22 @@ export default function GiftWizard() {
                         ))}
                         {(formData.albumImages || []).length <
                           ALBUM_MAX_FILES && (
-                          <label className="w-20 h-20 flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-stone-300 text-stone-500 hover:border-rose-400 hover:bg-rose-50/50 cursor-pointer transition-colors">
-                            <input
-                              type="file"
-                              accept="image/jpeg,image/png,image/webp"
-                              className="hidden"
-                              onChange={handleAlbumUpload}
-                              disabled={uploadingAlbum}
-                            />
-                            {uploadingAlbum ? (
-                              <Loader className="h-6 w-6 animate-spin" />
-                            ) : (
-                              <ImageIcon className="h-6 w-6 mb-0.5" />
-                            )}
-                            <span className="text-xs">Hinzufügen</span>
-                          </label>
-                        )}
+                            <label className="w-20 h-20 flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-stone-300 text-stone-500 hover:border-rose-400 hover:bg-rose-50/50 cursor-pointer transition-colors">
+                              <input
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                className="hidden"
+                                onChange={handleAlbumUpload}
+                                disabled={uploadingAlbum}
+                              />
+                              {uploadingAlbum ? (
+                                <Loader className="h-6 w-6 animate-spin" />
+                              ) : (
+                                <ImageIcon className="h-6 w-6 mb-0.5" />
+                              )}
+                              <span className="text-xs">Hinzufügen</span>
+                            </label>
+                          )}
                       </div>
                       {!id && (formData.albumImages || []).length === 0 && (
                         <p className="text-xs text-stone-400 mt-2">

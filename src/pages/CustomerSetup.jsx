@@ -461,9 +461,7 @@ export default function CustomerSetup() {
                 type="text"
                 value={subheadline}
                 onChange={(e) => setSubheadline(e.target.value)}
-                placeholder={`Eine Botschaft von ${
-                  gift.senderName || gift.customerName
-                }`}
+                placeholder="Deine Botschaft"
                 className="w-full bg-stone-950/50 border border-stone-800 rounded-xl p-4 text-base text-stone-300 placeholder-stone-600 focus:ring-2 focus:ring-rose-500/30 outline-none transition-all min-h-[52px] leading-relaxed"
               />
             </div>
