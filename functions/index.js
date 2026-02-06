@@ -1,6 +1,5 @@
-const { onRequest, onCall } = require("firebase-functions/v2/https");
+const { onCall } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
-const crypto = require("crypto");
 const bcrypt = require("bcrypt");
 
 admin.initializeApp();
@@ -63,7 +62,7 @@ exports.comparePin = onCall({ cors: true }, async (request) => {
  */
 exports.verifyGiftPin = onCall({ cors: true }, async (request) => {
   try {
-    console.log('verifyGiftPin called with data:', request.data);
+    // console.log('verifyGiftPin called with data:', request.data); // Clean up logs
 
     const { giftId, pin } = request.data;
 
@@ -91,6 +90,28 @@ exports.verifyGiftPin = onCall({ cors: true }, async (request) => {
     }
 
     const giftData = giftDoc.data();
+
+    // ============================================
+    // TIME CAPSULE CHECK
+    // ============================================
+    // If unlockDate is set and in the future, DENY access
+    if (giftData.unlockDate) {
+      // Firestore Timestamp to millis
+      const unlockTime = giftData.unlockDate.toMillis ? giftData.unlockDate.toMillis() : new Date(giftData.unlockDate).getTime();
+      const now = Date.now();
+
+      if (now < unlockTime) {
+        console.warn(`Gift ${giftId} is time-locked until ${new Date(unlockTime).toISOString()}`);
+        // Return specific time-locked status so client can show countdown (if they bypassed the lock screen check)
+        return {
+          match: false,
+          giftData: null,
+          isTimeLocked: true,
+          unlockDate: unlockTime
+        };
+      }
+    }
+
     const accessCodeHash = giftData.accessCodeHash;
     const accessCode = giftData.accessCode;
 
@@ -112,6 +133,13 @@ exports.verifyGiftPin = onCall({ cors: true }, async (request) => {
       delete safeGiftData.accessCode;
       delete safeGiftData.accessCodeHash;
       delete safeGiftData.securityToken; // Also hide token if not needed
+
+      // CONVERT TIMESTAMP TO MILLIS
+      if (safeGiftData.unlockDate && typeof safeGiftData.unlockDate.toMillis === 'function') {
+        safeGiftData.unlockDate = safeGiftData.unlockDate.toMillis();
+      } else if (safeGiftData.unlockDate) {
+        safeGiftData.unlockDate = new Date(safeGiftData.unlockDate).getTime();
+      }
 
       return { match: true, giftData: safeGiftData };
     } else {
@@ -158,7 +186,10 @@ exports.getPublicGiftData = onCall({ cors: true }, async (request) => {
       'openingAnimation',
       'engravingText', // Needed for bracelet lock screen
       'designImage', // Maybe needed for preview?
-      'locked'
+      'locked',
+      // TIME CAPSULE FIELDS
+      // 'unlockDate', // Handle manually below to convert to millis
+      'timezone'   // Just in case we need it for display
     ];
 
     const publicData = {};
@@ -167,6 +198,12 @@ exports.getPublicGiftData = onCall({ cors: true }, async (request) => {
         publicData[field] = data[field];
       }
     });
+
+    // Handle unlockDate separately to convert to millis
+    if (data.unlockDate) {
+      publicData.unlockDate = data.unlockDate.toMillis ? data.unlockDate.toMillis() : new Date(data.unlockDate).getTime();
+    }
+
     // Always include ID
     publicData.id = giftDoc.id;
 

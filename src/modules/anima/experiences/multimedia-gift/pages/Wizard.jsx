@@ -25,7 +25,6 @@ import {
 } from "lucide-react";
 import WizardMessageEditor from "../components/WizardMessageEditor";
 import AdminSidebar from "@/components/AdminSidebar";
-import { sanitizeInput, isValidMessage } from "@/utils/security";
 import { uploadAlbumImage } from "@/services/albumUpload";
 import { ALBUM_MAX_FILES } from "@/utils/security";
 
@@ -60,6 +59,7 @@ export default function GiftWizard() {
 
     // Kamlimos Specific (Mug/Bracelet)
     accessCode: "",
+    unlockDate: "", // Time Capsule Date (ISO String for Input)
     openingAnimation: "none",
     messages: [],
     albumImages: [],
@@ -85,6 +85,21 @@ export default function GiftWizard() {
         try {
           const data = await getGiftById(id);
           if (data) {
+            // Helper to format Date/Timestamp to DateTime Local String (YYYY-MM-DDTHH:mm)
+            let formattedUnlockDate = "";
+            if (data.unlockDate) {
+              const d = data.unlockDate.toDate
+                ? data.unlockDate.toDate()
+                : new Date(data.unlockDate);
+              // Format manually to local ISO string without timezone issues for input
+              // Simple approach: d.toISOString().slice(0, 16) gives UTC. We want local usually.
+              // Adjust for timezone offset to show correct local time in input
+              const offset = d.getTimezoneOffset() * 60000;
+              formattedUnlockDate = new Date(d.getTime() - offset)
+                .toISOString()
+                .slice(0, 16);
+            }
+
             setFormData({
               project: data.project || "kamlimos",
               productType: data.productType || "mug",
@@ -94,6 +109,7 @@ export default function GiftWizard() {
               customerEmail: data.customerEmail || "",
               orderId: data.orderId || "",
               accessCode: data.accessCode || "",
+              unlockDate: formattedUnlockDate,
               openingAnimation: data.openingAnimation || "none",
               messages: data.messages || [],
               albumImages: data.albumImages || [],
@@ -122,6 +138,7 @@ export default function GiftWizard() {
       };
       fetchGift();
     } else {
+      // ... (Initial new config - existing code) ...
       // New gift creation with preset project mode
       if (urlProjectMode === "noor" || urlProjectMode === "dua") {
         setFormData((prev) => ({
@@ -215,7 +232,6 @@ export default function GiftWizard() {
   const handleAlbumUpload = async (e) => {
     const file = e?.target?.files?.[0];
     if (!file) return;
-    const giftId = id || "new"; // for new gifts we need to create first then add images; for edit we have id
     if (!id) {
       alert(
         "Bitte zuerst das Geschenk speichern, danach können Sie Bilder hinzufügen."
@@ -250,10 +266,18 @@ export default function GiftWizard() {
     setLoading(true);
     setError("");
     try {
-      if (isEditMode) {
-        await updateGift(id, formData);
+      // Prepare Data: Convert unlockDate string to Date Object (will be saved as Timestamp by Firebase SDK)
+      const dataToSave = { ...formData };
+      if (dataToSave.unlockDate) {
+        dataToSave.unlockDate = new Date(dataToSave.unlockDate);
       } else {
-        const giftId = await createGift(formData);
+        dataToSave.unlockDate = null; // Explicitly clear if empty
+      }
+
+      if (isEditMode) {
+        await updateGift(id, dataToSave);
+      } else {
+        const giftId = await createGift(dataToSave);
         console.log("✅ Gift created successfully:", giftId);
         // Wait a bit to ensure Firestore has fully written the document
         await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -344,6 +368,13 @@ export default function GiftWizard() {
               Abbrechen
             </button>
           </div>
+
+          {/* Error Display */}
+          {error && (
+            <div className="mb-4 p-4 rounded-lg bg-rose-50 border border-rose-200 text-rose-600 text-sm flex items-center">
+              <span className="mr-2">⚠️</span> {error}
+            </div>
+          )}
 
           {/* Progress Steps */}
           <div className="mb-8 flex space-x-2">
@@ -440,8 +471,6 @@ export default function GiftWizard() {
                         )}
                       </div>
                     </div>
-
-                    {/* ARABIC TEXT INPUT REMOVED PER USER REQUEST */}
 
                     {/* AUDIO 2: MEANING */}
                     <div className="bg-stone-50 p-6 rounded-xl border border-stone-200">
@@ -747,6 +776,26 @@ export default function GiftWizard() {
                             <option value="stars">Sterne ⭐</option>
                             <option value="confetti">Konfetti 🎉</option>
                           </select>
+                        </div>
+                        {/* Time Capsule Input */}
+                        <div className="col-span-2 md:col-span-2 border-t border-stone-100 pt-4 mt-2">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Watch className="h-4 w-4 text-indigo-500" />
+                            <label className="text-sm font-medium text-stone-700">
+                              Zeitkapsel (Optional)
+                            </label>
+                          </div>
+                          <p className="text-xs text-stone-500 mb-2">
+                            Wenn gesetzt, ist das Geschenk bis zu diesem
+                            Zeitpunkt gesperrt (Countdown).
+                          </p>
+                          <input
+                            type="datetime-local"
+                            name="unlockDate"
+                            value={formData.unlockDate}
+                            onChange={handleInputChange}
+                            className={styles.input}
+                          />
                         </div>
                       </div>
                     )}

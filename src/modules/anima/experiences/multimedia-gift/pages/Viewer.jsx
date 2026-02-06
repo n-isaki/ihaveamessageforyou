@@ -22,6 +22,115 @@ import {
   getRemainingAttempts,
 } from "@/utils/security";
 
+const RedirectToSetup = ({ id }) => {
+  useEffect(() => {
+    window.location.href = `/setup/${id}`;
+  }, [id]);
+  return null;
+};
+
+const TimeCapsuleCountdown = ({ unlockTime }) => {
+  const [timeLeft, setTimeLeft] = useState(0);
+
+  useEffect(() => {
+    const update = () => setTimeLeft(unlockTime - Date.now());
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [unlockTime]);
+
+  if (timeLeft <= 0) return null; // Logic in parent handles the switch to unlock mode
+
+  const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+  const hours = Math.floor(
+    (timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+  );
+  const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+  const formatNumber = (num) => num.toString().padStart(2, "0");
+
+  return (
+    <div className="animate-in fade-in duration-700">
+      <div className="mb-8 relative inline-flex items-center justify-center">
+        <div className="absolute inset-0 bg-indigo-500/20 blur-xl rounded-full animate-pulse"></div>
+        <div className="relative px-5 py-2 bg-stone-900 border border-indigo-500/30 rounded-full flex items-center gap-2 shadow-lg shadow-indigo-500/10">
+          <Lock className="w-3 h-3 text-indigo-400" />
+          <span className="text-indigo-300 text-[10px] font-bold tracking-[0.2em] uppercase">
+            Zeitkapsel
+          </span>
+        </div>
+      </div>
+
+      <h1 className="text-3xl font-serif italic text-white mb-2 leading-tight">
+        Noch versiegelt
+      </h1>
+
+      <p className="text-stone-400 mb-8 text-sm font-light leading-relaxed">
+        Dieses Geschenk öffnet sich am <br />
+        <span className="text-white font-medium border-b border-stone-800 pb-0.5">
+          {new Date(unlockTime).toLocaleDateString("de-DE", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          })}
+        </span>
+        <span className="mx-1">um</span>
+        <span className="text-white font-medium">
+          {new Date(unlockTime).toLocaleTimeString("de-DE", {
+            hour: "2-digit",
+            minute: "2-digit",
+          })}{" "}
+          Uhr
+        </span>
+      </p>
+
+      {/* Modern Grid Countdown */}
+      <div className="grid grid-cols-4 gap-2 mb-8 max-w-[320px] mx-auto">
+        <div className="flex flex-col items-center bg-stone-900/50 border border-stone-800 rounded-xl p-3 backdrop-blur-sm">
+          <span className="text-2xl font-mono font-bold text-white leading-none mb-1">
+            {days}
+          </span>
+          <span className="text-[9px] text-stone-500 uppercase tracking-wider">
+            {days === 1 ? "Tag" : "Tage"}
+          </span>
+        </div>
+        <div className="flex flex-col items-center bg-stone-900/50 border border-stone-800 rounded-xl p-3 backdrop-blur-sm">
+          <span className="text-2xl font-mono font-bold text-white leading-none mb-1">
+            {formatNumber(hours)}
+          </span>
+          <span className="text-[9px] text-stone-500 uppercase tracking-wider">
+            Std
+          </span>
+        </div>
+        <div className="flex flex-col items-center bg-stone-900/50 border border-stone-800 rounded-xl p-3 backdrop-blur-sm">
+          <span className="text-2xl font-mono font-bold text-white leading-none mb-1">
+            {formatNumber(minutes)}
+          </span>
+          <span className="text-[9px] text-stone-500 uppercase tracking-wider">
+            Min
+          </span>
+        </div>
+        <div className="flex flex-col items-center bg-stone-900/50 border border-stone-800. rounded-xl p-3 backdrop-blur-sm">
+          <span className="text-2xl font-mono font-bold text-white leading-none mb-1 text-rose-500">
+            {formatNumber(seconds)}
+          </span>
+          <span className="text-[9px] text-stone-500 uppercase tracking-wider">
+            Sek
+          </span>
+        </div>
+      </div>
+
+      <div className="w-full text-center">
+        <p className="text-xs text-stone-600 animate-pulse">
+          Bitte komm zum angegebenen Zeitpunkt zurück.
+        </p>
+      </div>
+    </div>
+  );
+};
+
 export default function GiftReveal({ initialData }) {
   const { id } = useParams();
   const [gift, setGift] = useState(initialData || null);
@@ -105,23 +214,12 @@ export default function GiftReveal({ initialData }) {
   }, [gift, id, isPreview]);
 
   // Redirect to Setup if empty and unlocked (Scan-to-Setup)
-  useEffect(() => {
-    if (
-      gift &&
-      !gift.locked &&
-      (!gift.messages || gift.messages.length === 0) &&
-      gift.productType !== "bracelet" &&
-      !isPreview
-    ) {
-      // Use window.location for hard redirect or navigate
-      // Since we are in Router context... I need useNavigate.
-      // But Viewer uses useParams. I need to add useNavigate hook.
-      // For now window.location is safer if I don't want to change imports excessively,
-      // but useNavigate is better SPA practice.
-      // I'll check imports.
-      window.location.href = `/setup/${id}`;
-    }
-  }, [gift, id, isPreview]);
+  const shouldRedirectToSetup =
+    gift &&
+    !gift.locked &&
+    (!gift.messages || gift.messages.length === 0) &&
+    gift.productType !== "bracelet" &&
+    !isPreview;
 
   const triggerAnimation = (type) => {
     const duration = 3000;
@@ -213,18 +311,28 @@ export default function GiftReveal({ initialData }) {
     setError("");
 
     try {
-      // Verify PIN server-side (supports both hashed and plain text for backward compatibility)
-      console.log("Verifying PIN for gift:", {
-        id,
-        pinLength: pin.length,
-        hasGift: !!gift,
-      });
       // RESPONSE CHANGE: Now returns { match, giftData }
       const response = await verifyGiftPin(id, pin.trim());
 
       // Handle both old boolean return (just in case) and new object return
-      const isValid = (typeof response === 'boolean') ? response : response.match;
-      const fullGiftData = (typeof response === 'object') ? response.giftData : null;
+      const isValid = typeof response === "boolean" ? response : response.match;
+      const fullGiftData =
+        typeof response === "object" ? response.giftData : null;
+      const responseIsTimeLocked =
+        typeof response === "object" ? response.isTimeLocked : false;
+      const responseUnlockDate =
+        typeof response === "object" ? response.unlockDate : null;
+
+      if (responseIsTimeLocked) {
+        // Should ideally update UI state to show time lock screen again if accidentally bypassed
+        // But for now, just showing error
+        // Ideally we update gift.unlockDate and re-render
+        if (responseUnlockDate) {
+          setGift((prev) => ({ ...prev, unlockDate: responseUnlockDate }));
+        }
+        setError("Dieses Geschenk ist noch nicht freigeschaltet.");
+        return;
+      }
 
       if (isValid) {
         // Success: Reset rate limit
@@ -253,26 +361,15 @@ export default function GiftReveal({ initialData }) {
       }
     } catch (error) {
       console.error("Error verifying PIN:", error);
-      // Fallback to client-side comparison for backward compatibility (ONLY if we have accessCode locally, which we shouldn't for locked gifts anymore)
-      if (gift && gift.accessCode && pin === gift.accessCode) {
-        resetRateLimit(`pin_${id}`);
-        setUnlocked(true);
-        if (!gift.viewed && !isPreview) {
-          markGiftAsViewed(id).catch((err) =>
-            console.error("Error marking as viewed", err)
-          );
-        }
-        if (gift.openingAnimation && gift.openingAnimation !== "none") {
-          setTimeout(() => triggerAnimation(gift.openingAnimation), 500);
-        }
-      } else {
-        const remaining = getRemainingAttempts(`pin_${id}`);
-        setError(`Falscher PIN Code. (${remaining} Versuche übrig)`);
-      }
+      setError(`Ein Fehler ist aufgetreten. Bitte versuche es später.`);
     } finally {
       setIsVerifyingPin(false);
     }
   };
+
+  if (shouldRedirectToSetup) {
+    return <RedirectToSetup id={id} />;
+  }
 
   const toggleFontSize = () => {
     setFontSizeLevel((prev) => (prev + 1) % 3);
@@ -327,68 +424,93 @@ export default function GiftReveal({ initialData }) {
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-stone-800 border border-stone-700 mb-6 shadow-inner">
               <Lock className="h-6 w-6 text-rose-500" />
             </div>
-            <h1 className="text-2xl font-serif italic text-stone-100 mb-2">
-              Deine Nachricht
-            </h1>
-            <p className="text-stone-400 mb-2 text-sm font-light">
-              Eine persönliche Botschaft wartet auf dich.
-            </p>
-            <p className="text-stone-500 mb-6 text-xs font-light">
-              Wo findest du den Code? Auf der Geschenkkarte (z.B. neben dem
-              QR-Code) oder in der Nachricht des Absenders.
-            </p>
 
-            <form onSubmit={handleUnlock} className="space-y-4">
-              <input
-                type="text"
-                value={pin}
-                onChange={(e) => {
-                  setPin(e.target.value);
-                  setError("");
-                }}
-                disabled={isVerifyingPin}
-                className="block w-full text-center text-3xl tracking-widest bg-stone-950/50 border border-stone-700 text-white rounded-xl py-4 focus:ring-1 focus:ring-rose-500/50 focus:border-rose-500/50 outline-none transition-all placeholder-stone-700 font-mono uppercase disabled:opacity-50 disabled:cursor-not-allowed"
-                placeholder="CODE"
-              />
-              {error && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-rose-500 text-xs font-medium tracking-wide"
-                >
-                  {error}
-                </motion.div>
-              )}
-              {isVerifyingPin && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="flex flex-col items-center gap-3 py-2"
-                >
-                  <div className="relative">
-                    <Loader className="h-6 w-6 animate-spin text-rose-500" />
-                    <div className="absolute inset-0 bg-rose-500/20 rounded-full blur-md animate-pulse"></div>
-                  </div>
-                  <p className="text-stone-400 text-sm font-light tracking-wide">
-                    Nachricht wird geladen...
-                  </p>
-                </motion.div>
-              )}
-              <button
-                type="submit"
-                disabled={isVerifyingPin || !pin}
-                className="w-full py-4 px-4 rounded-xl text-sm font-medium tracking-wide text-white bg-rose-600 hover:bg-rose-500 active:scale-95 transition-all shadow-lg shadow-rose-900/20 mt-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-rose-600 relative overflow-hidden"
-              >
-                {isVerifyingPin ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <Loader className="h-4 w-4 animate-spin" />
-                    <span>Wird geladen...</span>
-                  </span>
-                ) : (
-                  "Nachricht öffnen"
-                )}
-              </button>
-            </form>
+            {/* TIME CAPSULE LOGIC */}
+            {gift.unlockDate &&
+              (() => {
+                const unlockTime =
+                  typeof gift.unlockDate.toMillis === "function"
+                    ? gift.unlockDate.toMillis()
+                    : new Date(gift.unlockDate).getTime();
+
+                // Use state to trigger re-renders every second
+                // Note: Since this is inside the render function, we need a separate component
+                // to manage the interval correctly without memory leaks or infinite loops.
+                return <TimeCapsuleCountdown unlockTime={unlockTime} />;
+              })()}
+
+            {/* STANDARD PIN LOGIC (Only if NOT time locked OR if time lock is passed) */}
+            {(!gift.unlockDate ||
+              (gift.unlockDate &&
+                Date.now() >
+                  (typeof gift.unlockDate.toMillis === "function"
+                    ? gift.unlockDate.toMillis()
+                    : new Date(gift.unlockDate).getTime()))) && (
+              <>
+                <h1 className="text-2xl font-serif italic text-stone-100 mb-2">
+                  Deine Nachricht
+                </h1>
+                <p className="text-stone-400 mb-2 text-sm font-light">
+                  Eine persönliche Botschaft wartet auf dich.
+                </p>
+                <p className="text-stone-500 mb-6 text-xs font-light">
+                  Wo findest du den Code? Auf der Geschenkkarte (z.B. neben dem
+                  QR-Code) oder in der Nachricht des Absenders.
+                </p>
+
+                <form onSubmit={handleUnlock} className="space-y-4">
+                  <input
+                    type="text"
+                    value={pin}
+                    onChange={(e) => {
+                      setPin(e.target.value);
+                      setError("");
+                    }}
+                    disabled={isVerifyingPin}
+                    className="block w-full text-center text-3xl tracking-widest bg-stone-950/50 border border-stone-700 text-white rounded-xl py-4 focus:ring-1 focus:ring-rose-500/50 focus:border-rose-500/50 outline-none transition-all placeholder-stone-700 font-mono uppercase disabled:opacity-50 disabled:cursor-not-allowed"
+                    placeholder="CODE"
+                  />
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-rose-500 text-xs font-medium tracking-wide"
+                    >
+                      {error}
+                    </motion.div>
+                  )}
+                  {isVerifyingPin && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="flex flex-col items-center gap-3 py-2"
+                    >
+                      <div className="relative">
+                        <Loader className="h-6 w-6 animate-spin text-rose-500" />
+                        <div className="absolute inset-0 bg-rose-500/20 rounded-full blur-md animate-pulse"></div>
+                      </div>
+                      <p className="text-stone-400 text-sm font-light tracking-wide">
+                        Nachricht wird geladen...
+                      </p>
+                    </motion.div>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={isVerifyingPin || !pin}
+                    className="w-full py-4 px-4 rounded-xl text-sm font-medium tracking-wide text-white bg-rose-600 hover:bg-rose-500 active:scale-95 transition-all shadow-lg shadow-rose-900/20 mt-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-rose-600 relative overflow-hidden"
+                  >
+                    {isVerifyingPin ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <Loader className="h-4 w-4 animate-spin" />
+                        <span>Wird geladen...</span>
+                      </span>
+                    ) : (
+                      "Nachricht öffnen"
+                    )}
+                  </button>
+                </form>
+              </>
+            )}
           </motion.div>
         </div>
       ) : (
@@ -401,12 +523,13 @@ export default function GiftReveal({ initialData }) {
               title="Schriftgröße ändern"
             >
               <Type
-                className={`transition-all ${fontSizeLevel === 0
+                className={`transition-all ${
+                  fontSizeLevel === 0
                     ? "h-5 w-5"
                     : fontSizeLevel === 1
-                      ? "h-6 w-6"
-                      : "h-7 w-7"
-                  }`}
+                    ? "h-6 w-6"
+                    : "h-7 w-7"
+                }`}
               />
             </button>
           </div>
@@ -537,49 +660,49 @@ export default function GiftReveal({ initialData }) {
               {((typeof gift.headline === "string" && gift.headline.trim()) ||
                 (typeof gift.subheadline === "string" &&
                   gift.subheadline.trim())) && (
-                  <div className="min-h-screen flex flex-col items-center justify-center p-8 relative">
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="text-center space-y-6 max-w-4xl"
-                    >
-                      <div className="inline-flex justify-center mb-4">
-                        <div className="w-px h-16 bg-gradient-to-b from-transparent via-rose-500 to-transparent opacity-50"></div>
-                      </div>
-                      {typeof gift.headline === "string" &&
-                        gift.headline.trim() && (
-                          <h2 className="text-5xl md:text-7xl font-serif italic text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-stone-500 tracking-tight leading-tight">
-                            <ReactMarkdown className="text-2xl md:text-3xl font-bold text-stone-900 leading-tight">
-                              {gift.headline.trim()}
-                            </ReactMarkdown>
-                          </h2>
-                        )}
-                      {typeof gift.subheadline === "string" &&
-                        gift.subheadline.trim() && (
-                          <p className="text-lg text-stone-400 font-light tracking-wide mt-8">
-                            {gift.subheadline.trim()}
-                          </p>
-                        )}
-                    </motion.div>
+                <div className="min-h-screen flex flex-col items-center justify-center p-8 relative">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-center space-y-6 max-w-4xl"
+                  >
+                    <div className="inline-flex justify-center mb-4">
+                      <div className="w-px h-16 bg-gradient-to-b from-transparent via-rose-500 to-transparent opacity-50"></div>
+                    </div>
+                    {typeof gift.headline === "string" &&
+                      gift.headline.trim() && (
+                        <h2 className="text-5xl md:text-7xl font-serif italic text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-stone-500 tracking-tight leading-tight">
+                          <ReactMarkdown className="text-2xl md:text-3xl font-bold text-stone-900 leading-tight">
+                            {gift.headline.trim()}
+                          </ReactMarkdown>
+                        </h2>
+                      )}
+                    {typeof gift.subheadline === "string" &&
+                      gift.subheadline.trim() && (
+                        <p className="text-lg text-stone-400 font-light tracking-wide mt-8">
+                          {gift.subheadline.trim()}
+                        </p>
+                      )}
+                  </motion.div>
 
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 1, duration: 1 }}
-                      className="absolute bottom-12 left-0 right-0 flex justify-center"
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1, duration: 1 }}
+                    className="absolute bottom-12 left-0 right-0 flex justify-center"
+                  >
+                    <button
+                      type="button"
+                      onClick={scrollToContent}
+                      className="flex flex-col items-center text-stone-500 text-xs tracking-[0.2em] uppercase animate-bounce hover:text-stone-300 focus:outline-none focus:ring-2 focus:ring-rose-500/50 focus:ring-offset-2 focus:ring-offset-stone-950 rounded-lg py-2 px-3 transition-colors"
+                      aria-label="Zum Inhalt scrollen"
                     >
-                      <button
-                        type="button"
-                        onClick={scrollToContent}
-                        className="flex flex-col items-center text-stone-500 text-xs tracking-[0.2em] uppercase animate-bounce hover:text-stone-300 focus:outline-none focus:ring-2 focus:ring-rose-500/50 focus:ring-offset-2 focus:ring-offset-stone-950 rounded-lg py-2 px-3 transition-colors"
-                        aria-label="Zum Inhalt scrollen"
-                      >
-                        <span className="mb-2">Nachricht öffnen</span>
-                        <div className="w-px h-8 bg-gradient-to-b from-stone-500 to-transparent"></div>
-                      </button>
-                    </motion.div>
-                  </div>
-                )}
+                      <span className="mb-2">Nachricht öffnen</span>
+                      <div className="w-px h-8 bg-gradient-to-b from-stone-500 to-transparent"></div>
+                    </button>
+                  </motion.div>
+                </div>
+              )}
 
               {/* Messages Section – mit Hero: unterhalb; ohne Hero: zentriert, vollflächig */}
               {(() => {
@@ -590,10 +713,11 @@ export default function GiftReveal({ initialData }) {
                 return (
                   <div
                     ref={contentStartRef}
-                    className={`bg-stone-900/50 flex flex-col items-center p-6 md:p-12 space-y-24 ${hasHero
+                    className={`bg-stone-900/50 flex flex-col items-center p-6 md:p-12 space-y-24 ${
+                      hasHero
                         ? "min-h-screen py-32"
                         : "min-h-screen justify-center py-12 md:py-16 relative"
-                      }`}
+                    }`}
                   >
                     {!hasHero && (
                       <div
@@ -718,7 +842,7 @@ export default function GiftReveal({ initialData }) {
                             ) : (
                               <div className="rounded-2xl overflow-hidden shadow-2xl bg-black border border-stone-800 ring-1 ring-white/5">
                                 {msg.content.includes("youtube") ||
-                                  msg.content.includes("youtu.be") ? (
+                                msg.content.includes("youtu.be") ? (
                                   <div className="aspect-w-16 aspect-h-9">
                                     <iframe
                                       src={msg.content
