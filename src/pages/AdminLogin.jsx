@@ -14,7 +14,7 @@ export default function AdminLogin() {
         try {
             await loginAdmin(email, password);
             navigate('/admin/dashboard');
-        } catch (err) {
+        } catch {
             setError('Failed to login. Please check your credentials.');
         }
     };

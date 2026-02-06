@@ -167,7 +167,7 @@ export function getRemainingAttempts(key) {
     }
 
     return Math.max(0, MAX_ATTEMPTS - (data.attempts || 0));
-  } catch (error) {
+  } catch {
     return MAX_ATTEMPTS;
   }
 }

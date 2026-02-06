@@ -1,11 +1,12 @@
 
 import React from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function DeleteModal({ isOpen, onClose, onConfirm, isDeleting, itemName }) {
     const isBulk = typeof itemName === 'string' && itemName.includes('Geschenke');
     const count = isBulk ? parseInt(itemName.match(/\d+/)?.[0] || '0') : 1;
-    
+
     return (
         <AnimatePresence>
             {isOpen && (
@@ -20,7 +21,7 @@ export default function DeleteModal({ isOpen, onClose, onConfirm, isDeleting, it
                             {isBulk ? `${count} Geschenke löschen?` : 'Geschenk löschen?'}
                         </h3>
                         <p className="text-center text-stone-500 mb-6">
-                            {isBulk 
+                            {isBulk
                                 ? `Möchtest du wirklich ${count} ${count === 1 ? 'Geschenk' : 'Geschenke'} löschen? Diese Aktion kann nicht rückgängig gemacht werden.`
                                 : 'Diese Aktion kann nicht rückgängig gemacht werden.'}
                         </p>

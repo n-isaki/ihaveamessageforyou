@@ -65,6 +65,7 @@ export default function WizardMessageEditor({
         {iconOnlyMode ? (
           <>
             <div className="flex items-center gap-1.5">
+              {/* eslint-disable-next-line no-unused-vars -- Icon used in JSX */}
               {addOptions.map(({ type, label, Icon }) => (
                 <button
                   key={type}
@@ -92,6 +93,7 @@ export default function WizardMessageEditor({
               </button>
               {addMenuOpen && (
                 <div className="absolute right-0 top-full mt-1.5 py-1.5 min-w-[160px] rounded-xl border border-stone-700 bg-stone-900 shadow-xl z-20">
+                  {/* eslint-disable-next-line no-unused-vars -- Icon used in JSX below */}
                   {addOptions.map(({ type, label, Icon }) => (
                     <button
                       key={type}

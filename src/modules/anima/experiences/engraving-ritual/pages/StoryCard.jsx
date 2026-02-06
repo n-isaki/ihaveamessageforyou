@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { getGiftById } from '@/services/gifts';
 import { Loader, MoveUp, Info } from 'lucide-react';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 
 export default function StoryCard() {
@@ -11,6 +12,17 @@ export default function StoryCard() {
     const [scrolled, setScrolled] = useState(false);
 
     useEffect(() => {
+        const loadGift = async () => {
+            try {
+                const data = await getGiftById(id);
+                setGift(data);
+            } catch (error) {
+                console.error(error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
         loadGift();
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
@@ -18,17 +30,6 @@ export default function StoryCard() {
 
     const handleScroll = () => {
         if (window.scrollY > 50) setScrolled(true);
-    };
-
-    const loadGift = async () => {
-        try {
-            const data = await getGiftById(id);
-            setGift(data);
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading(false);
-        }
     };
 
     if (loading) return <div className="h-screen bg-stone-950 flex items-center justify-center"><Loader className="animate-spin text-stone-600" /></div>;

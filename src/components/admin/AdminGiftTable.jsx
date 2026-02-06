@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Lock,
@@ -20,7 +21,7 @@ import {
   Square,
 } from "lucide-react";
 import { getExperience } from "../../modules/registry";
-import { toast } from "../Toast";
+import { toast } from "../../services/toast";
 
 export default function AdminGiftTable({
   gifts,
@@ -139,7 +140,7 @@ ${setupUrl}`;
                       className="p-1 hover:bg-stone-200 rounded transition-colors"
                     >
                       {gifts.length > 0 &&
-                      gifts.every((g) => selectedGifts.has(g.id)) ? (
+                        gifts.every((g) => selectedGifts.has(g.id)) ? (
                         <CheckSquare className="h-4 w-4 text-rose-600" />
                       ) : (
                         <Square className="h-4 w-4 text-stone-400" />
@@ -161,19 +162,16 @@ ${setupUrl}`;
                   <React.Fragment key={gift.id}>
                     <tr
                       onClick={() => !isSelectMode && onToggleExpand(gift.id)}
-                      className={`${
-                        !isSelectMode ? "cursor-pointer" : ""
-                      } hover:bg-stone-100 transition-colors ${
-                        expandedId === gift.id
+                      className={`${!isSelectMode ? "cursor-pointer" : ""
+                        } hover:bg-stone-100 transition-colors ${expandedId === gift.id
                           ? "bg-emerald-50/60 ring-1 ring-inset ring-emerald-100"
                           : index % 2 === 0
-                          ? "bg-white"
-                          : "bg-stone-50/50"
-                      } ${
-                        selectedGifts.has(gift.id)
+                            ? "bg-white"
+                            : "bg-stone-50/50"
+                        } ${selectedGifts.has(gift.id)
                           ? "bg-rose-50/50 ring-1 ring-inset ring-rose-200"
                           : ""
-                      }`}
+                        }`}
                     >
                       {isSelectMode && (
                         <td
@@ -226,11 +224,11 @@ ${setupUrl}`;
                               {exp.id === "noor"
                                 ? gift.title || "Noor"
                                 : exp.id === "memoria"
-                                ? gift.deceasedName || "Memoria"
-                                : gift.headline
-                                ? gift.headline.substring(0, 20) +
-                                  (gift.headline.length > 20 ? "..." : "")
-                                : exp.label}
+                                  ? gift.deceasedName || "Memoria"
+                                  : gift.headline
+                                    ? gift.headline.substring(0, 20) +
+                                    (gift.headline.length > 20 ? "..." : "")
+                                    : exp.label}
                             </div>
                             <div className="text-xs text-stone-400">
                               {exp.label}
@@ -285,11 +283,10 @@ ${setupUrl}`;
                               e.stopPropagation();
                               onToggleViewed(gift);
                             }}
-                            className={`p-1.5 rounded-lg transition-colors ${
-                              gift.viewed
-                                ? "text-green-600 hover:bg-green-50"
-                                : "text-stone-400 hover:bg-stone-100"
-                            }`}
+                            className={`p-1.5 rounded-lg transition-colors ${gift.viewed
+                              ? "text-green-600 hover:bg-green-50"
+                              : "text-stone-400 hover:bg-stone-100"
+                              }`}
                             title={
                               gift.viewed
                                 ? "Als ungesehen markieren"
@@ -387,19 +384,17 @@ ${setupUrl}`;
                                     <div className="relative">
                                       <div className="absolute top-1/2 left-0 w-full h-0.5 bg-stone-100 -translate-y-1/2 rounded-full"></div>
                                       <div
-                                        className={`relative flex ${
-                                          exp.isSetupRequired
-                                            ? "justify-between"
-                                            : "justify-around"
-                                        }`}
+                                        className={`relative flex ${exp.isSetupRequired
+                                          ? "justify-between"
+                                          : "justify-around"
+                                          }`}
                                       >
                                         {/* Step 1: Created */}
                                         <div
-                                          className={`flex flex-col items-center ${
-                                            exp.isSetupRequired
-                                              ? "w-1/4"
-                                              : "w-1/3"
-                                          }`}
+                                          className={`flex flex-col items-center ${exp.isSetupRequired
+                                            ? "w-1/4"
+                                            : "w-1/3"
+                                            }`}
                                         >
                                           <div
                                             className={`w-8 h-8 rounded-full flex items-center justify-center border-2 bg-emerald-500 border-emerald-500 text-white z-10 shadow-sm`}
@@ -413,14 +408,14 @@ ${setupUrl}`;
                                             <p className="text-[10px] text-stone-400 font-mono mt-0.5">
                                               {gift.createdAt?.toDate
                                                 ? gift.createdAt
-                                                    .toDate()
-                                                    .toLocaleDateString(
-                                                      "de-DE",
-                                                      {
-                                                        day: "2-digit",
-                                                        month: "2-digit",
-                                                      }
-                                                    )
+                                                  .toDate()
+                                                  .toLocaleDateString(
+                                                    "de-DE",
+                                                    {
+                                                      day: "2-digit",
+                                                      month: "2-digit",
+                                                    }
+                                                  )
                                                 : "-"}
                                             </p>
                                           </div>
@@ -429,22 +424,20 @@ ${setupUrl}`;
                                         {exp.isSetupRequired && (
                                           <div className="flex flex-col items-center w-1/4">
                                             <div
-                                              className={`w-8 h-8 rounded-full flex items-center justify-center border-2 z-10 shadow-sm transition-colors ${
-                                                gift.setupStarted || gift.locked
-                                                  ? "bg-emerald-500 border-emerald-500 text-white"
-                                                  : "bg-white border-stone-200 text-stone-300"
-                                              }`}
+                                              className={`w-8 h-8 rounded-full flex items-center justify-center border-2 z-10 shadow-sm transition-colors ${gift.setupStarted || gift.locked
+                                                ? "bg-emerald-500 border-emerald-500 text-white"
+                                                : "bg-white border-stone-200 text-stone-300"
+                                                }`}
                                             >
                                               <Edit2 className="h-3.5 w-3.5" />
                                             </div>
                                             <div className="mt-2 text-center">
                                               <p
-                                                className={`text-[10px] font-bold uppercase tracking-wide ${
-                                                  gift.setupStarted ||
+                                                className={`text-[10px] font-bold uppercase tracking-wide ${gift.setupStarted ||
                                                   gift.locked
-                                                    ? "text-stone-900"
-                                                    : "text-stone-300"
-                                                }`}
+                                                  ? "text-stone-900"
+                                                  : "text-stone-300"
+                                                  }`}
                                               >
                                                 Bearbeitet
                                               </p>
@@ -455,21 +448,19 @@ ${setupUrl}`;
                                         {exp.isSetupRequired && (
                                           <div className="flex flex-col items-center w-1/4">
                                             <div
-                                              className={`w-8 h-8 rounded-full flex items-center justify-center border-2 z-10 shadow-sm transition-colors ${
-                                                gift.locked
-                                                  ? "bg-emerald-500 border-emerald-500 text-white"
-                                                  : "bg-white border-stone-200 text-stone-300"
-                                              }`}
+                                              className={`w-8 h-8 rounded-full flex items-center justify-center border-2 z-10 shadow-sm transition-colors ${gift.locked
+                                                ? "bg-emerald-500 border-emerald-500 text-white"
+                                                : "bg-white border-stone-200 text-stone-300"
+                                                }`}
                                             >
                                               <Lock className="h-3.5 w-3.5" />
                                             </div>
                                             <div className="mt-2 text-center">
                                               <p
-                                                className={`text-[10px] font-bold uppercase tracking-wide ${
-                                                  gift.locked
-                                                    ? "text-stone-900"
-                                                    : "text-stone-300"
-                                                }`}
+                                                className={`text-[10px] font-bold uppercase tracking-wide ${gift.locked
+                                                  ? "text-stone-900"
+                                                  : "text-stone-300"
+                                                  }`}
                                               >
                                                 Fertig
                                               </p>
@@ -478,42 +469,39 @@ ${setupUrl}`;
                                         )}
                                         {/* Step 4: Viewed */}
                                         <div
-                                          className={`flex flex-col items-center ${
-                                            exp.isSetupRequired
-                                              ? "w-1/4"
-                                              : "w-1/3"
-                                          }`}
+                                          className={`flex flex-col items-center ${exp.isSetupRequired
+                                            ? "w-1/4"
+                                            : "w-1/3"
+                                            }`}
                                         >
                                           <div
-                                            className={`w-8 h-8 rounded-full flex items-center justify-center border-2 z-10 shadow-sm transition-colors ${
-                                              gift.viewed
-                                                ? "bg-indigo-500 border-indigo-500 text-white"
-                                                : "bg-white border-stone-200 text-stone-300"
-                                            }`}
+                                            className={`w-8 h-8 rounded-full flex items-center justify-center border-2 z-10 shadow-sm transition-colors ${gift.viewed
+                                              ? "bg-indigo-500 border-indigo-500 text-white"
+                                              : "bg-white border-stone-200 text-stone-300"
+                                              }`}
                                           >
                                             <Eye className="h-3.5 w-3.5" />
                                           </div>
                                           <div className="mt-2 text-center">
                                             <p
-                                              className={`text-[10px] font-bold uppercase tracking-wide ${
-                                                gift.viewed
-                                                  ? "text-indigo-600"
-                                                  : "text-stone-300"
-                                              }`}
+                                              className={`text-[10px] font-bold uppercase tracking-wide ${gift.viewed
+                                                ? "text-indigo-600"
+                                                : "text-stone-300"
+                                                }`}
                                             >
                                               Gesehen
                                             </p>
                                             <p className="text-[10px] text-stone-400 font-mono mt-0.5">
                                               {gift.viewedAt?.toDate
                                                 ? gift.viewedAt
-                                                    .toDate()
-                                                    .toLocaleDateString(
-                                                      "de-DE",
-                                                      {
-                                                        day: "2-digit",
-                                                        month: "2-digit",
-                                                      }
-                                                    )
+                                                  .toDate()
+                                                  .toLocaleDateString(
+                                                    "de-DE",
+                                                    {
+                                                      day: "2-digit",
+                                                      month: "2-digit",
+                                                    }
+                                                  )
                                                 : "-"}
                                             </p>
                                           </div>
@@ -533,8 +521,8 @@ ${setupUrl}`;
                                         Erstellt:{" "}
                                         {gift.createdAt?.toDate
                                           ? gift.createdAt
-                                              .toDate()
-                                              .toLocaleString("de-DE")
+                                            .toDate()
+                                            .toLocaleString("de-DE")
                                           : "Unbekannt"}
                                       </span>
                                       <span className="flex items-center gap-2">
@@ -571,8 +559,8 @@ ${setupUrl}`;
                                       <dd>
                                         {gift.createdAt?.toDate
                                           ? gift.createdAt
-                                              .toDate()
-                                              .toLocaleDateString()
+                                            .toDate()
+                                            .toLocaleDateString()
                                           : "N/A"}
                                       </dd>
                                     </div>
@@ -621,9 +609,8 @@ ${setupUrl}`;
               className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden relative"
             >
               <div
-                className={`absolute top-0 bottom-0 left-0 w-1.5 ${
-                  gift.locked ? "bg-stone-800" : "bg-amber-400"
-                }`}
+                className={`absolute top-0 bottom-0 left-0 w-1.5 ${gift.locked ? "bg-stone-800" : "bg-amber-400"
+                  }`}
               ></div>
               <div className="p-4 pl-5">
                 <div className="flex justify-between items-start mb-3">
@@ -652,11 +639,10 @@ ${setupUrl}`;
                       e.stopPropagation();
                       onToggleViewed(gift);
                     }}
-                    className={`p-1.5 rounded-full ${
-                      gift.viewed
-                        ? "bg-green-100 text-green-700"
-                        : "bg-stone-100 text-stone-400"
-                    }`}
+                    className={`p-1.5 rounded-full ${gift.viewed
+                      ? "bg-green-100 text-green-700"
+                      : "bg-stone-100 text-stone-400"
+                      }`}
                   >
                     {gift.viewed ? (
                       <Check className="h-4 w-4" />
@@ -689,11 +675,10 @@ ${setupUrl}`;
                     </a>
                     <button
                       onClick={() => onToggleExpand(gift.id)}
-                      className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors ${
-                        expandedId === gift.id
-                          ? "bg-stone-800 text-white"
-                          : "bg-stone-50 text-stone-600"
-                      }`}
+                      className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors ${expandedId === gift.id
+                        ? "bg-stone-800 text-white"
+                        : "bg-stone-50 text-stone-600"
+                        }`}
                     >
                       {expandedId === gift.id ? (
                         <ChevronUp className="h-4 w-4 mb-1" />

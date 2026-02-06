@@ -1,20 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Gift, ArrowRight } from "lucide-react";
 
 export default function LandingPage() {
-  const [giftId, setGiftId] = useState("");
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-
-  useEffect(() => {
-    // If gift ID is in URL query params (simulation of QR scan with params), pre-fill it
-    // Or if we decide to use a route like /gift/:id, this page might just be for manual entry
-    const idFromUrl = searchParams.get("id");
-    if (idFromUrl) {
-      setGiftId(idFromUrl);
-    }
-  }, [searchParams]);
+  const [giftId, setGiftId] = useState(searchParams.get("id") || "");
+  const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();

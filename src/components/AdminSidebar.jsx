@@ -7,12 +7,7 @@ export default function AdminSidebar({ activeView, onViewChange, onRefresh, isOp
     const [collapsed, setCollapsed] = useState(false);
     const location = useLocation();
 
-    // Adjusted class logic: center content if collapsed
-    const menuItemClass = (view) =>
-        `flex items-center space-x-3 w-full px-4 py-3 rounded-xl transition-all font-medium text-sm ${activeView === view
-            ? 'bg-rose-600 text-white shadow-lg shadow-rose-900/20'
-            : 'text-stone-400 hover:text-stone-100 hover:bg-stone-900'
-        } ${collapsed ? 'justify-center px-2' : ''}`;
+
 
     return (
         <>
@@ -79,27 +74,25 @@ export default function AdminSidebar({ activeView, onViewChange, onRefresh, isOp
                                 <p className="text-[10px] font-semibold text-[#8A8A8A] uppercase tracking-wider">Übersicht</p>
                             </div>
                         )}
-                        <Link 
+                        <Link
                             to="/admin/dashboard?view=list"
                             onClick={() => { onViewChange?.('list'); onClose?.(); }}
-                            className={`flex items-center space-x-3 w-full px-4 py-2.5 rounded-lg transition-all font-medium text-sm ${
-                                activeView === 'list' && location.pathname === '/admin/dashboard' 
-                                    ? 'bg-[#3A3A3A] text-white border-l-2 border-white' 
+                            className={`flex items-center space-x-3 w-full px-4 py-2.5 rounded-lg transition-all font-medium text-sm ${activeView === 'list' && location.pathname === '/admin/dashboard'
+                                    ? 'bg-[#3A3A3A] text-white border-l-2 border-white'
                                     : 'text-[#B0B0B0] hover:text-white hover:bg-[#353535]'
-                            } ${collapsed ? 'justify-center px-2' : ''}`}
+                                } ${collapsed ? 'justify-center px-2' : ''}`}
                             title="Alle Aufträge"
                         >
                             <LayoutGrid className="h-4 w-4" />
                             {!collapsed && <span>Alle Aufträge</span>}
                         </Link>
-                        <Link 
+                        <Link
                             to="/admin/dashboard?view=kanban"
                             onClick={() => { onViewChange?.('kanban'); onClose?.(); }}
-                            className={`flex items-center space-x-3 w-full px-4 py-2.5 rounded-lg transition-all font-medium text-sm ${
-                                activeView === 'kanban' && location.pathname === '/admin/dashboard' 
-                                    ? 'bg-[#3A3A3A] text-white border-l-2 border-white' 
+                            className={`flex items-center space-x-3 w-full px-4 py-2.5 rounded-lg transition-all font-medium text-sm ${activeView === 'kanban' && location.pathname === '/admin/dashboard'
+                                    ? 'bg-[#3A3A3A] text-white border-l-2 border-white'
                                     : 'text-[#B0B0B0] hover:text-white hover:bg-[#353535]'
-                            } ${collapsed ? 'justify-center px-2' : ''}`}
+                                } ${collapsed ? 'justify-center px-2' : ''}`}
                             title="Kanban Board"
                         >
                             <Kanban className="h-4 w-4" />
@@ -117,14 +110,13 @@ export default function AdminSidebar({ activeView, onViewChange, onRefresh, isOp
                                 <p className="text-[10px] font-semibold text-[#8A8A8A] uppercase tracking-wider">Tools</p>
                             </div>
                         )}
-                        <Link 
-                            to="/admin/shopify" 
-                            onClick={onClose} 
-                            className={`flex items-center space-x-3 w-full px-4 py-2.5 rounded-lg transition-all font-medium text-sm ${
-                                location.pathname === '/admin/shopify' 
-                                    ? 'bg-[#3A3A3A] text-white border-l-2 border-white' 
+                        <Link
+                            to="/admin/shopify"
+                            onClick={onClose}
+                            className={`flex items-center space-x-3 w-full px-4 py-2.5 rounded-lg transition-all font-medium text-sm ${location.pathname === '/admin/shopify'
+                                    ? 'bg-[#3A3A3A] text-white border-l-2 border-white'
                                     : 'text-[#B0B0B0] hover:text-white hover:bg-[#353535]'
-                            } ${collapsed ? 'justify-center px-2' : ''}`}
+                                } ${collapsed ? 'justify-center px-2' : ''}`}
                             title="Shopify Theme Explorer"
                         >
                             <Store className="h-4 w-4" />

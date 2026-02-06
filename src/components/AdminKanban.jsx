@@ -1,5 +1,6 @@
 import React from 'react';
 import { MoreHorizontal, Clock, CheckCircle, Lock, Eye, EyeOff, Coffee, Watch, Heart, Zap, AlertTriangle } from 'lucide-react';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 

@@ -188,7 +188,7 @@ export const deleteGift = async (id) => {
           const fileRef = ref(storage, url);
           await deleteObject(fileRef);
           console.log("Deleted file from storage:", url);
-        } catch (err) {
+        } catch {
           // Ignore errors if file doesn't exist anymore or isn't deletable
           console.warn(
             "Could not delete file (maybe already gone or external URL):",
