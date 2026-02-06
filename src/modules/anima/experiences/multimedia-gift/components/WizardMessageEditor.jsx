@@ -186,7 +186,7 @@ export default function WizardMessageEditor({
                 onChange={(e) => onUpdate(msg.id, "author", e.target.value)}
                 className={
                   styles.inputSm +
-                  " border-b border-t-0 border-x-0 rounded-none px-0 " +
+                  " border-b border-t-0 border-x-0 rounded-none px-2 " +
                   theme.border
                 }
                 placeholder="Name des Absenders"
