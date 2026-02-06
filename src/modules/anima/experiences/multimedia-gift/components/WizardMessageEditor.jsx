@@ -158,12 +158,12 @@ export default function WizardMessageEditor({
             <div className="flex justify-between items-center mb-3">
               <span
                 className={`text-xs font-semibold uppercase tracking-wider px-2.5 py-1 rounded-lg ${msg.type === "video"
-                    ? "bg-red-500/10 text-red-400"
-                    : msg.type === "image"
-                      ? "bg-blue-500/10 text-blue-400"
-                      : darkMode
-                        ? "bg-stone-800 text-stone-400"
-                        : "bg-stone-100 text-stone-600"
+                  ? "bg-red-500/10 text-red-400"
+                  : msg.type === "image"
+                    ? "bg-blue-500/10 text-blue-400"
+                    : darkMode
+                      ? "bg-stone-800 text-stone-400"
+                      : "bg-stone-100 text-stone-600"
                   }`}
               >
                 {msg.type === "video"
@@ -231,7 +231,7 @@ export default function WizardMessageEditor({
         ))}
         {!widgetMode && messages.length === 0 && (
           <div
-            className={`text-center py-10 border border-dashed ${theme.border} rounded-2xl`}
+            className={`text-center py-10 px-4 border border-dashed ${theme.border} rounded-2xl`}
           >
             <MessageSquare
               className={`h-10 w-10 ${theme.subText} mx-auto mb-3 opacity-60`}
