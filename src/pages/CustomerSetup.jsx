@@ -431,14 +431,7 @@ export default function CustomerSetup() {
             <h2 className="font-setup-heading text-xl sm:text-2xl text-white leading-tight">
               Start-Bildschirm
             </h2>
-            <button
-              type="button"
-              onClick={() => setShowPreview(true)}
-              className="flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 bg-stone-800/80 hover:bg-stone-700 rounded-xl text-sm font-medium text-stone-200 transition-colors border border-stone-700/80 touch-manipulation"
-            >
-              <Eye className="w-4 h-4" />
-              Vorschau
-            </button>
+
           </div>
           <div className="space-y-5 relative z-10">
             <div>
@@ -567,10 +560,9 @@ export default function CustomerSetup() {
           }
           className={`
             w-full max-w-md flex items-center justify-center gap-3 min-h-[52px] sm:min-h-[56px] px-6 py-4 rounded-2xl font-bold text-base sm:text-lg shadow-2xl transition-all touch-manipulation active:scale-[0.98]
-            ${
-              messages.length === 0 && albumImages.length === 0
-                ? "bg-stone-900 text-stone-600 cursor-not-allowed border border-stone-800"
-                : "bg-gradient-to-r from-rose-700 to-rose-600 hover:from-rose-600 hover:to-rose-500 text-white shadow-rose-900/20 border border-rose-500/20"
+            ${messages.length === 0 && albumImages.length === 0
+              ? "bg-stone-900 text-stone-600 cursor-not-allowed border border-stone-800"
+              : "bg-gradient-to-r from-rose-700 to-rose-600 hover:from-rose-600 hover:to-rose-500 text-white shadow-rose-900/20 border border-rose-500/20"
             }
           `}
         >
