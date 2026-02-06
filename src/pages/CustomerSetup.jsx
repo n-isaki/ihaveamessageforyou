@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
-import { getGiftById, updateGift, markSetupAsStarted } from "../services/gifts";
+import {
+  getGiftById,
+  updateGift,
+  markSetupAsStarted,
+  getContributions,
+} from "../services/gifts";
 import WizardMessageEditor from "../modules/anima/experiences/multimedia-gift/components/WizardMessageEditor";
 import {
   Loader,
@@ -17,6 +22,8 @@ import {
   FileText,
   Image as ImageIcon,
   Gift,
+  Share2,
+  Copy,
 } from "lucide-react";
 import { uploadAlbumImage } from "../services/albumUpload";
 import { ALBUM_MAX_FILES } from "../utils/security";
@@ -45,6 +52,10 @@ export default function CustomerSetup() {
   const [albumImages, setAlbumImages] = useState([]);
   const [uploadingAlbum, setUploadingAlbum] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+
+  // Social Gifting
+  const [contributions, setContributions] = useState([]);
+  const [contributionLink, setContributionLink] = useState("");
 
   // Memoria Specific State (Text Only)
   const [memoriaData, setMemoriaData] = useState({
@@ -100,6 +111,24 @@ export default function CustomerSetup() {
     };
     init();
   }, [id, token, navigate]);
+
+  // Fetch Contributions separately (nur wenn Geschenk als "teilbar" freigegeben)
+  useEffect(() => {
+    if (gift && gift.contributionToken && gift.allowContributions === true) {
+      const origin = window.location.origin;
+      setContributionLink(`${origin}/join/${gift.contributionToken}`);
+
+      const fetchContribs = async () => {
+        const data = await getContributions(id);
+        setContributions(data);
+      };
+      fetchContribs();
+      // TODO: Add real-time listener later
+    } else {
+      setContributionLink("");
+      setContributions([]);
+    }
+  }, [gift, id]);
 
   const handleAddMessage = (type) => {
     if (locked) return;
@@ -194,6 +223,40 @@ export default function CustomerSetup() {
     } catch (err) {
       console.error("Failed to save", err);
       alert("Fehler beim Speichern. Bitte überprüfe deine Internetverbindung.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /** Speichern ohne Versiegeln – nur bei explizitem Klick, verhindert Datenverlust. */
+  const handleSaveDraft = async () => {
+    if (locked || !gift?.securityToken) return;
+    setSaving(true);
+    try {
+      const validMessages = messages
+        .filter((m) => isValidMessage(m))
+        .map((m) => ({
+          ...m,
+          content: sanitizeInput(m.content || "", 2000),
+          author: sanitizeInput(m.author || "", 100),
+        }));
+      await updateGift(id, {
+        messages: validMessages,
+        headline: sanitizeInput(headline, 200),
+        subheadline: sanitizeInput(subheadline, 200),
+        albumImages: Array.isArray(albumImages) ? albumImages : [],
+        securityToken: gift.securityToken,
+      });
+      setGift((prev) => ({
+        ...prev,
+        messages: validMessages,
+        headline: sanitizeInput(headline, 200),
+        subheadline: sanitizeInput(subheadline, 200),
+        albumImages: Array.isArray(albumImages) ? albumImages : [],
+      }));
+    } catch (err) {
+      console.error("Draft save failed", err);
+      alert("Fehler beim Speichern. Bitte erneut versuchen.");
     } finally {
       setSaving(false);
     }
@@ -431,7 +494,6 @@ export default function CustomerSetup() {
             <h2 className="font-setup-heading text-xl sm:text-2xl text-white leading-tight">
               Start-Bildschirm
             </h2>
-
           </div>
           <div className="space-y-5 relative z-10">
             <div>
@@ -454,10 +516,68 @@ export default function CustomerSetup() {
                 type="text"
                 value={subheadline}
                 onChange={(e) => setSubheadline(e.target.value)}
-                placeholder="Deine Botschaft"
+                placeholder="Eine persönliche Nachricht..."
                 className="w-full bg-stone-950/50 border border-stone-800 rounded-xl p-4 text-base text-stone-300 placeholder-stone-600 focus:ring-2 focus:ring-rose-500/30 outline-none transition-all min-h-[52px] leading-relaxed"
               />
             </div>
+
+            {/* Social Gifting Invite Section – nur sichtbar wenn allowContributions === true (Admin oder Käufer-Opt-in) */}
+            {/* Social Gifting Invite Section */}
+            {gift.contributionToken && gift.allowContributions && (
+              <div className="bg-stone-900/30 border border-stone-800 rounded-2xl p-4 mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <Share2 className="text-rose-400 h-5 w-5" />
+                  <h3 className="text-stone-200 font-semibold">
+                    Freunde einladen
+                  </h3>
+                </div>
+                <p className="text-stone-400 text-sm mb-3">
+                  Teile diesen Link, damit Freunde und Familie eigene
+                  Nachrichten auf die Tasse laden können.
+                </p>
+                <div className="flex gap-2">
+                  <div className="bg-stone-950 border border-stone-800 rounded-xl p-3 flex-1 text-stone-300 text-sm truncate font-mono">
+                    {contributionLink}
+                  </div>
+                  <button
+                    onClick={() =>
+                      navigator.clipboard
+                        .writeText(contributionLink)
+                        .then(() => alert("Link kopiert!"))
+                    }
+                    className="bg-stone-800 hover:bg-stone-700 text-white p-3 rounded-xl transition-colors"
+                    title="Link kopieren"
+                  >
+                    <Copy className="h-5 w-5" />
+                  </button>
+                </div>
+
+                {/* Display Contributions if any */}
+                {contributions.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-stone-800/50">
+                    <h4 className="text-stone-400 text-xs uppercase font-bold tracking-wider mb-2">
+                      Eingegangene Nachrichten ({contributions.length})
+                    </h4>
+                    <div className="space-y-2">
+                      {contributions.map((c) => (
+                        <div
+                          key={c.id}
+                          className="bg-stone-950/50 p-3 rounded-xl border border-stone-800/50 text-sm"
+                        >
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="font-bold text-stone-300">
+                              {c.author}
+                            </span>
+                            <span className="text-xs text-stone-600">Gast</span>
+                          </div>
+                          <p className="text-stone-400">{c.content}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {gift.personalizationText && (
               <div className="mt-4 p-4 bg-stone-950/50 rounded-xl text-base border border-stone-800 flex items-start gap-3 leading-relaxed">
@@ -551,7 +671,15 @@ export default function CustomerSetup() {
       </div>
 
       {/* Bottom Action Bar – mobile-optimiert, safe-area */}
-      <div className="fixed bottom-0 left-0 right-0 px-4 pt-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] bg-stone-950/95 backdrop-blur-xl border-t border-stone-800 flex justify-center z-30">
+      <div className="fixed bottom-0 left-0 right-0 px-4 pt-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] bg-stone-950/95 backdrop-blur-xl border-t border-stone-800 flex justify-center gap-3 z-30">
+        <button
+          type="button"
+          onClick={handleSaveDraft}
+          disabled={saving}
+          className="w-full max-w-[140px] flex items-center justify-center px-4 py-4 rounded-2xl font-bold text-base bg-stone-800 text-stone-300 border border-stone-700 hover:bg-stone-700 transition"
+        >
+          {saving ? <Loader className="h-5 w-5 animate-spin" /> : "Speichern"}
+        </button>
         <button
           type="button"
           onClick={handleSaveAndLockClick}
@@ -559,7 +687,7 @@ export default function CustomerSetup() {
             saving || (messages.length === 0 && albumImages.length === 0)
           }
           className={`
-            w-full max-w-md flex items-center justify-center gap-3 min-h-[52px] sm:min-h-[56px] px-6 py-4 rounded-2xl font-bold text-base sm:text-lg shadow-2xl transition-all touch-manipulation active:scale-[0.98]
+            w-full max-w-sm flex items-center justify-center gap-3 min-h-[52px] sm:min-h-[56px] px-6 py-4 rounded-2xl font-bold text-base sm:text-lg shadow-2xl transition-all touch-manipulation active:scale-[0.98]
             ${messages.length === 0 && albumImages.length === 0
               ? "bg-stone-900 text-stone-600 cursor-not-allowed border border-stone-800"
               : "bg-gradient-to-r from-rose-700 to-rose-600 hover:from-rose-600 hover:to-rose-500 text-white shadow-rose-900/20 border border-rose-500/20"

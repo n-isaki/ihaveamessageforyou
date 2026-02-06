@@ -61,6 +61,7 @@ export default function GiftWizard() {
     subheadline: "", // Added for custom subheadline override
     accessCode: "",
     unlockDate: "", // Time Capsule Date (ISO String for Input)
+    allowContributions: false, // New Feature Flag
     openingAnimation: "none",
     messages: [],
     albumImages: [],
@@ -112,6 +113,7 @@ export default function GiftWizard() {
               subheadline: data.subheadline || "",
               accessCode: data.accessCode || "",
               unlockDate: formattedUnlockDate,
+              allowContributions: data.allowContributions === true,
               openingAnimation: data.openingAnimation || "none",
               messages: data.messages || [],
               albumImages: data.albumImages || [],
@@ -382,26 +384,26 @@ export default function GiftWizard() {
           <div className="mb-8 flex space-x-2">
             <div
               className={`h-2 flex-1 rounded-full ${step >= 1
-                  ? isNoor
-                    ? "bg-emerald-500"
-                    : isMemoria
-                      ? "bg-stone-600"
-                      : isRitual
-                        ? "bg-indigo-500"
-                        : "bg-rose-500"
-                  : "bg-stone-200"
+                ? isNoor
+                  ? "bg-emerald-500"
+                  : isMemoria
+                    ? "bg-stone-600"
+                    : isRitual
+                      ? "bg-indigo-500"
+                      : "bg-rose-500"
+                : "bg-stone-200"
                 }`}
             ></div>
             <div
               className={`h-2 flex-1 rounded-full ${step >= 2
-                  ? isNoor
-                    ? "bg-emerald-500"
-                    : isMemoria
-                      ? "bg-stone-600"
-                      : isRitual
-                        ? "bg-indigo-500"
-                        : "bg-rose-500"
-                  : "bg-stone-200"
+                ? isNoor
+                  ? "bg-emerald-500"
+                  : isMemoria
+                    ? "bg-stone-600"
+                    : isRitual
+                      ? "bg-indigo-500"
+                      : "bg-rose-500"
+                : "bg-stone-200"
                 }`}
             ></div>
           </div>
@@ -803,10 +805,32 @@ export default function GiftWizard() {
                           <input
                             type="datetime-local"
                             name="unlockDate"
-                            value={formData.unlockDate}
+                            value={formData.unlockDate || ""}
                             onChange={handleInputChange}
                             className={styles.input}
                           />
+                        </div>
+
+                        {/* Social Gifting Toggle */}
+                        <div className="col-span-2 md:col-span-2 border-t border-stone-100 pt-4 mt-2">
+                          <div className="flex items-center gap-3 bg-stone-50 p-4 rounded-xl border border-stone-200">
+                            <input
+                              type="checkbox"
+                              id="allowContributions"
+                              name="allowContributions"
+                              checked={formData.allowContributions}
+                              onChange={(e) => setFormData(prev => ({ ...prev, allowContributions: e.target.checked }))}
+                              className="h-5 w-5 text-rose-600 rounded focus:ring-rose-500 border-gray-300"
+                            />
+                            <div>
+                              <label htmlFor="allowContributions" className="font-medium text-stone-900 block cursor-pointer">
+                                Social Gifting aktivieren (Freunde einladen)
+                              </label>
+                              <p className="text-xs text-stone-500">
+                                Wenn aktiv, erhalten Käufer einen Link, über den Freunde Nachrichten hinterlassen können.
+                              </p>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     )}

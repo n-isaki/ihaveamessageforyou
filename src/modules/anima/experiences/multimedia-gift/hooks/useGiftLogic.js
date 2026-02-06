@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { getGiftById, markGiftAsViewed } from "@/services/gifts";
+import { getGiftById, markGiftAsViewed, getContributions } from "@/services/gifts";
 import { verifyGiftPin } from "@/services/pinSecurity";
 import {
     checkRateLimit,
@@ -34,6 +34,25 @@ export function useGiftLogic(id, initialData) {
         const fetchGift = async () => {
             try {
                 const data = await getGiftById(id);
+                // [NEW] Social Gifting: Fetch contributions and merge
+                if (data) {
+                    const contributions = await getContributions(id);
+                    if (contributions.length > 0) {
+                        // Merge contributions into messages
+                        // Map contribution format to message format
+                        const socialMessages = contributions.map(c => ({
+                            id: c.id,
+                            type: c.type || 'text',
+                            content: c.content,
+                            author: c.author,
+                            isContribution: true // Marker for UI styling if needed
+                        }));
+
+                        // Combine: Main messages first, then social messages? Or mixed?
+                        // For now append to end
+                        data.messages = [...(data.messages || []), ...socialMessages];
+                    }
+                }
                 setGift(data);
             } catch (error) {
                 console.error("Failed to fetch gift", error);
@@ -192,6 +211,17 @@ export function useGiftLogic(id, initialData) {
                 resetRateLimit(`pin_${id}`);
                 setUnlocked(true);
                 if (fullGiftData) {
+                    // [NEW] Social Gifting: Merge server-side fetched contributions
+                    if (fullGiftData.contributions && fullGiftData.contributions.length > 0) {
+                        const socialMessages = fullGiftData.contributions.map(c => ({
+                            id: c.id,
+                            type: c.type || 'text',
+                            content: c.content,
+                            author: c.author,
+                            isContribution: true
+                        }));
+                        fullGiftData.messages = [...(fullGiftData.messages || []), ...socialMessages];
+                    }
                     setGift(fullGiftData);
                 }
                 if (!gift.viewed && !isPreview) {

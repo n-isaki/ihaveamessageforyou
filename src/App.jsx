@@ -18,6 +18,7 @@ const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const CustomerSetup = lazy(() => import("./pages/CustomerSetup"));
 const PrintGift = lazy(() => import("./pages/PrintGift"));
 const ShopifyThemeExplorer = lazy(() => import("./pages/ShopifyThemeExplorer"));
+const ContributionPage = lazy(() => import("./pages/ContributionPage"));
 
 // Anima Modules - Lazy Loaded
 const GiftWizard = lazy(() =>
@@ -122,6 +123,9 @@ function App() {
 
             {/* Customer Setup (Etsy Flow) */}
             <Route path="/setup/:id" element={<CustomerSetup />} />
+
+            {/* Social Gifting (Join Flow) */}
+            <Route path="/join/:token" element={<ContributionPage />} />
 
             <Route path="/admin/login" element={<AdminLogin />} />
 

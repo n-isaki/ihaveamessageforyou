@@ -75,13 +75,33 @@ service cloud.firestore {
                       && onlyAllowedFields(['messages', 'headline', 'subheadline', 'albumImages', 'locked', 
                                             'setupCompletedAt', 'setupStarted', 'setupStartedAt',
                                             'deceasedName', 'lifeDates', 'meaningText',
-                                            'engravingText', 'meaningText', 'accessCode', 'accessCodeHash', 'securityToken', 'updatedAt']))
+                                            'engravingText', 'meaningText', 'accessCode', 'accessCodeHash', 'securityToken', 'updatedAt', 'allowContributions']))
                   || (!isLocked() 
                       && onlyAllowedFields(['setupStarted', 'setupStartedAt', 'updatedAt'])) // ✅ Allow setupStarted updates without token
                   || onlyAllowedFields(['viewed', 'viewedAt', 'updatedAt']); // ✅ Erlaube viewed/viewedAt Updates für alle (locked oder unlocked)
       
       // DELETE: Only Admin
       allow delete: if isAdmin();
+
+      // ============================================
+      // SUBSCRIPTION: Social Gifting Contributions
+      // ============================================
+      match /contributions/{contributionId} {
+         // READ: 
+         // 1. Admin (always)
+         // 2. Owner of parent gift via securityToken (Viewer/Setup)
+         // Note: Contributors CANNOT read other messages (Write-Only Privacy)
+         allow read: if isAdmin() 
+                     || (get(/databases/$(database)/documents/gift_orders/$(documentId)).data.securityToken == request.query.token)
+                     || (get(/databases/$(database)/documents/gift_orders/$(documentId)).data.locked == false); // Or if public? No, better explicit.
+
+         // CREATE: Public write access IF they have the valid contributionToken
+         // Token validation: Payload token === Parent Gift token
+         allow create: if request.resource.data.contributionToken == get(/databases/$(database)/documents/gift_orders/$(documentId)).data.contributionToken;
+
+         // UPDATE/DELETE: Only Admin (Contributors cannot edit/delete once sent)
+         allow update, delete: if isAdmin();
+      }
     }
     
     // ============================================

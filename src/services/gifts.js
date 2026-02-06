@@ -26,6 +26,8 @@ export const createEtsyOrder = async (data) => {
       status: "open",
       platform: "etsy",
       securityToken: self.crypto.randomUUID(), // Secure Token for Magic Link
+      contributionToken: self.crypto.randomUUID(), // Token for Social Gifting (Public Write Access)
+      allowContributions: false, // Teilbar: nur wenn Admin oder Käufer (Add-on) aktiviert
       locked: false,
       createdAt: serverTimestamp(),
       viewed: false,
@@ -58,6 +60,19 @@ export const createGift = async (giftData) => {
     // unless explicitly set to false
     const shouldBeLocked = !requiresSetup && giftData.locked !== false;
 
+    // Separate sensitive fields if necessary (for now flat structure but prepared)
+    const dataToSave = {
+      ...giftData,
+      status: "open", // open, sealed, archived
+      securityToken: self.crypto.randomUUID(), // Setup & Ownership Token
+      contributionToken: self.crypto.randomUUID(), // Social Gifting Token (Write-Only)
+      pinHash: null, // Will be set upon sealing
+      locked: shouldBeLocked,
+      setupStarted: false,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+
     // Hash PIN if provided (server-side security)
     let accessCodeHash = null;
     if (
@@ -79,6 +94,8 @@ export const createGift = async (giftData) => {
       securityToken: self.crypto.randomUUID(), // Ensure every gift has a token for setup
       platform: giftData.platform || "manual", // Ensure platform is set for Firestore rules
       ...giftData,
+      contributionToken: dataToSave.contributionToken,
+      allowContributions: giftData.allowContributions === true, // Teilbar: nur wenn explizit aktiviert (Admin oder Add-on)
       // Store both hash and plain text for now (migration period)
       // accessCodeHash will be used for verification, accessCode for display/QR codes
       ...(accessCodeHash && { accessCodeHash }),
@@ -256,7 +273,8 @@ export const getGiftById = async (id, retries = 3) => {
         // Document doesn't exist yet, wait and retry
         if (attempt < retries - 1) {
           console.log(
-            `⏳ Document not found, waiting... (attempt ${attempt + 1
+            `⏳ Document not found, waiting... (attempt ${
+              attempt + 1
             }/${retries})`
           );
           await new Promise((resolve) =>
@@ -268,22 +286,28 @@ export const getGiftById = async (id, retries = 3) => {
       }
     } catch (error) {
       // Log the actual error code for debugging on Staging
-      console.warn('Firestore error caught in getGiftById:', error.code, error.message);
+      console.warn(
+        "Firestore error caught in getGiftById:",
+        error.code,
+        error.message
+      );
 
       // SECURITY UPDATE: Handle locked gifts (PERMISSION_DENIED)
       // Check for multiple variations of permission denied error
       if (
-        error.code === 'permission-denied' ||
-        error.code === 'PERMISSION_DENIED' ||
-        (error.code && error.code.toLowerCase().includes('permission')) ||
-        (error.message && error.message.toLowerCase().includes('permission')) ||
-        (error.message && error.message.toLowerCase().includes('privilege'))
+        error.code === "permission-denied" ||
+        error.code === "PERMISSION_DENIED" ||
+        (error.code && error.code.toLowerCase().includes("permission")) ||
+        (error.message && error.message.toLowerCase().includes("permission")) ||
+        (error.message && error.message.toLowerCase().includes("privilege"))
       ) {
-        console.warn("🔒 Gift is locked (PERMISSION_DENIED). Attempting to fetch public data...");
+        console.warn(
+          "🔒 Gift is locked (PERMISSION_DENIED). Attempting to fetch public data..."
+        );
         try {
-          // Import dynamically to avoid circular dependencies if any, 
+          // Import dynamically to avoid circular dependencies if any,
           // or ensure pinSecurity.js is imported at top
-          const { getPublicGiftData } = await import('./pinSecurity');
+          const { getPublicGiftData } = await import("./pinSecurity");
           const result = await getPublicGiftData(id);
 
           if (result && result.exists) {
@@ -315,6 +339,70 @@ export const getGiftById = async (id, retries = 3) => {
   }
 
   return null;
+};
+
+// ============================================
+// SOCIAL GIFTING (CONTRIBUTIONS)
+// ============================================
+
+export const getGiftByContributionToken = async (token) => {
+  // Use Cloud Function for secure lookup (Project: ihmfy)
+  const { httpsCallable, getFunctions } = await import("firebase/functions");
+  const functions = getFunctions();
+  const getGift = httpsCallable(functions, "getGiftByContributionToken");
+
+  try {
+    const result = await getGift({ token });
+    return result.data; // { giftId, recipientName, senderName, title, ... }
+  } catch (error) {
+    console.error("Error fetching gift by token:", error);
+    throw error;
+  }
+};
+
+export const addContribution = async (giftId, contributionData) => {
+  // ContributionData: { author, content, type, mediaUrl?, contributionToken }
+  // Write to sub-collection: gift_orders/{giftId}/contributions
+  try {
+    const contributionsRef = collection(
+      db,
+      COLLECTION_NAME,
+      giftId,
+      "contributions"
+    );
+    await addDoc(contributionsRef, {
+      ...contributionData,
+      status: "approved", // Default approved for MVP
+      timestamp: serverTimestamp(),
+    });
+  } catch (error) {
+    console.error("Error adding contribution:", error);
+    throw error;
+  }
+};
+
+export const getContributions = async (giftId) => {
+  try {
+    const contributionsRef = collection(
+      db,
+      COLLECTION_NAME,
+      giftId,
+      "contributions"
+    );
+    // Order by timestamp so they appear in sequence
+    const q = query(contributionsRef, orderBy("timestamp", "asc"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+  } catch (error) {
+    console.warn(
+      "Error fetching contributions (might be empty/locked):",
+      error
+    );
+    return []; // Return empty array gracefully if permission denied or empty
+  }
 };
 
 export const markGiftAsViewed = async (id) => {
