@@ -826,8 +826,9 @@ export default function GiftWizard() {
                               <label htmlFor="allowContributions" className="font-medium text-stone-900 block cursor-pointer">
                                 Social Gifting aktivieren (Freunde einladen)
                               </label>
-                              <p className="text-xs text-stone-500">
-                                Wenn aktiv, erhalten Käufer einen Link, über den Freunde Nachrichten hinterlassen können.
+                              <p className="text-xs text-stone-500 leading-relaxed mt-1">
+                                Wenn aktiv, kann der Käufer einen Link teilen, über den Freunde Nachrichten hinterlassen können.
+                                Diese Nachrichten erscheinen dann zusammen mit dem Hauptgeschenk, wenn der Empfänger den Code scannt.
                               </p>
                             </div>
                           </div>

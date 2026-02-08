@@ -532,8 +532,8 @@ export default function CustomerSetup() {
                   </h3>
                 </div>
                 <p className="text-stone-400 text-sm mb-3">
-                  Teile diesen Link, damit Freunde und Familie eigene
-                  Nachrichten auf die Tasse laden können.
+                  Teile diesen Link, damit Freunde und Familie persönliche Nachrichten für den Empfänger hinterlassen können.
+                  Diese erscheinen dann direkt im digitalen Geschenk (z.B. beim Scannen des QR-Codes).
                 </p>
                 <div className="flex gap-2">
                   <div className="bg-stone-950 border border-stone-800 rounded-xl p-3 flex-1 text-stone-300 text-sm truncate font-mono">
@@ -664,9 +664,11 @@ export default function CustomerSetup() {
           </div>
         </section>
 
-        <p className="text-center text-sm text-stone-500 pb-24 sm:pb-20 px-4 leading-relaxed">
-          <Lock className="inline h-4 w-4 mr-1.5 mb-0.5 opacity-70" />
-          Nach dem Versiegeln kann das Geschenk nicht mehr bearbeitet werden.
+        <p className="text-center text-sm text-stone-500 pb-24 sm:pb-20 px-4 leading-relaxed bg-stone-900/40 p-4 rounded-xl border border-stone-800/50 mt-8 mx-auto max-w-lg">
+          <Info className="inline h-4 w-4 mr-1.5 mb-0.5 opacity-70 text-rose-400" />
+          <strong>Wichtig:</strong> Nutze <span className="text-white">"Speichern"</span>, um deinen Entwurf zu sichern.
+          <br />
+          Erst wenn du fertig bist, klicke auf <span className="text-white">"Geschenk versiegeln"</span>. Danach sind keine Änderungen mehr möglich.
         </p>
       </div>
 
@@ -746,13 +748,13 @@ export default function CustomerSetup() {
                     onClick={confirmSave}
                     className="w-full py-3.5 bg-rose-600 text-white font-bold rounded-xl hover:bg-rose-500 transition-colors shadow-lg shadow-rose-900/20"
                   >
-                    Ja, jetzt versiegeln
+                    Ja, jetzt endgültig versiegeln
                   </button>
                   <button
                     onClick={() => setShowConfirmModal(false)}
                     className="w-full py-3.5 bg-transparent border border-stone-800 text-stone-400 font-medium rounded-xl hover:bg-stone-800 hover:text-white transition-colors"
                   >
-                    Noch bearbeiten
+                    Nein, noch bearbeiten
                   </button>
                 </div>
               </div>
