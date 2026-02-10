@@ -139,18 +139,17 @@ export const updateGift = async (id, giftData) => {
       fieldsToUpdate: Object.keys(giftData),
     });
 
-    // Hash PIN if accessCode is being updated
+    // Hash PIN if accessCode is being updated; clear hash if PIN is removed
     let accessCodeHash = null;
-    if (
+    const hasPin =
       giftData.accessCode &&
       typeof giftData.accessCode === "string" &&
-      giftData.accessCode.length > 0
-    ) {
+      giftData.accessCode.length > 0;
+    if (hasPin) {
       try {
         accessCodeHash = await hashPin(giftData.accessCode);
       } catch (error) {
         console.error("Error hashing PIN during update:", error);
-        // Continue without hash (backward compatibility)
       }
     }
 
@@ -158,10 +157,11 @@ export const updateGift = async (id, giftData) => {
       ...giftData,
       updatedAt: serverTimestamp(),
     };
-
-    // Add hash if available
     if (accessCodeHash) {
       updateData.accessCodeHash = accessCodeHash;
+    } else {
+      // PIN entfernt oder leer → Hash löschen, damit Geschenk ohne PIN zugänglich ist
+      updateData.accessCodeHash = null;
     }
 
     const docRef = doc(db, COLLECTION_NAME, id);
@@ -275,7 +275,8 @@ export const getGiftById = async (id, retries = 3) => {
         // Document doesn't exist yet, wait and retry
         if (attempt < retries - 1) {
           console.log(
-            `⏳ Document not found, waiting... (attempt ${attempt + 1
+            `⏳ Document not found, waiting... (attempt ${
+              attempt + 1
             }/${retries})`
           );
           await new Promise((resolve) =>

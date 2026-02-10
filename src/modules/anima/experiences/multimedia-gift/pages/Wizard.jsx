@@ -48,7 +48,8 @@ export default function GiftWizard() {
     orderId: "",
 
     // Kamlimos Specific (Mug/Bracelet)
-    subheadline: "", // Added for custom subheadline override
+    headline: "", // Titel (erste Zeile auf dem Cover)
+    subheadline: "", // Untertitel / zweite Zeile
     accessCode: "",
     unlockDate: "", // Time Capsule Date (ISO String for Input)
     // Time Capsule Date (ISO String for Input)
@@ -102,8 +103,10 @@ export default function GiftWizard() {
               customerName: data.customerName || "",
               customerEmail: data.customerEmail || "",
               orderId: data.orderId || "",
+              headline: data.headline || "",
               subheadline: data.subheadline || "",
-              accessCode: data.accessCode || "",
+              accessCode:
+                data.allowPublicAccess !== false ? "" : data.accessCode || "",
               unlockDate: formattedUnlockDate,
               allowContributions: data.allowContributions === true,
               allowPublicAccess: data.allowPublicAccess !== false, // Default: true if undefined
@@ -731,6 +734,17 @@ export default function GiftWizard() {
                         placeholder="#1001"
                       />
                     </div>
+                    <div className="md:col-span-2">
+                      <label className={styles.label}>Titel</label>
+                      <input
+                        type="text"
+                        name="headline"
+                        value={formData.headline}
+                        onChange={handleInputChange}
+                        className={styles.input}
+                        placeholder="Erste Zeile auf dem Cover"
+                      />
+                    </div>
                     <div>
                       <label className={styles.label}>Empfänger</label>
                       <input
@@ -793,16 +807,18 @@ export default function GiftWizard() {
                     ) : (
                       // Mug fields
                       <div className="md:col-span-2 grid grid-cols-2 gap-4">
-                        <div>
-                          <label className={styles.label}>PIN Code</label>
-                          <input
-                            type="text"
-                            name="accessCode"
-                            value={formData.accessCode}
-                            onChange={handleInputChange}
-                            className={styles.input}
-                          />
-                        </div>
+                        {!formData.allowPublicAccess && (
+                          <div>
+                            <label className={styles.label}>PIN Code</label>
+                            <input
+                              type="text"
+                              name="accessCode"
+                              value={formData.accessCode}
+                              onChange={handleInputChange}
+                              className={styles.input}
+                            />
+                          </div>
+                        )}
                         <div>
                           <label className={styles.label}>
                             Öffnungs-Animation
@@ -882,12 +898,15 @@ export default function GiftWizard() {
                               id="allowPublicAccess"
                               name="allowPublicAccess"
                               checked={formData.allowPublicAccess}
-                              onChange={(e) =>
+                              onChange={(e) => {
+                                const checked = e.target.checked;
                                 setFormData((prev) => ({
                                   ...prev,
-                                  allowPublicAccess: e.target.checked,
-                                }))
-                              }
+                                  allowPublicAccess: checked,
+                                  // Wenn "öffentlich erlauben" aktiv: PIN entfernen, damit Kunde nicht trotzdem PIN bekommt
+                                  ...(checked && { accessCode: "" }),
+                                }));
+                              }}
                               className="h-5 w-5 text-rose-600 rounded focus:ring-rose-500 border-gray-300"
                             />
                             <div>
