@@ -4,21 +4,11 @@ import { createGift, getGiftById, updateGift } from "@/services/gifts";
 import { storage } from "@/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import {
-  Plus,
-  Trash2,
-  Video,
-  MessageSquare,
   ArrowRight,
-  ArrowLeft,
-  Save,
   Loader,
-  Coffee,
   Watch,
-  Music,
   FileAudio,
   UploadCloud,
-  Zap,
-  Heart,
   Image as ImageIcon,
   Menu,
   X,
@@ -61,7 +51,9 @@ export default function GiftWizard() {
     subheadline: "", // Added for custom subheadline override
     accessCode: "",
     unlockDate: "", // Time Capsule Date (ISO String for Input)
+    // Time Capsule Date (ISO String for Input)
     allowContributions: false, // New Feature Flag
+    allowPublicAccess: true, // Default: Admin allows "Optional PIN" feature
     openingAnimation: "none",
     messages: [],
     albumImages: [],
@@ -114,6 +106,7 @@ export default function GiftWizard() {
               accessCode: data.accessCode || "",
               unlockDate: formattedUnlockDate,
               allowContributions: data.allowContributions === true,
+              allowPublicAccess: data.allowPublicAccess !== false, // Default: true if undefined
               openingAnimation: data.openingAnimation || "none",
               messages: data.messages || [],
               albumImages: data.albumImages || [],
@@ -356,12 +349,12 @@ export default function GiftWizard() {
               {isEditMode
                 ? "Auftrag bearbeiten"
                 : isNoor
-                  ? "Neues Noor"
-                  : isMemoria
-                    ? "Neues Memoria"
-                    : isBracelet
-                      ? "Neues Armband"
-                      : "Neue Tasse"}
+                ? "Neues Noor"
+                : isMemoria
+                ? "Neues Memoria"
+                : isBracelet
+                ? "Neues Armband"
+                : "Neue Tasse"}
             </h1>
             <button
               onClick={() =>
@@ -383,28 +376,30 @@ export default function GiftWizard() {
           {/* Progress Steps */}
           <div className="mb-8 flex space-x-2">
             <div
-              className={`h-2 flex-1 rounded-full ${step >= 1
-                ? isNoor
-                  ? "bg-emerald-500"
-                  : isMemoria
+              className={`h-2 flex-1 rounded-full ${
+                step >= 1
+                  ? isNoor
+                    ? "bg-emerald-500"
+                    : isMemoria
                     ? "bg-stone-600"
                     : isRitual
-                      ? "bg-indigo-500"
-                      : "bg-rose-500"
-                : "bg-stone-200"
-                }`}
+                    ? "bg-indigo-500"
+                    : "bg-rose-500"
+                  : "bg-stone-200"
+              }`}
             ></div>
             <div
-              className={`h-2 flex-1 rounded-full ${step >= 2
-                ? isNoor
-                  ? "bg-emerald-500"
-                  : isMemoria
+              className={`h-2 flex-1 rounded-full ${
+                step >= 2
+                  ? isNoor
+                    ? "bg-emerald-500"
+                    : isMemoria
                     ? "bg-stone-600"
                     : isRitual
-                      ? "bg-indigo-500"
-                      : "bg-rose-500"
-                : "bg-stone-200"
-                }`}
+                    ? "bg-indigo-500"
+                    : "bg-rose-500"
+                  : "bg-stone-200"
+              }`}
             ></div>
           </div>
 
@@ -687,6 +682,38 @@ export default function GiftWizard() {
                         />
                       </div>
                     </div>
+
+                    {/* Public Access Toggle */}
+                    <div className="pt-4 border-t border-stone-100 mt-2">
+                      <div className="flex items-center gap-3 bg-stone-50 p-4 rounded-xl border border-stone-200">
+                        <input
+                          type="checkbox"
+                          id="allowPublicAccessMemoria"
+                          name="allowPublicAccess"
+                          checked={formData.allowPublicAccess}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              allowPublicAccess: e.target.checked,
+                            }))
+                          }
+                          className="h-5 w-5 text-rose-600 rounded focus:ring-rose-500 border-gray-300"
+                        />
+                        <div>
+                          <label
+                            htmlFor="allowPublicAccessMemoria"
+                            className="font-medium text-stone-900 block cursor-pointer"
+                          >
+                            "Geschenk öffentlich machen" Option erlauben
+                          </label>
+                          <p className="text-xs text-stone-500 leading-relaxed mt-1">
+                            Wenn aktiv, kann der Käufer im Setup entscheiden, ob
+                            das Geschenk ohne PIN (öffentlich) zugänglich sein
+                            soll.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   /* KAMLIMOS FORM (Standard) */
@@ -725,7 +752,9 @@ export default function GiftWizard() {
                       />
                     </div>
                     <div>
-                      <label className={styles.label}>Absender (Untertitel)</label>
+                      <label className={styles.label}>
+                        Absender (Untertitel)
+                      </label>
                       <input
                         type="text"
                         name="subheadline"
@@ -819,16 +848,59 @@ export default function GiftWizard() {
                               id="allowContributions"
                               name="allowContributions"
                               checked={formData.allowContributions}
-                              onChange={(e) => setFormData(prev => ({ ...prev, allowContributions: e.target.checked }))}
+                              onChange={(e) =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  allowContributions: e.target.checked,
+                                }))
+                              }
                               className="h-5 w-5 text-rose-600 rounded focus:ring-rose-500 border-gray-300"
                             />
                             <div>
-                              <label htmlFor="allowContributions" className="font-medium text-stone-900 block cursor-pointer">
+                              <label
+                                htmlFor="allowContributions"
+                                className="font-medium text-stone-900 block cursor-pointer"
+                              >
                                 Social Gifting aktivieren (Freunde einladen)
                               </label>
                               <p className="text-xs text-stone-500 leading-relaxed mt-1">
-                                Wenn aktiv, kann der Käufer einen Link teilen, über den Freunde Nachrichten hinterlassen können.
-                                Diese Nachrichten erscheinen dann zusammen mit dem Hauptgeschenk, wenn der Empfänger den Code scannt.
+                                Wenn aktiv, kann der Käufer einen Link teilen,
+                                über den Freunde Nachrichten hinterlassen
+                                können. Diese Nachrichten erscheinen dann
+                                zusammen mit dem Hauptgeschenk, wenn der
+                                Empfänger den Code scannt.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Public Access Toggle */}
+                        <div className="col-span-2 md:col-span-2 pt-2">
+                          <div className="flex items-center gap-3 bg-stone-50 p-4 rounded-xl border border-stone-200">
+                            <input
+                              type="checkbox"
+                              id="allowPublicAccess"
+                              name="allowPublicAccess"
+                              checked={formData.allowPublicAccess}
+                              onChange={(e) =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  allowPublicAccess: e.target.checked,
+                                }))
+                              }
+                              className="h-5 w-5 text-rose-600 rounded focus:ring-rose-500 border-gray-300"
+                            />
+                            <div>
+                              <label
+                                htmlFor="allowPublicAccess"
+                                className="font-medium text-stone-900 block cursor-pointer"
+                              >
+                                "Geschenk öffentlich machen" Option erlauben
+                              </label>
+                              <p className="text-xs text-stone-500 leading-relaxed mt-1">
+                                Wenn aktiv, kann der Käufer im Setup
+                                entscheiden, ob das Geschenk ohne PIN
+                                (öffentlich) zugänglich sein soll.
                               </p>
                             </div>
                           </div>
@@ -893,22 +965,22 @@ export default function GiftWizard() {
                         ))}
                         {(formData.albumImages || []).length <
                           ALBUM_MAX_FILES && (
-                            <label className="w-20 h-20 flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-stone-300 text-stone-500 hover:border-rose-400 hover:bg-rose-50/50 cursor-pointer transition-colors">
-                              <input
-                                type="file"
-                                accept="image/jpeg,image/png,image/webp"
-                                className="hidden"
-                                onChange={handleAlbumUpload}
-                                disabled={uploadingAlbum}
-                              />
-                              {uploadingAlbum ? (
-                                <Loader className="h-6 w-6 animate-spin" />
-                              ) : (
-                                <ImageIcon className="h-6 w-6 mb-0.5" />
-                              )}
-                              <span className="text-xs">Hinzufügen</span>
-                            </label>
-                          )}
+                          <label className="w-20 h-20 flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-stone-300 text-stone-500 hover:border-rose-400 hover:bg-rose-50/50 cursor-pointer transition-colors">
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp"
+                              className="hidden"
+                              onChange={handleAlbumUpload}
+                              disabled={uploadingAlbum}
+                            />
+                            {uploadingAlbum ? (
+                              <Loader className="h-6 w-6 animate-spin" />
+                            ) : (
+                              <ImageIcon className="h-6 w-6 mb-0.5" />
+                            )}
+                            <span className="text-xs">Hinzufügen</span>
+                          </label>
+                        )}
                       </div>
                       {!id && (formData.albumImages || []).length === 0 && (
                         <p className="text-xs text-stone-400 mt-2">

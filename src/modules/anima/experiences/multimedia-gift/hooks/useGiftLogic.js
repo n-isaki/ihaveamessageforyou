@@ -163,6 +163,27 @@ export function useGiftLogic(id, initialData) {
         }
     }, []);
 
+    // 4b. Auto-unlock for Public Gifts (respecting Time Lock)
+    useEffect(() => {
+        if (!gift?.isPublic || unlocked) return;
+
+        const now = Date.now();
+        // Calculate lock status directly to prevent race condition on initial load
+        const calculatedLock = unlockTime && now < unlockTime;
+
+        if (!isTimeLocked && !calculatedLock) {
+            setUnlocked(true);
+            if (!gift.viewed && !isPreview) {
+                markGiftAsViewed(id).catch((err) =>
+                    console.error("Error marking as viewed", err)
+                );
+            }
+            if (gift.openingAnimation && gift.openingAnimation !== "none") {
+                setTimeout(() => triggerAnimation(gift.openingAnimation), 500);
+            }
+        }
+    }, [gift, unlocked, isTimeLocked, unlockTime, isPreview, id, triggerAnimation]);
+
     // 5. Verify PIN / Handle Unlock
     const verifyPin = async (pinInput) => {
         if (!gift) {

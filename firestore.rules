@@ -55,7 +55,8 @@ service cloud.firestore {
       // Use getPublicGiftData cloud function for lock screen metadata.
       allow read: if isAdmin() 
                   || isValidToken()
-                  || (resource.data.locked == false); // ✅ ONLY unlocked gifts are public
+                  || (resource.data.locked == false) // ✅ ONLY unlocked gifts are public
+                  || (resource.data.isPublic == true); // ✅ Allow reading if public (Open Access)
       
       // CREATE: Only Admin or Shopify Webhook (with shopifyOrderId)
       allow create: if isAdmin() 
@@ -75,9 +76,9 @@ service cloud.firestore {
                       && onlyAllowedFields(['messages', 'headline', 'subheadline', 'albumImages', 'locked', 
                                             'setupCompletedAt', 'setupStarted', 'setupStartedAt',
                                             'deceasedName', 'lifeDates', 'meaningText',
-                                            'engravingText', 'meaningText', 'accessCode', 'accessCodeHash', 'securityToken', 'updatedAt', 'allowContributions']))
+                                            'engravingText', 'meaningText', 'accessCode', 'accessCodeHash', 'securityToken', 'updatedAt', 'allowContributions', 'isPublic', 'allowPublicAccess']))
                   || (!isLocked() 
-                      && onlyAllowedFields(['setupStarted', 'setupStartedAt', 'updatedAt'])) // ✅ Allow setupStarted updates without token
+                      && onlyAllowedFields(['setupStarted', 'setupStartedAt', 'updatedAt', 'isPublic'])) // ✅ Allow setting isPublic and setupStarted
                   || onlyAllowedFields(['viewed', 'viewedAt', 'updatedAt']); // ✅ Erlaube viewed/viewedAt Updates für alle (locked oder unlocked)
       
       // DELETE: Only Admin
@@ -91,9 +92,10 @@ service cloud.firestore {
          // 1. Admin (always)
          // 2. Owner of parent gift via securityToken (Viewer/Setup)
          // Note: Contributors CANNOT read other messages (Write-Only Privacy)
-         allow read: if isAdmin() 
-                     || (get(/databases/$(database)/documents/gift_orders/$(documentId)).data.securityToken == request.query.token)
-                     || (get(/databases/$(database)/documents/gift_orders/$(documentId)).data.locked == false); // Or if public? No, better explicit.
+          allow read: if isAdmin() 
+                      || (get(/databases/$(database)/documents/gift_orders/$(documentId)).data.securityToken == request.query.token)
+                      || (get(/databases/$(database)/documents/gift_orders/$(documentId)).data.locked == false)
+                      || (get(/databases/$(database)/documents/gift_orders/$(documentId)).data.isPublic == true);
 
          // CREATE: Public write access IF they have the valid contributionToken
          // Token validation: Payload token === Parent Gift token

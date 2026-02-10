@@ -69,6 +69,8 @@ export const createGift = async (giftData) => {
       pinHash: null, // Will be set upon sealing
       locked: shouldBeLocked,
       setupStarted: false,
+      isPublic: false, // Default: Private until user explicitly enables it
+      allowPublicAccess: giftData.allowPublicAccess !== false, // Default: Admin allows public option
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
@@ -273,8 +275,7 @@ export const getGiftById = async (id, retries = 3) => {
         // Document doesn't exist yet, wait and retry
         if (attempt < retries - 1) {
           console.log(
-            `⏳ Document not found, waiting... (attempt ${
-              attempt + 1
+            `⏳ Document not found, waiting... (attempt ${attempt + 1
             }/${retries})`
           );
           await new Promise((resolve) =>

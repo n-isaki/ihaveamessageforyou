@@ -57,6 +57,9 @@ export default function CustomerSetup() {
   const [contributions, setContributions] = useState([]);
   const [contributionLink, setContributionLink] = useState("");
 
+  // Optional PIN
+  const [isPublic, setIsPublic] = useState(false);
+
   // Memoria Specific State (Text Only)
   const [memoriaData, setMemoriaData] = useState({
     deceasedName: "",
@@ -89,6 +92,7 @@ export default function CustomerSetup() {
           setHeadline(data.headline || "");
           setSubheadline(data.subheadline || "");
           setAlbumImages(data.albumImages || []);
+          setIsPublic(data.isPublic || false);
 
           // Memoria Init
           if (data.project === "memoria") {
@@ -211,6 +215,7 @@ export default function CustomerSetup() {
         updates.headline = sanitizeInput(headline, 200);
         updates.subheadline = sanitizeInput(subheadline, 200);
         updates.albumImages = Array.isArray(albumImages) ? albumImages : [];
+        updates.isPublic = isPublic; // ✅ Added isPublic to seal update
       }
 
       // Include securityToken in update to validate ownership in Firestore rules
@@ -245,6 +250,7 @@ export default function CustomerSetup() {
         headline: sanitizeInput(headline, 200),
         subheadline: sanitizeInput(subheadline, 200),
         albumImages: Array.isArray(albumImages) ? albumImages : [],
+        isPublic: isPublic, // Added isPublic to draft save too
         securityToken: gift.securityToken,
       });
       setGift((prev) => ({
@@ -253,6 +259,7 @@ export default function CustomerSetup() {
         headline: sanitizeInput(headline, 200),
         subheadline: sanitizeInput(subheadline, 200),
         albumImages: Array.isArray(albumImages) ? albumImages : [],
+        isPublic: isPublic,
       }));
     } catch (err) {
       console.error("Draft save failed", err);
@@ -434,6 +441,28 @@ export default function CustomerSetup() {
                       Änderungen sind danach nicht mehr möglich.
                     </p>
                   </div>
+
+                  {/* Public Toggle (Memoria) */}
+                  {gift.allowPublicAccess !== false && (
+                    <div className="text-left bg-stone-800/50 p-4 rounded-xl border border-stone-700 mt-4">
+                      <label className="flex items-start gap-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={isPublic}
+                          onChange={(e) => setIsPublic(e.target.checked)}
+                          className="mt-1 h-5 w-5 text-rose-500 rounded focus:ring-rose-500/50 bg-stone-900 border-stone-600"
+                        />
+                        <div>
+                          <span className="text-white font-medium block">
+                            Geschenk öffentlich machen?
+                          </span>
+                          <span className="text-stone-400 text-xs block leading-relaxed mt-1">
+                            Wenn aktiviert, benötigt niemand einen PIN-Code.
+                          </span>
+                        </div>
+                      </label>
+                    </div>
+                  )}
                   <button
                     onClick={confirmSave}
                     className="w-full py-3.5 bg-stone-100 text-stone-900 font-bold rounded-xl hover:bg-white"
@@ -741,6 +770,27 @@ export default function CustomerSetup() {
                     <strong>versiegelt</strong>. Änderungen sind danach nicht
                     mehr möglich.
                   </p>
+
+                  {/* Public Toggle (if allowed by Admin) */}
+                  {gift.allowPublicAccess !== false && (
+                    <div className="text-left bg-stone-800/50 p-4 rounded-xl border border-stone-700 mt-4">
+                      <label className="flex items-start gap-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={isPublic}
+                          onChange={(e) => setIsPublic(e.target.checked)}
+                          className="mt-1 h-5 w-5 text-rose-500 rounded focus:ring-rose-500/50 bg-stone-900 border-stone-600"
+                        />
+                        <div>
+                          <span className="text-white font-medium block">Geschenk öffentlich machen?</span>
+                          <span className="text-stone-400 text-xs block leading-relaxed mt-1">
+                            Wenn aktiviert, benötigt niemand einen PIN-Code ("Open Access").
+                            Ideal zum Teilen auf Social Media.
+                          </span>
+                        </div>
+                      </label>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-3 pt-2">
