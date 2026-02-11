@@ -69,8 +69,7 @@ export const createGift = async (giftData) => {
       pinHash: null, // Will be set upon sealing
       locked: shouldBeLocked,
       setupStarted: false,
-      isPublic: false, // Default: Private until user explicitly enables it
-      allowPublicAccess: giftData.allowPublicAccess !== false, // Default: Admin allows public option
+      isPublic: false, // Default: Private until customer chooses in setup
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     };
@@ -123,19 +122,19 @@ export const createGift = async (giftData) => {
 
 export const updateGift = async (id, giftData) => {
   try {
-    // Debug: Log what we're trying to update
+    // Debug: Log what we're trying to update (PIN/accessCode never logged)
     const currentUser = auth.currentUser;
+    const safeData = { ...giftData };
+    if (safeData.accessCode != null) safeData.accessCode = "[REDACTED]";
+    if (safeData.securityToken != null)
+      safeData.securityToken = safeData.securityToken.substring(0, 10) + "...";
     console.log("🔍 updateGift Debug:", {
       id,
       isAuthenticated: !!currentUser,
       userId: currentUser?.uid,
       email: currentUser?.email,
       hostname: window.location.hostname,
-      dataToUpdate: giftData,
-      hasSecurityToken: !!giftData.securityToken,
-      securityTokenValue: giftData.securityToken
-        ? giftData.securityToken.substring(0, 10) + "..."
-        : null,
+      dataToUpdate: safeData,
       fieldsToUpdate: Object.keys(giftData),
     });
 
@@ -169,12 +168,17 @@ export const updateGift = async (id, giftData) => {
     console.log("✅ Gift updated successfully");
   } catch (error) {
     console.error("❌ Error updating gift:", error);
+    const safeTried = giftData && { ...giftData };
+    if (safeTried?.accessCode != null) safeTried.accessCode = "[REDACTED]";
+    if (safeTried?.securityToken != null)
+      safeTried.securityToken =
+        safeTried.securityToken.substring(0, 10) + "...";
     console.error("Error details:", {
       code: error.code,
       message: error.message,
       hostname: window.location.hostname,
       isAuthenticated: auth?.currentUser != null,
-      dataTried: giftData,
+      dataTried: safeTried,
     });
     throw error;
   }

@@ -54,7 +54,6 @@ export default function GiftWizard() {
     unlockDate: "", // Time Capsule Date (ISO String for Input)
     // Time Capsule Date (ISO String for Input)
     allowContributions: false, // New Feature Flag
-    allowPublicAccess: true, // Default: Admin allows "Optional PIN" feature
     openingAnimation: "none",
     messages: [],
     albumImages: [],
@@ -105,11 +104,9 @@ export default function GiftWizard() {
               orderId: data.orderId || "",
               headline: data.headline || "",
               subheadline: data.subheadline || "",
-              accessCode:
-                data.allowPublicAccess !== false ? "" : data.accessCode || "",
+              accessCode: data.accessCode || "",
               unlockDate: formattedUnlockDate,
               allowContributions: data.allowContributions === true,
-              allowPublicAccess: data.allowPublicAccess !== false, // Default: true if undefined
               openingAnimation: data.openingAnimation || "none",
               messages: data.messages || [],
               albumImages: data.albumImages || [],
@@ -685,38 +682,6 @@ export default function GiftWizard() {
                         />
                       </div>
                     </div>
-
-                    {/* Public Access Toggle */}
-                    <div className="pt-4 border-t border-stone-100 mt-2">
-                      <div className="flex items-center gap-3 bg-stone-50 p-4 rounded-xl border border-stone-200">
-                        <input
-                          type="checkbox"
-                          id="allowPublicAccessMemoria"
-                          name="allowPublicAccess"
-                          checked={formData.allowPublicAccess}
-                          onChange={(e) =>
-                            setFormData((prev) => ({
-                              ...prev,
-                              allowPublicAccess: e.target.checked,
-                            }))
-                          }
-                          className="h-5 w-5 text-rose-600 rounded focus:ring-rose-500 border-gray-300"
-                        />
-                        <div>
-                          <label
-                            htmlFor="allowPublicAccessMemoria"
-                            className="font-medium text-stone-900 block cursor-pointer"
-                          >
-                            "Geschenk öffentlich machen" Option erlauben
-                          </label>
-                          <p className="text-xs text-stone-500 leading-relaxed mt-1">
-                            Wenn aktiv, kann der Käufer im Setup entscheiden, ob
-                            das Geschenk ohne PIN (öffentlich) zugänglich sein
-                            soll.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 ) : (
                   /* KAMLIMOS FORM (Standard) */
@@ -807,18 +772,64 @@ export default function GiftWizard() {
                     ) : (
                       // Mug fields
                       <div className="md:col-span-2 grid grid-cols-2 gap-4">
-                        {!formData.allowPublicAccess && (
-                          <div>
-                            <label className={styles.label}>PIN Code</label>
+                        <div>
+                          <label className={styles.label}>
+                            PIN Code (optional, wird dem Käufer vorausgefüllt)
+                          </label>
+                          <div className="flex gap-2">
                             <input
                               type="text"
                               name="accessCode"
                               value={formData.accessCode}
                               onChange={handleInputChange}
                               className={styles.input}
+                              placeholder="z.B. für Empfänger"
                             />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const words = [
+                                  "LUNA",
+                                  "STAR",
+                                  "HERZ",
+                                  "SUN",
+                                  "MOND",
+                                  "ROSE",
+                                  "CODE",
+                                  "GIFT",
+                                  "LIEBE",
+                                  "GLUCK",
+                                ];
+                                const year = new Date()
+                                  .getFullYear()
+                                  .toString();
+                                const roll = Math.random();
+                                const code =
+                                  roll < 0.4
+                                    ? words[
+                                        Math.floor(Math.random() * words.length)
+                                      ]
+                                    : roll < 0.7
+                                    ? year
+                                    : Array.from(
+                                        { length: 6 },
+                                        () =>
+                                          "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[
+                                            Math.floor(Math.random() * 32)
+                                          ]
+                                      ).join("");
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  accessCode: code,
+                                }));
+                              }}
+                              className="px-3 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg border border-stone-300 transition-colors text-sm font-medium whitespace-nowrap"
+                              title="Zufälligen PIN generieren (z.B. LUNA, 2025)"
+                            >
+                              ✨ Generieren
+                            </button>
                           </div>
-                        )}
+                        </div>
                         <div>
                           <label className={styles.label}>
                             Öffnungs-Animation
@@ -885,41 +896,6 @@ export default function GiftWizard() {
                                 können. Diese Nachrichten erscheinen dann
                                 zusammen mit dem Hauptgeschenk, wenn der
                                 Empfänger den Code scannt.
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Public Access Toggle */}
-                        <div className="col-span-2 md:col-span-2 pt-2">
-                          <div className="flex items-center gap-3 bg-stone-50 p-4 rounded-xl border border-stone-200">
-                            <input
-                              type="checkbox"
-                              id="allowPublicAccess"
-                              name="allowPublicAccess"
-                              checked={formData.allowPublicAccess}
-                              onChange={(e) => {
-                                const checked = e.target.checked;
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  allowPublicAccess: checked,
-                                  // Wenn "öffentlich erlauben" aktiv: PIN entfernen, damit Kunde nicht trotzdem PIN bekommt
-                                  ...(checked && { accessCode: "" }),
-                                }));
-                              }}
-                              className="h-5 w-5 text-rose-600 rounded focus:ring-rose-500 border-gray-300"
-                            />
-                            <div>
-                              <label
-                                htmlFor="allowPublicAccess"
-                                className="font-medium text-stone-900 block cursor-pointer"
-                              >
-                                "Geschenk öffentlich machen" Option erlauben
-                              </label>
-                              <p className="text-xs text-stone-500 leading-relaxed mt-1">
-                                Wenn aktiv, kann der Käufer im Setup
-                                entscheiden, ob das Geschenk ohne PIN
-                                (öffentlich) zugänglich sein soll.
                               </p>
                             </div>
                           </div>

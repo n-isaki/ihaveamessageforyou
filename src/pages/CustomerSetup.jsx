@@ -26,7 +26,7 @@ import {
   Copy,
 } from "lucide-react";
 import { uploadAlbumImage } from "../services/albumUpload";
-import { ALBUM_MAX_FILES } from "../utils/security";
+import { ALBUM_MAX_FILES, isValidPin } from "../utils/security";
 import MugViewer from "../modules/anima/experiences/multimedia-gift/pages/Viewer";
 import { v4 as uuidv4 } from "uuid";
 // eslint-disable-next-line no-unused-vars
@@ -57,8 +57,9 @@ export default function CustomerSetup() {
   const [contributions, setContributions] = useState([]);
   const [contributionLink, setContributionLink] = useState("");
 
-  // Optional PIN
-  const [isPublic, setIsPublic] = useState(false);
+  // Zugriff: "public" = Öffentlich stellen, "pin" = Mit PIN (Kunde kann PIN vorausgefüllt bearbeiten)
+  const [accessChoice, setAccessChoice] = useState("pin"); // "public" | "pin"
+  const [customerPin, setCustomerPin] = useState("");
 
   // Memoria Specific State (Text Only)
   const [memoriaData, setMemoriaData] = useState({
@@ -92,7 +93,10 @@ export default function CustomerSetup() {
           setHeadline(data.headline || "");
           setSubheadline(data.subheadline || "");
           setAlbumImages(data.albumImages || []);
-          setIsPublic(data.isPublic || false);
+          setAccessChoice(data.isPublic ? "public" : "pin");
+          setCustomerPin(
+            typeof data.accessCode === "string" ? data.accessCode : ""
+          );
 
           // Memoria Init
           if (data.project === "memoria") {
@@ -203,6 +207,22 @@ export default function CustomerSetup() {
           memoriaData.meaningText || "",
           5000
         );
+        const isPublicChoice = accessChoice === "public";
+        updates.isPublic = isPublicChoice;
+        if (isPublicChoice) {
+          updates.accessCode = "";
+          updates.accessCodeHash = null; // Daten-Hygiene: kein Zombie-PIN bei öffentlichen Geschenken
+        } else {
+          const pin = customerPin.trim();
+          if (!pin || !isValidPin(pin)) {
+            alert(
+              "Bitte gib einen gültigen PIN ein (4–8 Zeichen, Buchstaben oder Zahlen)."
+            );
+            setSaving(false);
+            return;
+          }
+          updates.accessCode = pin;
+        }
       } else {
         const validMessages = messages
           .filter((m) => isValidMessage(m))
@@ -215,7 +235,22 @@ export default function CustomerSetup() {
         updates.headline = sanitizeInput(headline, 200);
         updates.subheadline = sanitizeInput(subheadline, 200);
         updates.albumImages = Array.isArray(albumImages) ? albumImages : [];
-        updates.isPublic = isPublic; // ✅ Added isPublic to seal update
+        const isPublicChoice = accessChoice === "public";
+        updates.isPublic = isPublicChoice;
+        if (isPublicChoice) {
+          updates.accessCode = "";
+          updates.accessCodeHash = null; // Daten-Hygiene: kein Zombie-PIN bei öffentlichen Geschenken
+        } else {
+          const pin = customerPin.trim();
+          if (!pin || !isValidPin(pin)) {
+            alert(
+              "Bitte gib einen gültigen PIN ein (4–8 Zeichen, Buchstaben oder Zahlen)."
+            );
+            setSaving(false);
+            return;
+          }
+          updates.accessCode = pin;
+        }
       }
 
       // Include securityToken in update to validate ownership in Firestore rules
@@ -245,21 +280,39 @@ export default function CustomerSetup() {
           content: sanitizeInput(m.content || "", 2000),
           author: sanitizeInput(m.author || "", 100),
         }));
-      await updateGift(id, {
+      const isPublicChoice = accessChoice === "public";
+      const draftUpdates = {
         messages: validMessages,
         headline: sanitizeInput(headline, 200),
         subheadline: sanitizeInput(subheadline, 200),
         albumImages: Array.isArray(albumImages) ? albumImages : [],
-        isPublic: isPublic, // Added isPublic to draft save too
+        isPublic: isPublicChoice,
+        accessCode: isPublicChoice
+          ? ""
+          : customerPin.trim() || gift.accessCode || "",
+        ...(isPublicChoice && { accessCodeHash: null }), // Daten-Hygiene: kein Zombie-PIN
         securityToken: gift.securityToken,
-      });
+      };
+      if (
+        !isPublicChoice &&
+        draftUpdates.accessCode &&
+        !isValidPin(draftUpdates.accessCode)
+      ) {
+        alert(
+          "Bitte gib einen gültigen PIN ein (4–8 Zeichen, Buchstaben oder Zahlen)."
+        );
+        setSaving(false);
+        return;
+      }
+      await updateGift(id, draftUpdates);
       setGift((prev) => ({
         ...prev,
         messages: validMessages,
         headline: sanitizeInput(headline, 200),
         subheadline: sanitizeInput(subheadline, 200),
         albumImages: Array.isArray(albumImages) ? albumImages : [],
-        isPublic: isPublic,
+        isPublic: isPublicChoice,
+        accessCode: draftUpdates.accessCode || "",
       }));
     } catch (err) {
       console.error("Draft save failed", err);
@@ -442,27 +495,57 @@ export default function CustomerSetup() {
                     </p>
                   </div>
 
-                  {/* Public Toggle (Memoria) */}
-                  {gift.allowPublicAccess !== false && (
-                    <div className="text-left bg-stone-800/50 p-4 rounded-xl border border-stone-700 mt-4">
-                      <label className="flex items-start gap-3 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={isPublic}
-                          onChange={(e) => setIsPublic(e.target.checked)}
-                          className="mt-1 h-5 w-5 text-rose-500 rounded focus:ring-rose-500/50 bg-stone-900 border-stone-600"
-                        />
-                        <div>
-                          <span className="text-white font-medium block">
-                            Geschenk öffentlich machen?
-                          </span>
-                          <span className="text-stone-400 text-xs block leading-relaxed mt-1">
-                            Wenn aktiviert, benötigt niemand einen PIN-Code.
-                          </span>
-                        </div>
-                      </label>
+                  {/* Zugriff: immer gefragt – Öffentlich stellen oder Mit PIN (Memoria) */}
+                  <div className="text-left bg-stone-800/50 p-4 rounded-xl border border-stone-700 mt-4 space-y-3">
+                    <span className="text-white font-medium block text-sm">
+                      Zugriff
+                    </span>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setAccessChoice("public")}
+                        className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-colors ${
+                          accessChoice === "public"
+                            ? "bg-rose-600 text-white"
+                            : "bg-stone-800 text-stone-400 hover:bg-stone-700"
+                        }`}
+                      >
+                        Öffentlich stellen
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAccessChoice("pin")}
+                        className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-colors ${
+                          accessChoice === "pin"
+                            ? "bg-rose-600 text-white"
+                            : "bg-stone-800 text-stone-400 hover:bg-stone-700"
+                        }`}
+                      >
+                        Mit PIN
+                      </button>
                     </div>
-                  )}
+                    {accessChoice === "pin" && (
+                      <div>
+                        <label className="text-xs text-stone-500 block mb-1">
+                          PIN (4–8 Zeichen, z.B. für Empfänger)
+                        </label>
+                        <input
+                          type="text"
+                          value={customerPin}
+                          onChange={(e) =>
+                            setCustomerPin(
+                              e.target.value
+                                .replace(/[^A-Za-z0-9]/g, "")
+                                .slice(0, 8)
+                            )
+                          }
+                          placeholder="PIN eingeben"
+                          className="w-full bg-stone-950 border border-stone-700 rounded-lg px-3 py-2 text-white placeholder-stone-600 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500/40 outline-none"
+                          maxLength={8}
+                        />
+                      </div>
+                    )}
+                  </div>
                   <button
                     onClick={confirmSave}
                     className="w-full py-3.5 bg-stone-100 text-stone-900 font-bold rounded-xl hover:bg-white"
@@ -561,8 +644,10 @@ export default function CustomerSetup() {
                   </h3>
                 </div>
                 <p className="text-stone-400 text-sm mb-3">
-                  Teile diesen Link, damit Freunde und Familie persönliche Nachrichten für den Empfänger hinterlassen können.
-                  Diese erscheinen dann direkt im digitalen Geschenk (z.B. beim Scannen des QR-Codes).
+                  Teile diesen Link, damit Freunde und Familie persönliche
+                  Nachrichten für den Empfänger hinterlassen können. Diese
+                  erscheinen dann direkt im digitalen Geschenk (z.B. beim
+                  Scannen des QR-Codes).
                 </p>
                 <div className="flex gap-2">
                   <div className="bg-stone-950 border border-stone-800 rounded-xl p-3 flex-1 text-stone-300 text-sm truncate font-mono">
@@ -695,9 +780,13 @@ export default function CustomerSetup() {
 
         <p className="text-center text-sm text-stone-500 pb-24 sm:pb-20 px-4 leading-relaxed bg-stone-900/40 p-4 rounded-xl border border-stone-800/50 mt-8 mx-auto max-w-lg">
           <Info className="inline h-4 w-4 mr-1.5 mb-0.5 opacity-70 text-rose-400" />
-          <strong>Wichtig:</strong> Nutze <span className="text-white">"Speichern"</span>, um deinen Entwurf zu sichern.
+          <strong>Wichtig:</strong> Nutze{" "}
+          <span className="text-white">"Speichern"</span>, um deinen Entwurf zu
+          sichern.
           <br />
-          Erst wenn du fertig bist, klicke auf <span className="text-white">"Geschenk versiegeln"</span>. Danach sind keine Änderungen mehr möglich.
+          Erst wenn du fertig bist, klicke auf{" "}
+          <span className="text-white">"Geschenk versiegeln"</span>. Danach sind
+          keine Änderungen mehr möglich.
         </p>
       </div>
 
@@ -719,9 +808,10 @@ export default function CustomerSetup() {
           }
           className={`
             w-full max-w-sm flex items-center justify-center gap-3 min-h-[52px] sm:min-h-[56px] px-6 py-4 rounded-2xl font-bold text-base sm:text-lg shadow-2xl transition-all touch-manipulation active:scale-[0.98]
-            ${messages.length === 0 && albumImages.length === 0
-              ? "bg-stone-900 text-stone-600 cursor-not-allowed border border-stone-800"
-              : "bg-gradient-to-r from-rose-700 to-rose-600 hover:from-rose-600 hover:to-rose-500 text-white shadow-rose-900/20 border border-rose-500/20"
+            ${
+              messages.length === 0 && albumImages.length === 0
+                ? "bg-stone-900 text-stone-600 cursor-not-allowed border border-stone-800"
+                : "bg-gradient-to-r from-rose-700 to-rose-600 hover:from-rose-600 hover:to-rose-500 text-white shadow-rose-900/20 border border-rose-500/20"
             }
           `}
         >
@@ -771,26 +861,57 @@ export default function CustomerSetup() {
                     mehr möglich.
                   </p>
 
-                  {/* Public Toggle (if allowed by Admin) */}
-                  {gift.allowPublicAccess !== false && (
-                    <div className="text-left bg-stone-800/50 p-4 rounded-xl border border-stone-700 mt-4">
-                      <label className="flex items-start gap-3 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={isPublic}
-                          onChange={(e) => setIsPublic(e.target.checked)}
-                          className="mt-1 h-5 w-5 text-rose-500 rounded focus:ring-rose-500/50 bg-stone-900 border-stone-600"
-                        />
-                        <div>
-                          <span className="text-white font-medium block">Geschenk öffentlich machen?</span>
-                          <span className="text-stone-400 text-xs block leading-relaxed mt-1">
-                            Wenn aktiviert, benötigt niemand einen PIN-Code ("Open Access").
-                            Ideal zum Teilen auf Social Media.
-                          </span>
-                        </div>
-                      </label>
+                  {/* Zugriff: immer gefragt – Öffentlich stellen oder Mit PIN (Mug) */}
+                  <div className="text-left bg-stone-800/50 p-4 rounded-xl border border-stone-700 mt-4 space-y-3">
+                    <span className="text-white font-medium block text-sm">
+                      Zugriff
+                    </span>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setAccessChoice("public")}
+                        className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-colors ${
+                          accessChoice === "public"
+                            ? "bg-rose-600 text-white"
+                            : "bg-stone-800 text-stone-400 hover:bg-stone-700"
+                        }`}
+                      >
+                        Öffentlich stellen
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAccessChoice("pin")}
+                        className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-colors ${
+                          accessChoice === "pin"
+                            ? "bg-rose-600 text-white"
+                            : "bg-stone-800 text-stone-400 hover:bg-stone-700"
+                        }`}
+                      >
+                        Mit PIN
+                      </button>
                     </div>
-                  )}
+                    {accessChoice === "pin" && (
+                      <div>
+                        <label className="text-xs text-stone-500 block mb-1">
+                          PIN (4–8 Zeichen, z.B. für Empfänger)
+                        </label>
+                        <input
+                          type="text"
+                          value={customerPin}
+                          onChange={(e) =>
+                            setCustomerPin(
+                              e.target.value
+                                .replace(/[^A-Za-z0-9]/g, "")
+                                .slice(0, 8)
+                            )
+                          }
+                          placeholder="PIN eingeben"
+                          className="w-full bg-stone-950 border border-stone-700 rounded-lg px-3 py-2 text-white placeholder-stone-600 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500/40 outline-none"
+                          maxLength={8}
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex flex-col gap-3 pt-2">
