@@ -254,29 +254,17 @@ export default function CustomerSetup() {
     if (locked || !gift?.securityToken) return;
     setSaving(true);
     try {
-      const isPublicChoice = accessChoice === "public";
+      // Memoria ist immer öffentlich (kein PIN)
       const draftUpdates = {
         deceasedName: sanitizeInput(memoriaData.deceasedName || "", 200),
         lifeDates: sanitizeInput(memoriaData.lifeDates || "", 100),
         meaningText: sanitizeInput(memoriaData.meaningText || "", 5000),
         designImage: memoriaDesignImage,
-        isPublic: isPublicChoice,
-        accessCode: isPublicChoice
-          ? ""
-          : customerPin.trim() || gift.accessCode || "",
-        ...(isPublicChoice && { accessCodeHash: null }),
+        isPublic: true,
+        accessCode: "",
+        accessCodeHash: null,
         securityToken: gift.securityToken,
       };
-
-      if (
-        !isPublicChoice &&
-        draftUpdates.accessCode &&
-        !isValidPin(draftUpdates.accessCode)
-      ) {
-        alert("Bitte gib einen gültigen PIN ein (falls du einen gesetzt hast).");
-        setSaving(false);
-        return;
-      }
 
       await updateGift(id, draftUpdates);
       setGift((prev) => ({
@@ -317,23 +305,11 @@ export default function CustomerSetup() {
           memoriaData.meaningText || "",
           5000
         );
-        updates.designImage = memoriaDesignImage; // Save final image choice
-        const isPublicChoice = accessChoice === "public";
-        updates.isPublic = isPublicChoice;
-        if (isPublicChoice) {
-          updates.accessCode = "";
-          updates.accessCodeHash = null; // Daten-Hygiene: kein Zombie-PIN bei öffentlichen Geschenken
-        } else {
-          const pin = customerPin.trim();
-          if (!pin || !isValidPin(pin)) {
-            alert(
-              "Bitte gib einen gültigen PIN ein (4–8 Zeichen, Buchstaben oder Zahlen)."
-            );
-            setSaving(false);
-            return;
-          }
-          updates.accessCode = pin;
-        }
+        updates.designImage = memoriaDesignImage;
+        // Memoria ist immer öffentlich (kein PIN)
+        updates.isPublic = true;
+        updates.accessCode = "";
+        updates.accessCodeHash = null;
       } else {
         const validMessages = messages
           .filter((m) => isValidMessage(m))
@@ -698,58 +674,9 @@ export default function CustomerSetup() {
                       Versiegeln?
                     </h3>
                     <p className="text-stone-400 text-base leading-relaxed">
-                      Änderungen sind danach nicht mehr möglich.
+                      Änderungen sind danach nicht mehr möglich. Memoria ist
+                      immer öffentlich zugänglich.
                     </p>
-                  </div>
-
-                  {/* Zugriff: immer gefragt – Öffentlich stellen oder Mit PIN (Memoria) */}
-                  <div className="text-left bg-stone-800/50 p-4 rounded-xl border border-stone-700 mt-4 space-y-3">
-                    <span className="text-white font-medium block text-sm">
-                      Zugriff
-                    </span>
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setAccessChoice("public")}
-                        className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-colors ${accessChoice === "public"
-                            ? "bg-rose-600 text-white"
-                            : "bg-stone-800 text-stone-400 hover:bg-stone-700"
-                          }`}
-                      >
-                        Öffentlich stellen
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setAccessChoice("pin")}
-                        className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-colors ${accessChoice === "pin"
-                            ? "bg-rose-600 text-white"
-                            : "bg-stone-800 text-stone-400 hover:bg-stone-700"
-                          }`}
-                      >
-                        Mit PIN
-                      </button>
-                    </div>
-                    {accessChoice === "pin" && (
-                      <div>
-                        <label className="text-xs text-stone-500 block mb-1">
-                          PIN (4–8 Zeichen, z.B. für Empfänger)
-                        </label>
-                        <input
-                          type="text"
-                          value={customerPin}
-                          onChange={(e) =>
-                            setCustomerPin(
-                              e.target.value
-                                .replace(/[^A-Za-z0-9]/g, "")
-                                .slice(0, 8)
-                            )
-                          }
-                          placeholder="PIN eingeben"
-                          className="w-full bg-stone-950 border border-stone-700 rounded-lg px-3 py-2 text-white placeholder-stone-600 focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500/40 outline-none"
-                          maxLength={8}
-                        />
-                      </div>
-                    )}
                   </div>
                   <button
                     onClick={confirmSave}

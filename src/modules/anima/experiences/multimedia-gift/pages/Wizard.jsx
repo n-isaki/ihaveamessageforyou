@@ -682,6 +682,25 @@ export default function GiftWizard() {
                         />
                       </div>
                     </div>
+
+                    {/* Gravierbild (vom Kunden im Setup hochgeladen) */}
+                    {formData.designImage && (
+                      <div className="pt-4 border-t border-stone-100">
+                        <label className={styles.label}>
+                          Gravierbild (vom Kunden)
+                        </label>
+                        <div className="mt-2 flex items-center gap-4">
+                          <img
+                            src={formData.designImage}
+                            alt="Gravur"
+                            className="h-24 w-24 rounded-lg object-cover border border-stone-200"
+                          />
+                          <span className="text-sm text-stone-500">
+                            Wird für Gravur verwendet
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   /* KAMLIMOS FORM (Standard) */
