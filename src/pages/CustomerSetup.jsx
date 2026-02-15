@@ -621,13 +621,13 @@ export default function CustomerSetup() {
           </div>
         </div>
 
-        <div className="w-full max-w-md flex flex-col sm:flex-row gap-3">
+        <div className="w-full max-w-md mx-auto mt-8 flex flex-col sm:flex-row gap-3 sm:justify-center">
           {/* Draft Save Button for Memoria */}
           <button
             type="button"
             onClick={handleSaveMemoriaDraft}
             disabled={saving}
-            className="flex-1 min-h-[52px] flex items-center justify-center font-bold text-base rounded-2xl bg-stone-800 text-stone-300 border border-stone-700 hover:bg-stone-700 transition-colors"
+            className="flex-1 sm:flex-initial min-h-[52px] min-w-[140px] flex items-center justify-center font-bold text-base rounded-2xl bg-stone-800 text-stone-300 border border-stone-700 hover:bg-stone-700 transition-colors"
           >
             {saving ? (
               <Loader className="animate-spin h-5 w-5" />
@@ -640,7 +640,7 @@ export default function CustomerSetup() {
             type="button"
             onClick={handleSaveAndLockClick}
             disabled={saving}
-            className="flex-[2] min-h-[52px] flex items-center justify-center gap-2 px-6 rounded-2xl font-bold text-base bg-stone-100 text-stone-900 hover:bg-white transition-colors"
+            className="flex-[2] sm:flex-initial min-h-[52px] min-w-[180px] flex items-center justify-center gap-2 px-6 rounded-2xl font-bold text-base bg-stone-100 text-stone-900 hover:bg-white transition-colors"
           >
             {saving ? (
               <Loader className="animate-spin" />
