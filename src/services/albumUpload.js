@@ -130,3 +130,48 @@ export async function deleteAllAlbumImages(urls) {
   if (!urls || !Array.isArray(urls)) return;
   await Promise.allSettled(urls.map((url) => deleteAlbumImageByUrl(url)));
 }
+
+/**
+ * Upload Memoria Design Image (Single). Handles replacement (deletes old URL if provided).
+ * @param {string} giftId
+ * @param {File} file
+ * @param {string} [oldUrl] - Optional previous image URL to delete
+ * @returns {Promise<{ url: string }>}
+ */
+export async function uploadMemoriaDesignImage(giftId, file, oldUrl) {
+  if (!giftId || !file) {
+    throw new Error("Gift-ID und Datei erforderlich.");
+  }
+
+  // 1. Validation (Reuse functionality)
+  const validation = validateAlbumFile(file);
+  if (!validation.valid) throw new Error(validation.error);
+
+  // 2. Strict Rate Limiting (Single slot, but still prevent spam)
+  if (checkAlbumUploadRateLimit(giftId)) {
+    throw new Error(
+      "Zu viele Uploads. Bitte warte einen Moment."
+    );
+  }
+
+  // 3. Compression
+  const compressed = await compressImage(file);
+
+  // 4. Create NEW Path (Timestamp ensures unique)
+  const safeName = `memoria_design_${Date.now()}`;
+  const path = `${STORAGE_PREFIX}/${giftId}/${safeName}`;
+  const storageRef = ref(storage, path);
+
+  // 5. Upload New
+  await uploadBytes(storageRef, compressed, {
+    contentType: file.type,
+  });
+  const newUrl = await getDownloadURL(storageRef);
+
+  // 6. Cleanup Old (if replaced)
+  if (oldUrl) {
+    await deleteAlbumImageByUrl(oldUrl); // Background cleanup
+  }
+
+  return { url: newUrl };
+}

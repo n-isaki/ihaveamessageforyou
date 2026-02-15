@@ -76,7 +76,7 @@ service cloud.firestore {
                       && onlyAllowedFields(['messages', 'headline', 'subheadline', 'albumImages', 'locked', 
                                             'setupCompletedAt', 'setupStarted', 'setupStartedAt',
                                             'deceasedName', 'lifeDates', 'meaningText',
-                                            'engravingText', 'meaningText', 'accessCode', 'accessCodeHash', 'securityToken', 'updatedAt', 'allowContributions', 'isPublic']))
+                                            'engravingText', 'meaningText', 'designImage', 'accessCode', 'accessCodeHash', 'securityToken', 'updatedAt', 'allowContributions', 'isPublic']))
                   || (!isLocked() 
                       && onlyAllowedFields(['setupStarted', 'setupStartedAt', 'updatedAt'])) // ✅ removed isPublic (Security Risk)
                   || onlyAllowedFields(['viewed', 'viewedAt', 'updatedAt']); // ✅ Erlaube viewed/viewedAt Updates für alle (locked oder unlocked)

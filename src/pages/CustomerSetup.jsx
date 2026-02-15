@@ -24,8 +24,13 @@ import {
   Gift,
   Share2,
   Copy,
+  Trash2,
 } from "lucide-react";
-import { uploadAlbumImage } from "../services/albumUpload";
+import {
+  uploadAlbumImage,
+  uploadMemoriaDesignImage,
+  deleteAlbumImageByUrl,
+} from "../services/albumUpload";
 import { ALBUM_MAX_FILES, isValidPin } from "../utils/security";
 import MugViewer from "../modules/anima/experiences/multimedia-gift/pages/Viewer";
 import { v4 as uuidv4 } from "uuid";
@@ -47,6 +52,8 @@ export default function CustomerSetup() {
   const [locked, setLocked] = useState(false);
   const [accessDenied, setAccessDenied] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [memoriaDesignImage, setMemoriaDesignImage] = useState("");
+  const [uploadingMemoriaDesign, setUploadingMemoriaDesign] = useState(false);
   const [headline, setHeadline] = useState("");
   const [subheadline, setSubheadline] = useState("");
   const [albumImages, setAlbumImages] = useState([]);
@@ -105,6 +112,9 @@ export default function CustomerSetup() {
               lifeDates: data.lifeDates || "",
               meaningText: data.meaningText || "",
             });
+            if (data.designImage) {
+              setMemoriaDesignImage(data.designImage);
+            }
           }
 
           if (!data.setupStarted && !data.locked) {
@@ -184,6 +194,106 @@ export default function CustomerSetup() {
     setAlbumImages((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // --- MEMORIA IMAGE LOGIC ---
+
+  const handleMemoriaImageUpload = async (e) => {
+    if (locked || !gift?.id) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingMemoriaDesign(true);
+    try {
+      // Hilfsfunktion: lädt hoch und löscht ggf. ALTES Bild (replacement logic)
+      const { url } = await uploadMemoriaDesignImage(
+        gift.id,
+        file,
+        memoriaDesignImage
+      );
+      setMemoriaDesignImage(url);
+    } catch (err) {
+      console.error("Upload failed", err);
+      alert(err.message || "Fehler beim Upload.");
+    } finally {
+      setUploadingMemoriaDesign(false);
+      // Reset input value to allow re-uploading same file if needed
+      e.target.value = "";
+    }
+  };
+
+  const handleRemoveMemoriaImage = async () => {
+    if (locked || !memoriaDesignImage) return;
+    if (
+      !confirm(
+        "Möchtest du das Bild wirklich löschen? Es wird sofort entfernt."
+      )
+    )
+      return;
+
+    const urlToDelete = memoriaDesignImage;
+
+    // 1. Optimistic UI update
+    setMemoriaDesignImage("");
+
+    try {
+      // 2. Delete from Storage
+      await deleteAlbumImageByUrl(urlToDelete);
+
+      // 3. Persist deletion in Firestore immediately (Requirement: "jederzeit löschen ohne Auftrag zu löschen")
+      await updateGift(id, {
+        designImage: "",
+        securityToken: gift.securityToken,
+      });
+    } catch (err) {
+      console.error("Delete failed", err);
+      alert("Fehler beim Löschen. Bitte überprüfe deine Verbindung.");
+      // Rollback UI if strictly necessary, but empty state is safer here
+    }
+  };
+
+  const handleSaveMemoriaDraft = async () => {
+    if (locked || !gift?.securityToken) return;
+    setSaving(true);
+    try {
+      const isPublicChoice = accessChoice === "public";
+      const draftUpdates = {
+        deceasedName: sanitizeInput(memoriaData.deceasedName || "", 200),
+        lifeDates: sanitizeInput(memoriaData.lifeDates || "", 100),
+        meaningText: sanitizeInput(memoriaData.meaningText || "", 5000),
+        designImage: memoriaDesignImage,
+        isPublic: isPublicChoice,
+        accessCode: isPublicChoice
+          ? ""
+          : customerPin.trim() || gift.accessCode || "",
+        ...(isPublicChoice && { accessCodeHash: null }),
+        securityToken: gift.securityToken,
+      };
+
+      if (
+        !isPublicChoice &&
+        draftUpdates.accessCode &&
+        !isValidPin(draftUpdates.accessCode)
+      ) {
+        alert("Bitte gib einen gültigen PIN ein (falls du einen gesetzt hast).");
+        setSaving(false);
+        return;
+      }
+
+      await updateGift(id, draftUpdates);
+      setGift((prev) => ({
+        ...prev,
+        ...draftUpdates,
+      }));
+      alert("Entwurf gespeichert!");
+    } catch (err) {
+      console.error("Draft save failed", err);
+      alert("Fehler beim Speichern.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ---------------------------
+
   const handleSaveAndLockClick = () => {
     setShowConfirmModal(true);
   };
@@ -207,6 +317,7 @@ export default function CustomerSetup() {
           memoriaData.meaningText || "",
           5000
         );
+        updates.designImage = memoriaDesignImage; // Save final image choice
         const isPublicChoice = accessChoice === "public";
         updates.isPublic = isPublicChoice;
         if (isPublicChoice) {
@@ -451,20 +562,116 @@ export default function CustomerSetup() {
                 placeholder="Erzähle uns etwas über die Person..."
               />
             </div>
+
+            {/* --- MEMORIA IMAGE UPLOAD SECTION --- */}
+            <div className="pt-6 border-t border-stone-800/60">
+              <label className="block text-sm font-semibold text-stone-500 mb-2 flex items-center">
+                <ImageIcon className="w-4 h-4 mr-2" /> Bild für die Gravur
+              </label>
+
+              {/* Quality Hint */}
+              <div className="bg-blue-900/10 border border-blue-900/30 p-4 rounded-xl mb-4 flex gap-3">
+                <Info className="h-5 w-5 text-blue-400 shrink-0 mt-0.5" />
+                <p className="text-sm text-blue-200/80 leading-relaxed">
+                  Für die Gravur brauchen wir ein Bild in guter Qualität:{" "}
+                  <strong>scharf, gut beleuchtet, am besten im Hochformat</strong>.
+                  <br />
+                  Max. 5 MB, JPG/PNG oder WebP.
+                </p>
+              </div>
+
+              {memoriaDesignImage ? (
+                <div className="relative w-full max-w-xs mx-auto aspect-[3/4] bg-stone-950 rounded-xl overflow-hidden border border-stone-700 shadow-xl group">
+                  <img
+                    src={memoriaDesignImage}
+                    alt="Gravur Vorlage"
+                    className="w-full h-full object-cover"
+                  />
+                  {!locked && (
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                      {/* Replace Button (Input overlay) */}
+                      <label className="cursor-pointer bg-white/10 hover:bg-white/20 p-3 rounded-full backdrop-blur-md transition-colors text-white border border-white/20">
+                        <Edit2 className="h-5 w-5" />
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          className="hidden"
+                          onChange={handleMemoriaImageUpload}
+                          disabled={uploadingMemoriaDesign}
+                        />
+                      </label>
+                      {/* Delete Button */}
+                      <button
+                        onClick={handleRemoveMemoriaImage}
+                        className="bg-red-500/80 hover:bg-red-600 p-3 rounded-full backdrop-blur-md transition-colors text-white shadow-lg"
+                        title="Bild löschen"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </button>
+                    </div>
+                  )}
+                  {uploadingMemoriaDesign && (
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                      <Loader className="h-8 w-8 text-white animate-spin" />
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <label className="block w-full border-2 border-dashed border-stone-800 hover:border-stone-600 hover:bg-stone-900/30 transition-all rounded-xl p-8 text-center cursor-pointer group">
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    onChange={handleMemoriaImageUpload}
+                    disabled={uploadingMemoriaDesign}
+                  />
+                  {uploadingMemoriaDesign ? (
+                    <Loader className="h-8 w-8 text-stone-500 animate-spin mx-auto mb-3" />
+                  ) : (
+                    <div className="h-12 w-12 bg-stone-800 group-hover:bg-stone-700 rounded-full flex items-center justify-center mx-auto mb-3 transition-colors text-stone-400 group-hover:text-stone-200">
+                      <ImageIcon className="h-6 w-6" />
+                    </div>
+                  )}
+                  <span className="text-stone-300 font-medium block">
+                    Bild hochladen
+                  </span>
+                  <span className="text-stone-600 text-sm mt-1 block">
+                    Klicken zum Auswählen
+                  </span>
+                </label>
+              )}
+            </div>
+            {/* ------------------------------------ */}
           </div>
         </div>
 
-        <div className="fixed bottom-0 left-0 right-0 px-4 pt-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] bg-stone-950/95 backdrop-blur-xl border-t border-stone-800 flex justify-center z-30">
+        <div className="w-full max-w-md flex flex-col sm:flex-row gap-3">
+          {/* Draft Save Button for Memoria */}
+          <button
+            type="button"
+            onClick={handleSaveMemoriaDraft}
+            disabled={saving}
+            className="flex-1 min-h-[52px] flex items-center justify-center font-bold text-base rounded-2xl bg-stone-800 text-stone-300 border border-stone-700 hover:bg-stone-700 transition-colors"
+          >
+            {saving ? (
+              <Loader className="animate-spin h-5 w-5" />
+            ) : (
+              <span>Speichern</span>
+            )}
+          </button>
+
           <button
             type="button"
             onClick={handleSaveAndLockClick}
             disabled={saving}
-            className="w-full max-w-md min-h-[52px] sm:min-h-[56px] flex items-center justify-center gap-3 px-6 py-4 rounded-2xl font-bold text-base sm:text-lg bg-stone-100 text-stone-900 hover:bg-white transition-colors touch-manipulation active:scale-[0.98]"
+            className="flex-[2] min-h-[52px] flex items-center justify-center gap-2 px-6 rounded-2xl font-bold text-base bg-stone-100 text-stone-900 hover:bg-white transition-colors"
           >
             {saving ? (
               <Loader className="animate-spin" />
             ) : (
-              <span>Absenden & Versiegeln</span>
+              <>
+                <Lock className="h-4 w-4" /> <span>Versiegeln</span>
+              </>
             )}
           </button>
         </div>
@@ -504,22 +711,20 @@ export default function CustomerSetup() {
                       <button
                         type="button"
                         onClick={() => setAccessChoice("public")}
-                        className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-colors ${
-                          accessChoice === "public"
+                        className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-colors ${accessChoice === "public"
                             ? "bg-rose-600 text-white"
                             : "bg-stone-800 text-stone-400 hover:bg-stone-700"
-                        }`}
+                          }`}
                       >
                         Öffentlich stellen
                       </button>
                       <button
                         type="button"
                         onClick={() => setAccessChoice("pin")}
-                        className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-colors ${
-                          accessChoice === "pin"
+                        className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-colors ${accessChoice === "pin"
                             ? "bg-rose-600 text-white"
                             : "bg-stone-800 text-stone-400 hover:bg-stone-700"
-                        }`}
+                          }`}
                       >
                         Mit PIN
                       </button>
@@ -808,10 +1013,9 @@ export default function CustomerSetup() {
           }
           className={`
             w-full max-w-sm flex items-center justify-center gap-3 min-h-[52px] sm:min-h-[56px] px-6 py-4 rounded-2xl font-bold text-base sm:text-lg shadow-2xl transition-all touch-manipulation active:scale-[0.98]
-            ${
-              messages.length === 0 && albumImages.length === 0
-                ? "bg-stone-900 text-stone-600 cursor-not-allowed border border-stone-800"
-                : "bg-gradient-to-r from-rose-700 to-rose-600 hover:from-rose-600 hover:to-rose-500 text-white shadow-rose-900/20 border border-rose-500/20"
+            ${messages.length === 0 && albumImages.length === 0
+              ? "bg-stone-900 text-stone-600 cursor-not-allowed border border-stone-800"
+              : "bg-gradient-to-r from-rose-700 to-rose-600 hover:from-rose-600 hover:to-rose-500 text-white shadow-rose-900/20 border border-rose-500/20"
             }
           `}
         >
@@ -870,22 +1074,20 @@ export default function CustomerSetup() {
                       <button
                         type="button"
                         onClick={() => setAccessChoice("public")}
-                        className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-colors ${
-                          accessChoice === "public"
+                        className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-colors ${accessChoice === "public"
                             ? "bg-rose-600 text-white"
                             : "bg-stone-800 text-stone-400 hover:bg-stone-700"
-                        }`}
+                          }`}
                       >
                         Öffentlich stellen
                       </button>
                       <button
                         type="button"
                         onClick={() => setAccessChoice("pin")}
-                        className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-colors ${
-                          accessChoice === "pin"
+                        className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-colors ${accessChoice === "pin"
                             ? "bg-rose-600 text-white"
                             : "bg-stone-800 text-stone-400 hover:bg-stone-700"
-                        }`}
+                          }`}
                       >
                         Mit PIN
                       </button>
