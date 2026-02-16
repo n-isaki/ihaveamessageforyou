@@ -64,9 +64,9 @@ export default function CustomerSetup() {
   const [contributions, setContributions] = useState([]);
   const [contributionLink, setContributionLink] = useState("");
 
-  // Zugriff: "public" = Öffentlich stellen, "pin" = Mit PIN (Kunde kann PIN vorausgefüllt bearbeiten)
   const [accessChoice, setAccessChoice] = useState("pin"); // "public" | "pin"
   const [customerPin, setCustomerPin] = useState("");
+  const [engravingText, setEngravingText] = useState("");
 
   // Memoria Specific State (Text Only)
   const [memoriaData, setMemoriaData] = useState({
@@ -100,6 +100,7 @@ export default function CustomerSetup() {
           setHeadline(data.headline || "");
           setSubheadline(data.subheadline || "");
           setAlbumImages(data.albumImages || []);
+          setEngravingText(data.engravingText || "");
           setAccessChoice(data.isPublic ? "public" : "pin");
           setCustomerPin(
             typeof data.accessCode === "string" ? data.accessCode : ""
@@ -322,6 +323,9 @@ export default function CustomerSetup() {
         updates.headline = sanitizeInput(headline, 200);
         updates.subheadline = sanitizeInput(subheadline, 200);
         updates.albumImages = Array.isArray(albumImages) ? albumImages : [];
+        if (gift.allowCustomerEngraving) {
+          updates.engravingText = sanitizeInput(engravingText, 30);
+        }
         const isPublicChoice = accessChoice === "public";
         updates.isPublic = isPublicChoice;
         if (isPublicChoice) {
@@ -373,6 +377,9 @@ export default function CustomerSetup() {
         headline: sanitizeInput(headline, 200),
         subheadline: sanitizeInput(subheadline, 200),
         albumImages: Array.isArray(albumImages) ? albumImages : [],
+        engravingText: gift.allowCustomerEngraving // Only save if allowed
+          ? sanitizeInput(engravingText, 30)
+          : gift.engravingText || "", // Keep existing if hidden
         isPublic: isPublicChoice,
         accessCode: isPublicChoice
           ? ""
@@ -398,6 +405,7 @@ export default function CustomerSetup() {
         headline: sanitizeInput(headline, 200),
         subheadline: sanitizeInput(subheadline, 200),
         albumImages: Array.isArray(albumImages) ? albumImages : [],
+        engravingText: draftUpdates.engravingText,
         isPublic: isPublicChoice,
         accessCode: draftUpdates.accessCode || "",
       }));
@@ -838,6 +846,24 @@ export default function CustomerSetup() {
                 </div>
               </div>
             )}
+
+            {/* Optional Customer Engraving Field */}
+            {gift && gift.allowCustomerEngraving && (
+              <div className="mt-4 pt-4 border-t border-stone-800/60">
+                <label className="text-sm font-semibold text-stone-500 mb-2 block flex justify-between items-center">
+                  <span>Gravurtext (Zusatz)</span>
+                  <span className="text-xs font-normal text-stone-600">{engravingText.length}/30</span>
+                </label>
+                <input
+                  type="text"
+                  value={engravingText}
+                  onChange={(e) => setEngravingText(e.target.value)}
+                  maxLength={30}
+                  placeholder="z.B. Für die beste Oma"
+                  className="w-full bg-stone-950/50 border border-stone-800 rounded-xl p-4 text-base text-stone-300 placeholder-stone-600 focus:ring-2 focus:ring-rose-500/30 outline-none transition-all min-h-[52px] leading-relaxed"
+                />
+              </div>
+            )}
           </div>
         </section>
 
@@ -1002,8 +1028,8 @@ export default function CustomerSetup() {
                         type="button"
                         onClick={() => setAccessChoice("public")}
                         className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-colors ${accessChoice === "public"
-                            ? "bg-rose-600 text-white"
-                            : "bg-stone-800 text-stone-400 hover:bg-stone-700"
+                          ? "bg-rose-600 text-white"
+                          : "bg-stone-800 text-stone-400 hover:bg-stone-700"
                           }`}
                       >
                         Öffentlich stellen
@@ -1012,8 +1038,8 @@ export default function CustomerSetup() {
                         type="button"
                         onClick={() => setAccessChoice("pin")}
                         className={`flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-colors ${accessChoice === "pin"
-                            ? "bg-rose-600 text-white"
-                            : "bg-stone-800 text-stone-400 hover:bg-stone-700"
+                          ? "bg-rose-600 text-white"
+                          : "bg-stone-800 text-stone-400 hover:bg-stone-700"
                           }`}
                       >
                         Mit PIN

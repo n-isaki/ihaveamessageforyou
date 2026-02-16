@@ -54,6 +54,7 @@ export default function GiftWizard() {
     unlockDate: "", // Time Capsule Date (ISO String for Input)
     // Time Capsule Date (ISO String for Input)
     allowContributions: false, // New Feature Flag
+    allowCustomerEngraving: false, // New Feature Flag: Enable customer engraving input
     openingAnimation: "none",
     messages: [],
     albumImages: [],
@@ -107,6 +108,7 @@ export default function GiftWizard() {
               accessCode: data.accessCode || "",
               unlockDate: formattedUnlockDate,
               allowContributions: data.allowContributions === true,
+              allowCustomerEngraving: data.allowCustomerEngraving === true,
               openingAnimation: data.openingAnimation || "none",
               messages: data.messages || [],
               albumImages: data.albumImages || [],
@@ -349,12 +351,12 @@ export default function GiftWizard() {
               {isEditMode
                 ? "Auftrag bearbeiten"
                 : isNoor
-                ? "Neues Noor"
-                : isMemoria
-                ? "Neues Memoria"
-                : isBracelet
-                ? "Neues Armband"
-                : "Neue Tasse"}
+                  ? "Neues Noor"
+                  : isMemoria
+                    ? "Neues Memoria"
+                    : isBracelet
+                      ? "Neues Armband"
+                      : "Neue Tasse"}
             </h1>
             <button
               onClick={() =>
@@ -376,30 +378,28 @@ export default function GiftWizard() {
           {/* Progress Steps */}
           <div className="mb-8 flex space-x-2">
             <div
-              className={`h-2 flex-1 rounded-full ${
-                step >= 1
-                  ? isNoor
-                    ? "bg-emerald-500"
-                    : isMemoria
+              className={`h-2 flex-1 rounded-full ${step >= 1
+                ? isNoor
+                  ? "bg-emerald-500"
+                  : isMemoria
                     ? "bg-stone-600"
                     : isRitual
-                    ? "bg-indigo-500"
-                    : "bg-rose-500"
-                  : "bg-stone-200"
-              }`}
+                      ? "bg-indigo-500"
+                      : "bg-rose-500"
+                : "bg-stone-200"
+                }`}
             ></div>
             <div
-              className={`h-2 flex-1 rounded-full ${
-                step >= 2
-                  ? isNoor
-                    ? "bg-emerald-500"
-                    : isMemoria
+              className={`h-2 flex-1 rounded-full ${step >= 2
+                ? isNoor
+                  ? "bg-emerald-500"
+                  : isMemoria
                     ? "bg-stone-600"
                     : isRitual
-                    ? "bg-indigo-500"
-                    : "bg-rose-500"
-                  : "bg-stone-200"
-              }`}
+                      ? "bg-indigo-500"
+                      : "bg-rose-500"
+                : "bg-stone-200"
+                }`}
             ></div>
           </div>
 
@@ -826,15 +826,15 @@ export default function GiftWizard() {
                                 const code =
                                   roll < 0.4
                                     ? words[
-                                        Math.floor(Math.random() * words.length)
-                                      ]
+                                    Math.floor(Math.random() * words.length)
+                                    ]
                                     : roll < 0.7
-                                    ? year
-                                    : Array.from(
+                                      ? year
+                                      : Array.from(
                                         { length: 6 },
                                         () =>
                                           "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[
-                                            Math.floor(Math.random() * 32)
+                                          Math.floor(Math.random() * 32)
                                           ]
                                       ).join("");
                                 setFormData((prev) => ({
@@ -919,6 +919,55 @@ export default function GiftWizard() {
                             </div>
                           </div>
                         </div>
+
+                        {/* Admin Engraving Text Input */}
+                        <div className="col-span-2 md:col-span-2">
+                          <label className={styles.label}>
+                            Gravur Text (Admin-Vorgabe, optional)
+                          </label>
+                          <input
+                            type="text"
+                            name="engravingText"
+                            value={formData.engravingText || ""}
+                            onChange={handleInputChange}
+                            className={styles.input}
+                            placeholder="z.B. Für die beste Oma"
+                            maxLength={30}
+                          />
+                          <p className="text-xs text-stone-500 mt-1">
+                            Wird beim Kunden als Vorbelegung angezeigt, wenn "Gravurtext vom Kunden erlauben" aktiv ist.
+                          </p>
+                        </div>
+
+                        {/* Customer Engraving Toggle - Only for Mugs */}
+                        <div className="col-span-2 md:col-span-2 border-t border-stone-100 pt-4 mt-2">
+                          <div className="flex items-center gap-3 bg-stone-50 p-4 rounded-xl border border-stone-200">
+                            <input
+                              type="checkbox"
+                              id="allowCustomerEngraving"
+                              name="allowCustomerEngraving"
+                              checked={formData.allowCustomerEngraving}
+                              onChange={(e) =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  allowCustomerEngraving: e.target.checked,
+                                }))
+                              }
+                              className="h-5 w-5 text-rose-600 rounded focus:ring-rose-500 border-gray-300"
+                            />
+                            <div>
+                              <label
+                                htmlFor="allowCustomerEngraving"
+                                className="font-medium text-stone-900 block cursor-pointer"
+                              >
+                                Gravurtext vom Kunden erlauben
+                              </label>
+                              <p className="text-xs text-stone-500 leading-relaxed mt-1">
+                                Wenn aktiv, sieht der Käufer im Setup ein Feld für Gravurtext (z.B. Tassenboden).
+                              </p>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -979,22 +1028,22 @@ export default function GiftWizard() {
                         ))}
                         {(formData.albumImages || []).length <
                           ALBUM_MAX_FILES && (
-                          <label className="w-20 h-20 flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-stone-300 text-stone-500 hover:border-rose-400 hover:bg-rose-50/50 cursor-pointer transition-colors">
-                            <input
-                              type="file"
-                              accept="image/jpeg,image/png,image/webp"
-                              className="hidden"
-                              onChange={handleAlbumUpload}
-                              disabled={uploadingAlbum}
-                            />
-                            {uploadingAlbum ? (
-                              <Loader className="h-6 w-6 animate-spin" />
-                            ) : (
-                              <ImageIcon className="h-6 w-6 mb-0.5" />
-                            )}
-                            <span className="text-xs">Hinzufügen</span>
-                          </label>
-                        )}
+                            <label className="w-20 h-20 flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-stone-300 text-stone-500 hover:border-rose-400 hover:bg-rose-50/50 cursor-pointer transition-colors">
+                              <input
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                className="hidden"
+                                onChange={handleAlbumUpload}
+                                disabled={uploadingAlbum}
+                              />
+                              {uploadingAlbum ? (
+                                <Loader className="h-6 w-6 animate-spin" />
+                              ) : (
+                                <ImageIcon className="h-6 w-6 mb-0.5" />
+                              )}
+                              <span className="text-xs">Hinzufügen</span>
+                            </label>
+                          )}
                       </div>
                       {!id && (formData.albumImages || []).length === 0 && (
                         <p className="text-xs text-stone-400 mt-2">
