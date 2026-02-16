@@ -64,7 +64,7 @@ export default function CustomerSetup() {
   const [contributions, setContributions] = useState([]);
   const [contributionLink, setContributionLink] = useState("");
 
-  const [accessChoice, setAccessChoice] = useState("pin"); // "public" | "pin"
+  const [accessChoice, setAccessChoice] = useState("public"); // "public" | "pin" – Default ohne PIN
   const [customerPin, setCustomerPin] = useState("");
   const [engravingText, setEngravingText] = useState("");
 
@@ -101,7 +101,7 @@ export default function CustomerSetup() {
           setSubheadline(data.subheadline || "");
           setAlbumImages(data.albumImages || []);
           setEngravingText(data.engravingText || "");
-          setAccessChoice(data.isPublic ? "public" : "pin");
+          setAccessChoice(data.isPublic === false ? "pin" : "public"); // Default öffentlich (ohne PIN)
           setCustomerPin(
             typeof data.accessCode === "string" ? data.accessCode : ""
           );
@@ -739,6 +739,30 @@ export default function CustomerSetup() {
           </details>
         </div>
 
+        {/* Gravurwunsch – eigene Sektion am Anfang, nur wenn Admin es erlaubt hat */}
+        {gift && gift.allowCustomerEngraving && (
+          <section className="bg-stone-900/40 border border-stone-800/80 rounded-2xl p-5 sm:p-8 relative overflow-hidden">
+            <h2 className="font-setup-heading text-xl sm:text-2xl text-white leading-tight mb-4">
+              Dein Gravurwunsch
+            </h2>
+            <p className="text-stone-500 text-sm mb-4">
+              Dieser Text erscheint z.B. auf dem Tassenboden. Der Admin sieht deinen Eintrag und kann ihn bei Bedarf anpassen.
+            </p>
+            <label className="text-sm font-semibold text-stone-500 mb-2 block flex justify-between items-center">
+              <span>Gravurtext</span>
+              <span className="text-xs font-normal text-stone-600">{engravingText.length}/30</span>
+            </label>
+            <textarea
+              value={engravingText}
+              onChange={(e) => setEngravingText(e.target.value.slice(0, 30))}
+              maxLength={30}
+              placeholder="z.B. Für die beste Oma"
+              rows={3}
+              className="w-full bg-stone-950/50 border border-stone-800 rounded-xl p-4 text-base text-stone-300 placeholder-stone-600 focus:ring-2 focus:ring-rose-500/30 outline-none transition-all leading-relaxed resize-y min-h-[80px]"
+            />
+          </section>
+        )}
+
         {/* Start-Bildschirm */}
         <section className="bg-stone-900/40 border border-stone-800/80 rounded-2xl p-5 sm:p-8 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-40 h-40 bg-rose-500/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
@@ -844,24 +868,6 @@ export default function CustomerSetup() {
                     "{gift.personalizationText}"
                   </span>
                 </div>
-              </div>
-            )}
-
-            {/* Optional Customer Engraving Field */}
-            {gift && gift.allowCustomerEngraving && (
-              <div className="mt-4 pt-4 border-t border-stone-800/60">
-                <label className="text-sm font-semibold text-stone-500 mb-2 block flex justify-between items-center">
-                  <span>Gravurtext (Zusatz)</span>
-                  <span className="text-xs font-normal text-stone-600">{engravingText.length}/30</span>
-                </label>
-                <input
-                  type="text"
-                  value={engravingText}
-                  onChange={(e) => setEngravingText(e.target.value)}
-                  maxLength={30}
-                  placeholder="z.B. Für die beste Oma"
-                  className="w-full bg-stone-950/50 border border-stone-800 rounded-xl p-4 text-base text-stone-300 placeholder-stone-600 focus:ring-2 focus:ring-rose-500/30 outline-none transition-all min-h-[52px] leading-relaxed"
-                />
               </div>
             )}
           </div>
@@ -1018,11 +1024,14 @@ export default function CustomerSetup() {
                     mehr möglich.
                   </p>
 
-                  {/* Zugriff: immer gefragt – Öffentlich stellen oder Mit PIN (Mug) */}
+                  {/* Zugriff: Default „Öffentlich“ – ohne PIN; mit Erklärung zu Link & Indexierung */}
                   <div className="text-left bg-stone-800/50 p-4 rounded-xl border border-stone-700 mt-4 space-y-3">
                     <span className="text-white font-medium block text-sm">
                       Zugriff
                     </span>
+                    <p className="text-xs text-stone-500 leading-relaxed">
+                      Auch bei „Öffentlich“: Ohne den Link ist das Geschenk nicht auffindbar – wir verwenden zufällige Link-IDs. Die Geschenk-Seiten sind für Suchmaschinen (z.B. Google) nicht indexiert, auch bei öffentlicher Freigabe.
+                    </p>
                     <div className="flex flex-col sm:flex-row gap-2">
                       <button
                         type="button"

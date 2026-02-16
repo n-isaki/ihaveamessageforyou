@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { createGift, getGiftById, updateGift } from "@/services/gifts";
+import { createGift, getGiftById, updateGift, getContributions } from "@/services/gifts";
 import { storage } from "@/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import {
@@ -36,6 +36,7 @@ export default function GiftWizard() {
   const [uploadingAlbum, setUploadingAlbum] = useState(false);
   const [initialLoading, setInitialLoading] = useState(isEditMode);
   const [error, setError] = useState("");
+  const [contributions, setContributions] = useState([]);
 
   const [formData, setFormData] = useState({
     // Common
@@ -166,6 +167,23 @@ export default function GiftWizard() {
       }
     }
   }, [id, isEditMode, urlProjectMode]);
+
+  // Social Gifting: Beiträge laden, damit Admin sie sieht (auch bei versiegeltem Geschenk)
+  useEffect(() => {
+    if (!id || !formData.allowContributions) {
+      setContributions([]);
+      return;
+    }
+    const load = async () => {
+      try {
+        const data = await getContributions(id);
+        setContributions(data || []);
+      } catch {
+        setContributions([]);
+      }
+    };
+    load();
+  }, [id, formData.allowContributions]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -920,26 +938,27 @@ export default function GiftWizard() {
                           </div>
                         </div>
 
-                        {/* Admin Engraving Text Input */}
-                        <div className="col-span-2 md:col-span-2">
-                          <label className={styles.label}>
-                            Gravur Text (Admin-Vorgabe, optional)
-                          </label>
-                          <input
-                            type="text"
-                            name="engravingText"
-                            value={formData.engravingText || ""}
-                            onChange={handleInputChange}
-                            className={styles.input}
-                            placeholder="z.B. Für die beste Oma"
-                            maxLength={30}
-                          />
-                          <p className="text-xs text-stone-500 mt-1">
-                            Wird beim Kunden als Vorbelegung angezeigt, wenn "Gravurtext vom Kunden erlauben" aktiv ist.
-                          </p>
-                        </div>
+                        {/* Eingegangene Beiträge (Social Gifting) – Admin sieht sie hier, auch bei versiegeltem Geschenk */}
+                        {formData.allowContributions && contributions.length > 0 && (
+                          <div className="col-span-2 md:col-span-2 border-t border-stone-100 pt-4 mt-2">
+                            <h4 className="text-sm font-medium text-stone-700 mb-2">
+                              Eingegangene Nachrichten ({contributions.length})
+                            </h4>
+                            <div className="space-y-2 max-h-48 overflow-y-auto rounded-lg border border-stone-200 bg-stone-50 p-3">
+                              {contributions.map((c) => (
+                                <div
+                                  key={c.id}
+                                  className="bg-white border border-stone-200 rounded-lg p-3 text-sm"
+                                >
+                                  <div className="font-medium text-stone-800">{c.author || "Gast"}</div>
+                                  <p className="text-stone-600 mt-0.5">{c.content}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
-                        {/* Customer Engraving Toggle - Only for Mugs */}
+                        {/* Customer Engraving Toggle - Only for Mugs (Checkbox zuerst) */}
                         <div className="col-span-2 md:col-span-2 border-t border-stone-100 pt-4 mt-2">
                           <div className="flex items-center gap-3 bg-stone-50 p-4 rounded-xl border border-stone-200">
                             <input
@@ -963,11 +982,32 @@ export default function GiftWizard() {
                                 Gravurtext vom Kunden erlauben
                               </label>
                               <p className="text-xs text-stone-500 leading-relaxed mt-1">
-                                Wenn aktiv, sieht der Käufer im Setup ein Feld für Gravurtext (z.B. Tassenboden).
+                                Wenn aktiv, sieht der Käufer im Setup ein Feld für Gravurtext (z.B. Tassenboden). Dein Eintrag unten dient als Vorgabe; der Kunde kann ihn ändern – du siehst den aktuellen Wert hier beim Bearbeiten.
                               </p>
                             </div>
                           </div>
                         </div>
+
+                        {/* Admin Engraving Text – nur sichtbar wenn Checkbox aktiv */}
+                        {formData.allowCustomerEngraving && (
+                          <div className="col-span-2 md:col-span-2">
+                            <label className={styles.label}>
+                              Gravur Text (Admin-Vorgabe / aktueller Wert)
+                            </label>
+                            <input
+                              type="text"
+                              name="engravingText"
+                              value={formData.engravingText || ""}
+                              onChange={handleInputChange}
+                              className={styles.input}
+                              placeholder="z.B. Für die beste Oma"
+                              maxLength={30}
+                            />
+                            <p className="text-xs text-stone-500 mt-1">
+                              Wird beim Kunden vorbelegt. Wenn der Kunde etwas einträgt, siehst du den aktuellen Text hier beim erneuten Öffnen des Geschenks.
+                            </p>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
