@@ -746,7 +746,7 @@ export default function CustomerSetup() {
               Dein Gravurwunsch
             </h2>
             <p className="text-stone-500 text-sm mb-4">
-              Dieser Text erscheint z.B. auf dem Tassenboden. Der Admin sieht deinen Eintrag und kann ihn bei Bedarf anpassen.
+              Dein Wunschtext für die Gravur.
             </p>
             <label className="text-sm font-semibold text-stone-500 mb-2 block flex justify-between items-center">
               <span>Gravurtext</span>
