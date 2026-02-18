@@ -42,7 +42,7 @@ export const FIELD_CONFIG = {
       required: [],
       label: 'Fotos & Videos',
       description: 'Lade hochwertige Fotos hoch',
-      maxFiles: 20
+      maxFiles: 7
     },
     engravingText: {
       enabled: ['mug', 'bracelet'],

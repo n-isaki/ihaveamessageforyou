@@ -631,7 +631,7 @@ export default function CustomerSetup() {
             defaultOpen={false}
             tips={[
               "Lade hochwertige Fotos hoch.",
-              "Du kannst bis zu 20 Fotos hinzufügen.",
+              `Du kannst bis zu ${ALBUM_MAX_FILES} Fotos hinzufügen.`,
               "Für Memoria: Ein Bild für die Gravur auswählen."
             ]}
           >
