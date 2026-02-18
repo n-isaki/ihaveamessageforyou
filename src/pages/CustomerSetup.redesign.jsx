@@ -738,16 +738,16 @@ export default function CustomerSetup() {
                   <Share2 className="w-5 h-5 text-stone-400" />
                   <h4 className="text-lg font-semibold text-white">Beitrags-Link</h4>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <input
                     type="text"
                     value={`${window.location.origin}/join/${gift.contributionToken}`}
                     readOnly
-                    className="flex-1 bg-stone-900 border border-stone-700 rounded-lg px-4 py-3 text-stone-300 font-mono text-sm"
+                    className="min-w-0 flex-1 bg-stone-900 border border-stone-700 rounded-lg px-4 py-3 text-stone-300 font-mono text-sm"
                   />
                   <button
                     onClick={handleShare}
-                    className="px-4 py-3 bg-rose-600 hover:bg-rose-500 text-white rounded-lg transition-colors flex items-center gap-2"
+                    className="w-full sm:w-auto shrink-0 px-4 py-3 bg-rose-600 hover:bg-rose-500 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
                   >
                     <Copy className="w-4 h-4" />
                     Kopieren

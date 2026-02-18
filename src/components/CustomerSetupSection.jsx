@@ -88,12 +88,12 @@ export default function CustomerSetupSection({
         </div>
       )}
 
-      {/* Content */}
-      <div className={`
-        transition-all duration-300 ease-in-out
-        ${isOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}
-      `}>
-        <div className="px-3 sm:px-6 pb-3 sm:pb-6">
+      {/* Content – äußeres div mit contents, damit Layout auf Mobile nicht bricht; Transition am inneren div */}
+      <div className="contents">
+        <div className={`
+          transition-all duration-300 ease-in-out
+          ${isOpen ? 'max-h-screen opacity-100 px-3 sm:px-6 pb-3 sm:pb-6' : 'max-h-0 opacity-0 overflow-hidden p-0'}
+        `}>
           {children}
         </div>
       </div>
