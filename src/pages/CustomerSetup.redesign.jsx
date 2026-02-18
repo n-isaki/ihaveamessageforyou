@@ -495,7 +495,8 @@ export default function CustomerSetup() {
       />
 
       <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-8 sm:p-8 space-y-4 sm:space-y-8">
-        {/* Basic Information Section */}
+        {/* Basic Information Section – relative z-10 damit auf Mobile nicht unter Medien/folgenden Sections verschwindet */}
+        <div className="relative z-10">
         <CustomerSetupSection
           title="Grundinformationen"
           description="Titel, Empfänger und wichtige Details"
@@ -623,6 +624,7 @@ export default function CustomerSetup() {
             )}
           </div>
         </CustomerSetupSection>
+        </div>
 
         {/* Media Section */}
         {gift.project !== 'noor' && (
