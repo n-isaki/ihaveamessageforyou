@@ -60,6 +60,7 @@ export default function CustomerSetup() {
   const [locked, setLocked] = useState(false);
   const [accessDenied, setAccessDenied] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [messageModal, setMessageModal] = useState(null); // { type: 'success'|'error', text: string }
   const [memoriaDesignImage, setMemoriaDesignImage] = useState("");
   const [uploadingMemoriaDesign, setUploadingMemoriaDesign] = useState(false);
   const [headline, setHeadline] = useState("");
@@ -226,7 +227,7 @@ export default function CustomerSetup() {
       }
     } catch (err) {
       console.error("Album upload failed", err);
-      alert(err.message || "Upload fehlgeschlagen.");
+      setMessageModal({ type: "error", text: err.message || "Upload fehlgeschlagen." });
     } finally {
       setUploadingAlbum(false);
       e.target.value = "";
@@ -257,7 +258,7 @@ export default function CustomerSetup() {
       }
     } catch (err) {
       console.error("Upload failed", err);
-      alert(err.message || "Fehler beim Upload.");
+      setMessageModal({ type: "error", text: err.message || "Fehler beim Upload." });
     } finally {
       setUploadingMemoriaDesign(false);
       e.target.value = "";
@@ -276,7 +277,7 @@ export default function CustomerSetup() {
       });
     } catch (err) {
       console.error("Delete failed", err);
-      alert("Fehler beim Löschen.");
+      setMessageModal({ type: "error", text: "Fehler beim Löschen." });
     }
   };
 
@@ -317,14 +318,8 @@ export default function CustomerSetup() {
 
       await updateGift(id, draftUpdates);
       setGift((prev) => ({ ...prev, ...draftUpdates }));
-      
-      // Debug: Log what was saved in draft
-      console.log('Draft saved:', {
-        draftUpdates,
-        completedSteps: newCompleted
-      });
-      
-      // Update completed steps
+
+      // Update completed steps (newCompleted must be declared before any use)
       const newCompleted = [...completedSteps];
       if (draftUpdates.headline || draftUpdates.subheadline || draftUpdates.recipientName || draftUpdates.senderName) {
         if (!newCompleted.includes('basic')) newCompleted.push('basic');
@@ -340,29 +335,22 @@ export default function CustomerSetup() {
         if (!newCompleted.includes('media')) newCompleted.push('media');
       }
       setCompletedSteps(newCompleted);
-      
-      alert("Entwurf gespeichert!");
+
+      setMessageModal({ type: "success", text: "Entwurf gespeichert!" });
     } catch (err) {
       console.error("Draft save failed", err);
-      setSaving(false);
-      
-      // Better error handling
-      if (err.message) {
-        alert(`Fehler beim Speichern: ${err.message}`);
-      } else {
-        alert("Fehler beim Speichern. Bitte versuche es erneut.");
-      }
+      setMessageModal({
+        type: "error",
+        text: err.message ? `Fehler beim Speichern: ${err.message}` : "Fehler beim Speichern. Bitte versuche es erneut.",
+      });
     } finally {
-      if (!err) {
-        setSaving(false);
-      }
+      setSaving(false);
     }
   };
 
   const handleSaveAndLock = async () => {
-    // Show confirmation modal first
     if (accessChoice === "pin" && !customerPin) {
-      alert("Bitte erst einen PIN-Code festlegen oder 'Öffentlich' wählen.");
+      setMessageModal({ type: "error", text: "Bitte erst einen PIN-Code festlegen oder 'Öffentlich' wählen." });
       return;
     }
     setShowConfirmModal(true);
@@ -411,7 +399,7 @@ export default function CustomerSetup() {
       });
     } catch (err) {
       console.error("Lock failed", err);
-      alert("Fehler beim Speichern.");
+      setMessageModal({ type: "error", text: "Fehler beim Speichern." });
     } finally {
       setSaving(false);
     }
@@ -426,7 +414,7 @@ export default function CustomerSetup() {
       const link = `${window.location.origin}/join/${gift.contributionToken}`;
       setContributionLink(link);
       navigator.clipboard.writeText(link);
-      alert("Link kopiert!");
+      setMessageModal({ type: "success", text: "Link kopiert!" });
     }
   };
 
@@ -841,6 +829,49 @@ export default function CustomerSetup() {
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* Message Modal (Erfolg / Fehler) */}
+      <AnimatePresence>
+        {messageModal && (
+          <motion.div
+            key="message-modal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-stone-900 rounded-2xl shadow-2xl max-w-md w-full border border-stone-800"
+            >
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  {messageModal.type === "success" ? (
+                    <CheckCircle className="w-6 h-6 text-emerald-500 shrink-0" />
+                  ) : (
+                    <ShieldAlert className="w-6 h-6 text-rose-500 shrink-0" />
+                  )}
+                  <p className={`text-sm leading-relaxed ${messageModal.type === "success" ? "text-stone-200" : "text-stone-300"}`}>
+                    {messageModal.text}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setMessageModal(null)}
+                  className={`w-full px-4 py-3 rounded-lg font-medium transition-all ${
+                    messageModal.type === "success"
+                      ? "bg-emerald-600 hover:bg-emerald-500 text-white"
+                      : "bg-stone-700 hover:bg-stone-600 text-stone-200"
+                  }`}
+                >
+                  OK
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
 
