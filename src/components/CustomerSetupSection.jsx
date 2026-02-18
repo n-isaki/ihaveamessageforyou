@@ -25,7 +25,7 @@ export default function CustomerSetupSection({
 
   return (
     <div className={`
-      relative bg-stone-900/40 backdrop-blur-sm rounded-2xl 
+      relative bg-stone-900/40 backdrop-blur-sm rounded-2xl min-w-0
       border transition-all duration-300 mb-4 sm:mb-6
       ${isActive ? 'border-rose-500/50 shadow-lg shadow-rose-500/10' : 'border-stone-800/50'}
       ${isCompleted ? 'border-emerald-500/30' : ''}
@@ -41,11 +41,11 @@ export default function CustomerSetupSection({
             w-4 h-4 sm:w-5 sm:h-5 shrink-0
           `}>{icon}</div>}
           <div className="min-w-0">
-            <h3 className="text-sm sm:text-lg font-semibold text-white flex items-center gap-2">
+            <h3 className="text-sm sm:text-lg font-semibold text-white flex flex-wrap items-center gap-2">
               {title}
-              {isCompleted && <span className="text-xs bg-emerald-500 text-white px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full">✅</span>}
+              {isCompleted && <span className="text-xs bg-emerald-500 text-white px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full shrink-0">✅</span>}
               {badge && (
-                <span className="text-xs bg-rose-500/20 text-rose-300 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full border border-rose-500/30">
+                <span className="text-xs bg-rose-500/20 text-rose-300 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full border border-rose-500/30 shrink-0">
                   {badge}
                 </span>
               )}

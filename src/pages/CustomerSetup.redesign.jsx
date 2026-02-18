@@ -494,9 +494,7 @@ export default function CustomerSetup() {
         isLocked={locked}
       />
 
-      <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-8 sm:p-8 space-y-4 sm:space-y-8">
-        {/* Basic Information Section – relative z-10 damit auf Mobile nicht unter Medien/folgenden Sections verschwindet */}
-        <div className="relative z-10">
+      <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-8 sm:p-8 space-y-6 sm:space-y-8 min-w-0">
         <CustomerSetupSection
           title="Grundinformationen"
           description="Titel, Empfänger und wichtige Details"
@@ -563,8 +561,8 @@ export default function CustomerSetup() {
                     Auch bei „Öffentlich“: Nur wer den Link hat, kann das Geschenk öffnen. Der Link enthält eine zufällig generierte ID – ohne den Link ist das Geschenk nicht auffindbar. Die Geschenk-Seiten werden von Suchmaschinen (z. B. Google) nicht indexiert.
                   </p>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 min-w-0">
+                  <div className="min-w-0">
                     <label className="flex items-center gap-3 text-stone-300 mb-3">
                       <input
                         type="radio"
@@ -572,7 +570,7 @@ export default function CustomerSetup() {
                         value="public"
                         checked={accessChoice === "public"}
                         onChange={(e) => setAccessChoice(e.target.value)}
-                        className="w-4 h-4 text-rose-500 focus:ring-rose-500"
+                        className="w-4 h-4 shrink-0 text-rose-500 focus:ring-rose-500"
                       />
                       <span>Öffentlich (kein PIN)</span>
                     </label>
@@ -580,7 +578,7 @@ export default function CustomerSetup() {
                       Jeder mit dem Link kann das Geschenk öffnen – ohne PIN-Eingabe.
                     </p>
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <label className="flex items-center gap-3 text-stone-300 mb-3">
                       <input
                         type="radio"
@@ -588,7 +586,7 @@ export default function CustomerSetup() {
                         value="pin"
                         checked={accessChoice === "pin"}
                         onChange={(e) => setAccessChoice(e.target.value)}
-                        className="w-4 h-4 text-rose-500 focus:ring-rose-500"
+                        className="w-4 h-4 shrink-0 text-rose-500 focus:ring-rose-500"
                       />
                       <span>PIN-geschützt</span>
                     </label>
@@ -624,9 +622,8 @@ export default function CustomerSetup() {
             )}
           </div>
         </CustomerSetupSection>
-        </div>
 
-        {/* Media Section */}
+        {/* Media Section – Abstand auf Mobile, damit keine Überlappung mit Grundinformationen */}
         {gift.project !== 'noor' && (
           <CustomerSetupSection
             title="Medien"
