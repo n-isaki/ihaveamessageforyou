@@ -89,7 +89,8 @@ export default function ContributionPage() {
         );
     }
 
-    if (!giftData || !giftData.allowContributions) {
+    // Cloud Function returns { giftId, recipientName, ... } only when allowContributions is true – no need to check allowContributions again
+    if (!giftData || !giftData.giftId) {
         return (
             <div className="min-h-screen bg-stone-950 text-stone-200">
                 <div className="text-center">

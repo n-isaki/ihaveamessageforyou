@@ -1,4 +1,4 @@
-const { onCall } = require("firebase-functions/v2/https");
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 const bcrypt = require("bcrypt");
 
