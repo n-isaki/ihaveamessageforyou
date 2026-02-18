@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Loader, Gift, Send } from "lucide-react";
+// eslint-disable-next-line no-unused-vars -- motion is used in JSX as <motion.div>
 import { motion } from "framer-motion";
 
 import { getGiftByContributionToken, addContribution } from "../services/gifts";
@@ -73,10 +74,50 @@ export default function ContributionPage() {
 
     if (error) {
         return (
-            <div className="min-h-screen bg-stone-950 flex items-center justify-center p-6 text-center">
-                <div>
-                    <h1 className="text-white text-xl font-bold mb-2">Ups...</h1>
+            <div className="min-h-screen bg-stone-950 text-stone-200">
+                <div className="text-center">
+                    <h1 className="text-white text-xl font-bold mb-4">Ups...</h1>
                     <p className="text-stone-400">{error}</p>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="mt-6 px-6 py-3 rounded-lg bg-rose-600 text-white hover:bg-rose-500 transition-all"
+                    >
+                        Erneut versuchen
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (!giftData || !giftData.allowContributions) {
+        return (
+            <div className="min-h-screen bg-stone-950 text-stone-200">
+                <div className="text-center">
+                    <h1 className="text-white text-xl font-bold mb-4">Geschenk nicht gefunden</h1>
+                    <p className="text-stone-400">Das angefragte Geschenk konnte nicht gefunden werden.</p>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="mt-6 px-6 py-3 rounded-lg bg-rose-600 text-white hover:bg-rose-500 transition-all"
+                    >
+                        Zurück zur Startseite
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    if (!giftData.contributions || giftData.contributions.length === 0) {
+        return (
+            <div className="min-h-screen bg-stone-950 text-stone-200">
+                <div className="text-center">
+                    <h1 className="text-white text-xl font-bold mb-4">Noch keine Beiträge</h1>
+                    <p className="text-stone-400">Dieses Geschenk hat noch keine Beiträge. Sei der Erste, der eine Nachricht hinterlässt!</p>
+                    <button
+                        onClick={() => window.location.reload()}
+                        className="mt-6 px-6 py-3 rounded-lg bg-rose-600 text-white hover:bg-rose-500 transition-all"
+                    >
+                        Zurück zur Startseite
+                    </button>
                 </div>
             </div>
         );

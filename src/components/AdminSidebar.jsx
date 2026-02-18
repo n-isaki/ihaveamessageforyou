@@ -111,6 +111,18 @@ export default function AdminSidebar({ activeView, onViewChange, onRefresh, isOp
                             </div>
                         )}
                         <Link
+                            to="/admin/dashboard"
+                            onClick={onClose}
+                            className={`flex items-center space-x-3 w-full px-4 py-2.5 rounded-lg transition-all font-medium text-sm ${location.pathname === '/admin/dashboard'
+                                    ? 'bg-[#3A3A3A] text-white border-l-2 border-white'
+                                    : 'text-[#B0B0B0] hover:text-white hover:bg-[#353535]'
+                                } ${collapsed ? 'justify-center px-2' : ''}`}
+                            title="Dashboard"
+                        >
+                            <LayoutGrid className="h-4 w-4" />
+                            {!collapsed && <span>Dashboard</span>}
+                        </Link>
+                        <Link
                             to="/admin/shopify"
                             onClick={onClose}
                             className={`flex items-center space-x-3 w-full px-4 py-2.5 rounded-lg transition-all font-medium text-sm ${location.pathname === '/admin/shopify'

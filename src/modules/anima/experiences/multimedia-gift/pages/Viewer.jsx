@@ -31,6 +31,22 @@ export default function GiftReveal({ initialData }) {
     verifyPin,
   } = useGiftLogic(id, initialData);
 
+  // Debug: Log when gift data changes
+  useEffect(() => {
+    if (gift) {
+      console.log('Viewer gift loaded:', {
+        id: gift.id,
+        project: gift.project,
+        productType: gift.productType,
+        headline: gift.headline,
+        subheadline: gift.subheadline,
+        messagesCount: gift.messages?.length || 0,
+        albumImagesCount: gift.albumImages?.length || 0,
+        locked: gift.locked
+      });
+    }
+  }, [gift]);
+
   // Redirect to Setup if empty and unlocked (Scan-to-Setup)
   const isPreview = !!initialData;
   const shouldRedirectToSetup =
@@ -79,8 +95,7 @@ export default function GiftReveal({ initialData }) {
   }
 
   const isBracelet =
-    gift?.productType === "bracelet" ||
-    (gift?.engravingText && gift.engravingText.length > 0);
+    gift?.productType === "bracelet";
 
   return (
     <div className="min-h-screen bg-stone-950 text-stone-100 font-sans selection:bg-rose-500/30">

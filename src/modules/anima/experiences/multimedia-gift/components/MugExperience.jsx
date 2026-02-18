@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 // eslint-disable-next-line no-unused-vars -- motion is used in JSX as <motion.div>
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
@@ -21,6 +21,15 @@ export default function MugExperience({ gift, getFontSizeClass }) {
         (typeof gift.headline === "string" && gift.headline.trim()) ||
         (typeof gift.subheadline === "string" && gift.subheadline.trim());
 
+    // Debug: Log gift data to check what's available
+    console.log('MugExperience gift data:', {
+        headline: gift.headline,
+        subheadline: gift.subheadline,
+        messages: gift.messages?.length || 0,
+        albumImages: gift.albumImages?.length || 0,
+        hasHero
+    });
+
     return (
         <div className="min-h-screen bg-stone-950 flex flex-col">
             {/* Hero Section – nur wenn Headline oder Subheadline Inhalt haben (nach Trim) */}
@@ -36,9 +45,7 @@ export default function MugExperience({ gift, getFontSizeClass }) {
                         </div>
                         {typeof gift.headline === "string" && gift.headline.trim() && (
                             <h2 className="text-5xl md:text-7xl font-serif italic text-transparent bg-clip-text bg-gradient-to-br from-white via-white to-stone-500 tracking-tight leading-tight">
-                                <ReactMarkdown className="text-2xl md:text-3xl font-bold text-stone-900 leading-tight">
-                                    {gift.headline.trim()}
-                                </ReactMarkdown>
+                                {gift.headline.trim()}
                             </h2>
                         )}
                         {typeof gift.subheadline === "string" &&
