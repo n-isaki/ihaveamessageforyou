@@ -89,30 +89,13 @@ export default function ContributionPage() {
         );
     }
 
-    // Cloud Function returns { giftId, recipientName, ... } only when allowContributions is true – no need to check allowContributions again
+    // Cloud Function returns { giftId, recipientName, ... } only when allowContributions is true – no "contributions" array; show form directly like main
     if (!giftData || !giftData.giftId) {
         return (
             <div className="min-h-screen bg-stone-950 text-stone-200">
                 <div className="text-center">
                     <h1 className="text-white text-xl font-bold mb-4">Geschenk nicht gefunden</h1>
                     <p className="text-stone-400">Das angefragte Geschenk konnte nicht gefunden werden.</p>
-                    <button
-                        onClick={() => window.location.reload()}
-                        className="mt-6 px-6 py-3 rounded-lg bg-rose-600 text-white hover:bg-rose-500 transition-all"
-                    >
-                        Zurück zur Startseite
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
-    if (!giftData.contributions || giftData.contributions.length === 0) {
-        return (
-            <div className="min-h-screen bg-stone-950 text-stone-200">
-                <div className="text-center">
-                    <h1 className="text-white text-xl font-bold mb-4">Noch keine Beiträge</h1>
-                    <p className="text-stone-400">Dieses Geschenk hat noch keine Beiträge. Sei der Erste, der eine Nachricht hinterlässt!</p>
                     <button
                         onClick={() => window.location.reload()}
                         className="mt-6 px-6 py-3 rounded-lg bg-rose-600 text-white hover:bg-rose-500 transition-all"
