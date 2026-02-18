@@ -88,11 +88,15 @@ export default function App() {
       <Router>
         <Suspense fallback={<PageLoader />}>
           <Routes>
-            {/* Public Routes */}
+            {/* Public Routes – an main angeglichen */}
             <Route path="/" element={<DomainAwareHome />} />
             <Route path="/wizard/:giftId" element={<GiftWizard />} />
-            <Route path="/view/:giftId" element={<UniversalViewer />} />
-            <Route path="/contribute/:giftId" element={<ContributionPage />} />
+            {/* Viewer: /v/:id und /gift/:id wie main (QR, Print, Links); UniversalViewer erwartet useParams().id */}
+            <Route path="/v/:id" element={<UniversalViewer />} />
+            <Route path="/gift/:id" element={<UniversalViewer />} />
+            <Route path="/view/:id" element={<UniversalViewer />} />
+            {/* Social Gifting: /join/:token wie main (Beitrags-Link); ContributionPage erwartet useParams().token */}
+            <Route path="/join/:token" element={<ContributionPage />} />
             <Route path="/contribute/:giftId/:token" element={<ContributionPage />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             
@@ -148,9 +152,9 @@ export default function App() {
               }
             />
             
-            {/* Catch-all for customer setup */}
-            <Route path="/setup/:giftId" element={<CustomerSetup />} />
-            <Route path="/setup/:giftId/:token" element={<CustomerSetup />} />
+            {/* Customer Setup (Token-Link) – wie main: Param :id, UniversalViewer nutzt /v/:id */}
+            <Route path="/setup/:id" element={<CustomerSetup />} />
+            <Route path="/setup/:id/:token" element={<CustomerSetup />} />
             
             {/* Fallback for admin routes */}
             <Route
