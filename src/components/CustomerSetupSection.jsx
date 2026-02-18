@@ -35,12 +35,12 @@ export default function CustomerSetupSection({
         className="flex items-center justify-between p-3 sm:p-6 cursor-pointer hover:bg-stone-800/30 transition-colors rounded-t-2xl"
         onClick={handleToggle}
       >
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-3 sm:gap-4">
           {icon && <div className={`
             ${isActive ? 'text-rose-400' : isCompleted ? 'text-emerald-400' : 'text-stone-400'}
-            w-4 h-4 sm:w-5 sm:h-5
+            w-4 h-4 sm:w-5 sm:h-5 shrink-0
           `}>{icon}</div>}
-          <div>
+          <div className="min-w-0">
             <h3 className="text-sm sm:text-lg font-semibold text-white flex items-center gap-2">
               {title}
               {isCompleted && <span className="text-xs bg-emerald-500 text-white px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full">✅</span>}

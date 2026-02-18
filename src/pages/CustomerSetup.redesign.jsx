@@ -557,6 +557,11 @@ export default function CustomerSetup() {
             {gift.project !== 'noor' && (
               <div className="space-y-4">
                 <h4 className="text-lg font-semibold text-white mb-4">Zugangsoptionen</h4>
+                <div className="bg-stone-800/50 border border-stone-700 rounded-xl p-4 mb-4">
+                  <p className="text-sm text-stone-400 leading-relaxed">
+                    Auch bei „Öffentlich“: Nur wer den Link hat, kann das Geschenk öffnen. Der Link enthält eine zufällig generierte ID – ohne den Link ist das Geschenk nicht auffindbar. Die Geschenk-Seiten werden von Suchmaschinen (z. B. Google) nicht indexiert.
+                  </p>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="flex items-center gap-3 text-stone-300 mb-3">
@@ -571,7 +576,7 @@ export default function CustomerSetup() {
                       <span>Öffentlich (kein PIN)</span>
                     </label>
                     <p className="text-sm text-stone-500">
-                      Jeder kann das Geschenk öffnen
+                      Jeder mit dem Link kann das Geschenk öffnen – ohne PIN-Eingabe.
                     </p>
                   </div>
                   <div>
