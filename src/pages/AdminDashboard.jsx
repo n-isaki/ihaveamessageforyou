@@ -224,36 +224,80 @@ export default function AdminDashboard() {
           <>
             <div className="max-w-6xl mx-auto">
               {/* Header & Tabs */}
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => setSidebarOpen(true)}
-                    className="md:hidden p-2 -ml-2 text-stone-600 hover:bg-stone-200 rounded-lg"
-                  >
-                    <Menu className="h-6 w-6" />
-                  </button>
-                  <div className="flex-1">
-                    <h1 className="text-3xl font-bold text-stone-900">
-                      Dashboard
-                    </h1>
-                    <p className="text-stone-500 mt-1">
-                      Verwalte deine Connected Produkte
-                    </p>
+              <div className="mb-8">
+                {/* Header */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => setSidebarOpen(true)}
+                      className="md:hidden p-2 -ml-2 text-stone-600 hover:bg-stone-200 rounded-lg"
+                    >
+                      <Menu className="h-6 w-6" />
+                    </button>
+                    <div className="flex-1">
+                      <h1 className="text-3xl font-bold text-stone-900">
+                        Dashboard
+                      </h1>
+                      <p className="text-stone-500 mt-1">
+                        Verwalte deine Connected Produkte
+                      </p>
+                    </div>
                   </div>
-                  {/* Bulk Select Toggle */}
-                  <button
-                    onClick={toggleSelectMode}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-                      isSelectMode
-                        ? "bg-rose-600 text-white"
-                        : "bg-stone-200 text-stone-700 hover:bg-stone-300"
-                    }`}
-                  >
-                    {isSelectMode ? "Auswahl beenden" : "Auswählen"}
-                  </button>
+                  
+                  {/* Action Buttons */}
+                  <div className="flex items-center gap-3">
+                    {/* Bulk Select Toggle */}
+                    <button
+                      onClick={toggleSelectMode}
+                      className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                        isSelectMode
+                          ? "bg-rose-600 text-white"
+                          : "bg-stone-200 text-stone-700 hover:bg-stone-300"
+                      }`}
+                    >
+                      {isSelectMode ? "Auswahl beenden" : "Auswählen"}
+                    </button>
+                    
+                    {/* Action Buttons */}
+                    {activeTab === "kamlimos" && (
+                      <button
+                        onClick={() => setShowEtsyModal(true)}
+                        className="inline-flex items-center px-4 py-2 border border-stone-200 rounded-xl shadow-sm text-sm font-medium text-stone-700 bg-white hover:bg-stone-50 transition-colors shrink-0"
+                      >
+                        <ShoppingBag className="h-5 w-5 mr-2 text-rose-600" />
+                        Etsy Simulieren
+                      </button>
+                    )}
+                    {activeTab === "memoria" && (
+                      <button
+                        onClick={() => setShowMemoriaModal(true)}
+                        className="inline-flex items-center px-4 py-2 border border-stone-200 rounded-xl shadow-sm text-sm font-medium text-stone-700 bg-white hover:bg-stone-50 transition-colors shrink-0"
+                      >
+                        <Heart className="h-5 w-5 mr-2 text-rose-600" />
+                        Memoria Auftrag
+                      </button>
+                    )}
+                    <Link
+                      to={
+                        activeTab === "noor"
+                          ? "/admin/create?project=noor"
+                          : activeTab === "dua"
+                          ? "/admin/create?project=noor"
+                          : activeTab === "memoria"
+                          ? "/admin/create?project=memoria"
+                          : activeTab === "ritual"
+                          ? "/admin/create?project=ritual"
+                          : "/admin/create?project=tasse"
+                      }
+                      className="inline-flex items-center px-4 py-2 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-stone-900 hover:bg-stone-800 transition-colors shrink-0"
+                    >
+                      <Plus className="h-5 w-5 mr-2" />
+                      Neuer Auftrag
+                    </Link>
+                  </div>
                 </div>
-
-                {/* TABS - Werkstatt Style (wie Schubladen) */}
+                
+                {/* TABS */}
                 <div className="flex gap-1 border-b border-stone-200 overflow-x-auto">
                   {["kamlimos", "noor", "memoria", "ritual"].map((tab) => (
                     <button
@@ -276,44 +320,6 @@ export default function AdminDashboard() {
                         : tab}
                     </button>
                   ))}
-                </div>
-
-                <div className="flex space-x-3">
-                  {activeTab === "kamlimos" && (
-                    <button
-                      onClick={() => setShowEtsyModal(true)}
-                      className="inline-flex items-center px-4 py-2 border border-stone-200 rounded-xl shadow-sm text-sm font-medium text-stone-700 bg-white hover:bg-stone-50 transition-colors shrink-0"
-                    >
-                      <ShoppingBag className="h-5 w-5 mr-2 text-rose-600" />
-                      Etsy Simulieren
-                    </button>
-                  )}
-                  {activeTab === "memoria" && (
-                    <button
-                      onClick={() => setShowMemoriaModal(true)}
-                      className="inline-flex items-center px-4 py-2 border border-stone-200 rounded-xl shadow-sm text-sm font-medium text-stone-700 bg-white hover:bg-stone-50 transition-colors shrink-0"
-                    >
-                      <Heart className="h-5 w-5 mr-2 text-rose-600" />
-                      Memoria Auftrag
-                    </button>
-                  )}
-                  <Link
-                    to={
-                      activeTab === "noor"
-                        ? "/admin/create?project=noor"
-                        : activeTab === "dua"
-                        ? "/admin/create?project=noor"
-                        : activeTab === "memoria"
-                        ? "/admin/create?project=memoria"
-                        : activeTab === "ritual"
-                        ? "/admin/create?project=ritual"
-                        : "/admin/create?project=tasse"
-                    }
-                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-stone-900 hover:bg-stone-800 transition-colors shrink-0"
-                  >
-                    <Plus className="h-5 w-5 mr-2" />
-                    Neuer Auftrag
-                  </Link>
                 </div>
               </div>
 
