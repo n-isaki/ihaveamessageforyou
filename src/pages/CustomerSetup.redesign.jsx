@@ -620,6 +620,27 @@ export default function CustomerSetup() {
                 success={engravingText.length > 0}
               />
             )}
+            
+            {/* Gravurwunsch – eigene Sektion, nur wenn Admin es erlaubt hat */}
+            {gift && gift.allowCustomerEngraving && (
+              <div className="mt-6 p-6 bg-stone-800/50 border border-stone-700 rounded-xl">
+                <h4 className="text-lg font-semibold text-white mb-3">Dein Gravurwunsch</h4>
+                <p className="text-sm text-stone-400 mb-4">
+                  Dein Wunschtext für die Gravur.
+                </p>
+                <CustomerSetupInput
+                  label="Gravurwunsch"
+                  description="Dein persönlicher Wunschtext für die Gravur (max. 30 Zeichen)"
+                  placeholder="z.B. Für die beste Oma"
+                  value={engravingText}
+                  onChange={(e) => setEngravingText(e.target.value)}
+                  maxLength={30}
+                  showCharCount={true}
+                  icon={<Edit2 />}
+                  success={engravingText.length > 0}
+                />
+              </div>
+            )}
           </div>
         </CustomerSetupSection>
 
