@@ -66,7 +66,7 @@ export default function CustomerSetupInput({
             {previewUrl ? (
               /* Preview */
               <div className="relative group">
-                <div className="w-full max-w-xs mx-auto aspect-[3/4] bg-stone-950 rounded-xl overflow-hidden border border-stone-700 shadow-xl">
+                <div className="w-full max-w-20 mx-auto aspect-[3/4] bg-stone-950 rounded-xl overflow-hidden border border-stone-700 shadow-xl">
                   <img
                     src={previewUrl}
                     alt="Preview"
@@ -102,7 +102,7 @@ export default function CustomerSetupInput({
             ) : (
               /* Upload Area */
               <label className={`
-                flex flex-col items-center justify-center w-full h-32 
+                flex flex-col items-center justify-center w-full h-24 
                 border-2 border-dashed rounded-xl cursor-pointer transition-all
                 ${disabled ? 'border-stone-700 cursor-not-allowed' : 'border-stone-600 hover:border-rose-500/50 hover:bg-stone-800/30'}
               `}>
@@ -143,13 +143,14 @@ export default function CustomerSetupInput({
             disabled={disabled}
             rows={multiline ? 4 : undefined}
             className={`
-              w-full bg-stone-950 border border-stone-800 rounded-xl p-4 
+              w-full bg-stone-950 border border-stone-800 rounded-xl p-3 
               text-base text-white placeholder-stone-500
               focus:ring-2 focus:ring-stone-600 focus:border-stone-600 outline-none
               transition-all duration-200
               ${error ? 'border-rose-500 focus:ring-rose-500' : ''}
               ${success ? 'border-emerald-500 focus:ring-emerald-500' : ''}
               ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
+              ${multiline ? 'min-h-[60px] resize-y' : 'h-12'}
             `}
           />
         )}
