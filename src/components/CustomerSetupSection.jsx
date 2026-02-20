@@ -25,7 +25,7 @@ export default function CustomerSetupSection({
 
   return (
     <div className={`
-      relative bg-stone-900/40 backdrop-blur-sm rounded-2xl min-w-0
+      relative bg-stone-900/40 backdrop-blur-sm rounded-2xl
       border transition-all duration-300 mb-4 sm:mb-6
       ${isActive ? 'border-rose-500/50 shadow-lg shadow-rose-500/10' : 'border-stone-800/50'}
       ${isCompleted ? 'border-emerald-500/30' : ''}
@@ -40,7 +40,7 @@ export default function CustomerSetupSection({
             ${isActive ? 'text-rose-400' : isCompleted ? 'text-emerald-400' : 'text-stone-400'}
             w-4 h-4 sm:w-5 sm:h-5 shrink-0
           `}>{icon}</div>}
-          <div className="min-w-0">
+          <div>
             <h3 className="text-sm sm:text-lg font-semibold text-white flex flex-wrap items-center gap-2">
               {title}
               {isCompleted && <span className="text-xs bg-emerald-500 text-white px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full shrink-0">✅</span>}
@@ -88,14 +88,12 @@ export default function CustomerSetupSection({
         </div>
       )}
 
-      {/* Content – äußeres div mit contents, damit Layout auf Mobile nicht bricht; Transition am inneren div */}
-      <div className="contents">
-        <div className={`
-          transition-all duration-300 ease-in-out
-          ${isOpen ? 'max-h-screen opacity-100 px-3 sm:px-6 pb-3 sm:pb-6' : 'max-h-0 opacity-0 overflow-hidden p-0'}
-        `}>
-          {children}
-        </div>
+      {/* Content – direkter Container ohne contents */}
+      <div className={`
+        transition-all duration-300 ease-in-out
+        ${isOpen ? 'max-h-screen opacity-100 px-3 sm:px-6 pb-3 sm:pb-6' : 'max-h-0 opacity-0 overflow-hidden p-0'}
+      `}>
+        {children}
       </div>
     </div>
   );
