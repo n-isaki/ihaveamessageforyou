@@ -20,6 +20,8 @@ import {
   MessageSquare,
   Users,
   Lightbulb,
+  Save,
+  ArrowRight,
 } from "lucide-react";
 import {
   uploadAlbumImage,
@@ -32,12 +34,6 @@ import { v4 as uuidv4 } from "uuid";
 import { motion as Motion, AnimatePresence } from "framer-motion";
 import { getExperience } from "../modules/registry";
 import { sanitizeInput, isValidMessage } from "../utils/security";
-
-// New Redesign Components
-import CustomerSetupProgress from "../components/CustomerSetupProgress";
-import CustomerSetupSection from "../components/CustomerSetupSection";
-import CustomerSetupInput from "../components/CustomerSetupInput";
-import CustomerSetupActionBar from "../components/CustomerSetupActionBar";
 
 export default function CustomerSetup() {
   const { id, token: tokenFromPath } = useParams();
@@ -78,26 +74,16 @@ export default function CustomerSetup() {
   const [memoriaDesignImage, setMemoriaDesignImage] = useState("");
 
   // UI state
-  const [currentStep, setCurrentStep] = useState("basic");
-  const [completedSteps, setCompletedSteps] = useState([]);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [messageModal, setMessageModal] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
   const [contributions, setContributions] = useState([]);
   const [contributionLink, setContributionLink] = useState("");
 
-  // Calculate progress
-  const calculateProgress = () => {
-    const requiredSteps = ["basic", "messages"];
-    if (gift?.project !== "noor") {
-      requiredSteps.push("media");
-    }
-    return (
-      (completedSteps.filter((step) => requiredSteps.includes(step)).length /
-        requiredSteps.length) *
-      100
-    );
-  };
+  // Calculate completion status
+  const isBasicComplete = headline || subheadline || recipientName || senderName;
+  const isMessagesComplete = messages.filter((msg) => isValidMessage(msg.content)).length > 0;
+  const isMediaComplete = albumImages.length > 0 || memoriaDesignImage || memoriaData.deceasedName;
 
   useEffect(() => {
     const loadGift = async () => {
@@ -133,10 +119,6 @@ export default function CustomerSetup() {
         setAccessChoice(data.isPublic ? "public" : "pin");
         setCustomerPin(data.accessCode || "");
 
-        // Initialize recipient and sender names
-        setRecipientName(data.recipientName || "");
-        setSenderName(data.senderName || "");
-
         if (data.project === "memoria") {
           setMemoriaData({
             deceasedName: data.deceasedName || "",
@@ -147,29 +129,6 @@ export default function CustomerSetup() {
         }
 
         setAlbumImages(data.albumImages || []);
-
-        // Set completed steps based on existing data
-        const completed = [];
-        if (data.headline || data.subheadline) completed.push("basic");
-        if (data.messages && data.messages.length > 0)
-          completed.push("messages");
-        if (data.albumImages && data.albumImages.length > 0)
-          completed.push("media");
-        setCompletedSteps(completed);
-
-        // Set initial step
-        if (!completed.includes("basic")) {
-          setCurrentStep("basic");
-        } else if (
-          !completed.includes("messages") &&
-          data.project !== "noor"
-        ) {
-          setCurrentStep("messages");
-        } else if (!completed.includes("media") && data.project !== "noor") {
-          setCurrentStep("media");
-        } else {
-          setCurrentStep("completed");
-        }
 
         // Load contributions if enabled
         if (data.allowContributions) {
@@ -221,11 +180,6 @@ export default function CustomerSetup() {
       const current = albumImages || [];
       const { url } = await uploadAlbumImage(id, file, current);
       setAlbumImages((prev) => [...(prev || []), url]);
-
-      // Update completed steps
-      if (!completedSteps.includes("media")) {
-        setCompletedSteps((prev) => [...prev, "media"]);
-      }
     } catch (err) {
       console.error("Album upload failed", err);
       setMessageModal({
@@ -265,11 +219,6 @@ export default function CustomerSetup() {
         memoriaDesignImage,
       );
       setMemoriaDesignImage(url);
-
-      // Update completed steps
-      if (!completedSteps.includes("media")) {
-        setCompletedSteps((prev) => [...prev, "media"]);
-      }
     } catch (err) {
       console.error("Upload failed", err);
       setMessageModal({
@@ -314,31 +263,6 @@ export default function CustomerSetup() {
 
       await updateGift(id, updates);
       setGift((prev) => ({ ...prev, ...updates }));
-
-      // Update completed steps (newCompleted must be declared before any use)
-      const newCompleted = [...completedSteps];
-      if (
-        updates.headline ||
-        updates.subheadline ||
-        updates.recipientName ||
-        updates.senderName
-      ) {
-        if (!newCompleted.includes("basic")) newCompleted.push("basic");
-      }
-      if (validMessages.length > 0) {
-        if (!newCompleted.includes("messages")) newCompleted.push("messages");
-      }
-      if (updates.albumImages && updates.albumImages.length > 0) {
-        if (!newCompleted.includes("media")) newCompleted.push("media");
-      }
-      if (
-        gift.project === "memoria" &&
-        (updates.deceasedName || updates.designImage)
-      ) {
-        if (!newCompleted.includes("basic")) newCompleted.push("basic");
-        if (!newCompleted.includes("media")) newCompleted.push("media");
-      }
-      setCompletedSteps(newCompleted);
 
       setMessageModal({
         type: "success",
@@ -480,13 +404,7 @@ export default function CustomerSetup() {
     );
   }
 
-  const progressPercentage = calculateProgress();
-  const canSave =
-    headline ||
-    subheadline ||
-    messages.length > 0 ||
-    albumImages.length > 0 ||
-    memoriaData.deceasedName;
+  const canSave = isBasicComplete || messages.length > 0 || albumImages.length > 0 || memoriaData.deceasedName;
   const canLock = canSave && messages.length > 0;
 
   return (
@@ -507,212 +425,209 @@ export default function CustomerSetup() {
         </div>
       </header>
 
-      {/* Progress */}
-      <CustomerSetupProgress
-        currentStep={currentStep}
-        completedSteps={completedSteps}
-        giftType={gift.productType}
-        isLocked={locked}
-      />
-
       {/* Main Content */}
-      <main className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+      <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
         {/* Basic Information Section */}
-        <CustomerSetupSection
-          title="Grundinformationen"
-          description="Titel, Empfänger und wichtige Details"
-          icon={<Edit2 />}
-          isCompleted={completedSteps.includes("basic")}
-          isActive={currentStep === "basic"}
-          badge="Wichtig"
-          defaultOpen={true}
-          tips={[
-            "Der Titel ist das Erste, was der Empfänger sieht.",
-            "Gib einen klaren Empfängernamen an.",
-            gift.project !== "noor" &&
-              "Du kannst später einen PIN-Code hinzufügen.",
-          ].filter(Boolean)}
-        >
-          <div className="space-y-4">
-            {/* Title and Recipient - Side by side on desktop */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <CustomerSetupInput
-                label="Titel"
-                description="Erste Zeile auf dem Cover"
-                placeholder="Für die beste Mama"
-                value={headline}
-                onChange={(e) => setHeadline(e.target.value)}
-                icon={<MessageSquare />}
-                success={headline.length > 0}
-              />
-              <CustomerSetupInput
-                label="Empfänger"
-                description="Wer beschenkt wird?"
-                placeholder="Name des Empfängers"
-                value={recipientName}
-                onChange={(e) => setRecipientName(e.target.value)}
-                icon={<User />}
-                success={recipientName.length > 0}
-              />
+        <section className="bg-stone-900/40 backdrop-blur-sm rounded-2xl border border-stone-800/50 p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Edit2 className="w-5 h-5 text-rose-400" />
+            <h2 className="text-xl font-semibold text-white">Grundinformationen</h2>
+            {isBasicComplete && (
+              <span className="text-xs bg-emerald-500 text-white px-2 py-1 rounded-full">✅</span>
+            )}
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-stone-300 mb-2">
+                  Titel
+                </label>
+                <input
+                  type="text"
+                  value={headline}
+                  onChange={(e) => setHeadline(e.target.value)}
+                  placeholder="Für die beste Mama"
+                  className="w-full bg-stone-950 border border-stone-800 rounded-xl px-4 py-3 text-white placeholder-stone-500 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition-all"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-stone-300 mb-2">
+                  Empfänger
+                </label>
+                <input
+                  type="text"
+                  value={recipientName}
+                  onChange={(e) => setRecipientName(e.target.value)}
+                  placeholder="Name des Empfängers"
+                  className="w-full bg-stone-950 border border-stone-800 rounded-xl px-4 py-3 text-white placeholder-stone-500 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition-all"
+                />
+              </div>
             </div>
-
-            {/* Sender and Subtitle - Side by side on desktop */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <CustomerSetupInput
-                label="Absender"
-                description="Wer schenkt?"
-                placeholder="Dein Name"
-                value={senderName}
-                onChange={(e) => setSenderName(e.target.value)}
-                icon={<User />}
-                success={senderName.length > 0}
-              />
-              <CustomerSetupInput
-                label="Untertitel"
-                description="Zweite Zeile auf dem Cover"
-                placeholder="Zu deinem Geburtstag"
-                value={subheadline}
-                onChange={(e) => setSubheadline(e.target.value)}
-                icon={<MessageSquare />}
-                success={subheadline.length > 0}
-              />
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-stone-300 mb-2">
+                  Absender
+                </label>
+                <input
+                  type="text"
+                  value={senderName}
+                  onChange={(e) => setSenderName(e.target.value)}
+                  placeholder="Dein Name"
+                  className="w-full bg-stone-950 border border-stone-800 rounded-xl px-4 py-3 text-white placeholder-stone-500 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition-all"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-stone-300 mb-2">
+                  Untertitel
+                </label>
+                <input
+                  type="text"
+                  value={subheadline}
+                  onChange={(e) => setSubheadline(e.target.value)}
+                  placeholder="Zu deinem Geburtstag"
+                  className="w-full bg-stone-950 border border-stone-800 rounded-xl px-4 py-3 text-white placeholder-stone-500 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition-all"
+                />
+              </div>
             </div>
+          </div>
 
-            {/* Access Options - Full width */}
-            {gift.project !== "noor" && (
-              <div className="space-y-3">
-                <h3 className="text-lg font-semibold text-white mb-3">
-                  Zugangsoptionen
-                </h3>
-                <div className="bg-stone-800/50 border border-stone-700 rounded-xl p-4 mb-4">
-                  <p className="text-sm text-stone-400 leading-relaxed">
-                    Auch bei "Öffentlich": Nur wer den Link hat, kann das Geschenk
-                    öffnen. Der Link enthält eine zufällig generierte ID – ohne den
-                    Link ist das Geschenk nicht auffindbar. Die Geschenk-Seiten
-                    werden von Suchmaschinen (z. B. Google) nicht indexiert.
+          {/* Access Options */}
+          {gift.project !== "noor" && (
+            <div className="mt-8">
+              <h3 className="text-lg font-semibold text-white mb-4">Zugangsoptionen</h3>
+              <div className="bg-stone-800/50 border border-stone-700 rounded-xl p-4 mb-4">
+                <p className="text-sm text-stone-400 leading-relaxed">
+                  Auch bei "Öffentlich": Nur wer den Link hat, kann das Geschenk
+                  öffnen. Der Link enthält eine zufällig generierte ID – ohne den
+                  Link ist das Geschenk nicht auffindbar. Die Geschenk-Seiten
+                  werden von Suchmaschinen (z. B. Google) nicht indexiert.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="flex items-center gap-3 text-stone-300 mb-3">
+                    <input
+                      type="radio"
+                      name="access"
+                      value="public"
+                      checked={accessChoice === "public"}
+                      onChange={(e) => setAccessChoice(e.target.value)}
+                      className="w-4 h-4 text-rose-500 focus:ring-rose-500"
+                    />
+                    <span>Öffentlich (kein PIN)</span>
+                  </label>
+                  <p className="text-sm text-stone-500">
+                    Jeder mit dem Link kann das Geschenk öffnen – ohne
+                    PIN-Eingabe.
                   </p>
                 </div>
 
-                {/* Radio buttons - Side by side on desktop */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="flex items-center gap-3 text-stone-300 mb-3">
+                    <input
+                      type="radio"
+                      name="access"
+                      value="pin"
+                      checked={accessChoice === "pin"}
+                      onChange={(e) => setAccessChoice(e.target.value)}
+                      className="w-4 h-4 text-rose-500 focus:ring-rose-500"
+                    />
+                    <span>PIN-geschützt</span>
+                  </label>
                   <div>
-                    <label className="flex items-center gap-3 text-stone-300 mb-2">
-                      <input
-                        type="radio"
-                        name="access"
-                        value="public"
-                        checked={accessChoice === "public"}
-                        onChange={(e) => setAccessChoice(e.target.value)}
-                        className="w-4 h-4 text-rose-500 focus:ring-rose-500"
-                      />
-                      <span>Öffentlich (kein PIN)</span>
+                    <label className="block text-sm font-medium text-stone-300 mb-2">
+                      PIN-Code
                     </label>
-                    <p className="text-sm text-stone-500">
-                      Jeder mit dem Link kann das Geschenk öffnen – ohne
-                      PIN-Eingabe.
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="flex items-center gap-3 text-stone-300 mb-2">
-                      <input
-                        type="radio"
-                        name="access"
-                        value="pin"
-                        checked={accessChoice === "pin"}
-                        onChange={(e) => setAccessChoice(e.target.value)}
-                        className="w-4 h-4 text-rose-500 focus:ring-rose-500"
-                      />
-                      <span>PIN-geschützt</span>
-                    </label>
-                    <CustomerSetupInput
-                      label="PIN-Code"
-                      description="4-stelliger Code für den Zugang"
-                      placeholder="1234"
+                    <input
+                      type="text"
                       value={customerPin}
                       onChange={(e) => setCustomerPin(e.target.value)}
-                      disabled={accessChoice !== "pin"}
+                      placeholder="1234"
                       maxLength={4}
-                      showCharCount={true}
-                      success={accessChoice === "pin" && customerPin.length === 4}
+                      disabled={accessChoice !== "pin"}
+                      className="w-full bg-stone-950 border border-stone-800 rounded-xl px-4 py-3 text-white placeholder-stone-500 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition-all disabled:opacity-50"
                     />
                   </div>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Engraving Text */}
-            {gift.productType !== "noor" && (
-              <CustomerSetupInput
-                label="Gravur Text"
-                description="Text für die Gravur (max. 30 Zeichen)"
-                placeholder="Für die beste Oma"
+          {/* Engraving Text */}
+          {gift.productType !== "noor" && (
+            <div className="mt-8">
+              <label className="block text-sm font-medium text-stone-300 mb-2">
+                Gravur Text
+              </label>
+              <input
+                type="text"
                 value={engravingText}
                 onChange={(e) => setEngravingText(e.target.value)}
+                placeholder="Für die beste Oma"
                 maxLength={30}
-                showCharCount={true}
-                icon={<Edit2 />}
-                success={engravingText.length > 0}
+                className="w-full bg-stone-950 border border-stone-800 rounded-xl px-4 py-3 text-white placeholder-stone-500 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition-all"
               />
-            )}
-
-            {/* Gravurwunsch - Special section */}
-            {gift && gift.allowCustomerEngraving && (
-              <div className="mt-4 p-4 bg-stone-800/50 border border-stone-700 rounded-xl">
-                <h3 className="text-lg font-semibold text-white mb-3">
-                  Dein Gravurwunsch
-                </h3>
-                <p className="text-sm text-stone-400 mb-4">
-                  Dein Wunschtext für die Gravur.
-                </p>
-                <CustomerSetupInput
-                  label="Gravurwunsch"
-                  description="Dein persönlicher Wunschtext für die Gravur (max. 30 Zeichen)"
-                  placeholder="z.B. Für die beste Oma"
-                  value={engravingText}
-                  onChange={(e) => setEngravingText(e.target.value)}
-                  maxLength={30}
-                  showCharCount={true}
-                  icon={<Edit2 />}
-                  success={engravingText.length > 0}
-                />
-              </div>
-            )}
-          </div>
-        </CustomerSetupSection>
+              <p className="text-xs text-stone-500 mt-1">
+                {engravingText.length}/30 Zeichen
+              </p>
+            </div>
+          )}
+        </section>
 
         {/* Media Section */}
         {gift.project !== "noor" && (
-          <CustomerSetupSection
-            title="Medien"
-            description="Fotos und Videos für das Geschenk"
-            icon={<ImageIcon />}
-            isCompleted={completedSteps.includes("media")}
-            isActive={currentStep === "media"}
-            badge="Visuell"
-            defaultOpen={false}
-            tips={[
-              "Lade hochwertige Fotos hoch.",
-              `Du kannst bis zu ${ALBUM_MAX_FILES} Fotos hinzufügen.`,
-              "Für Memoria: Ein Bild für die Gravur auswählen.",
-            ]}
-          >
+          <section className="bg-stone-900/40 backdrop-blur-sm rounded-2xl border border-stone-800/50 p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <ImageIcon className="w-5 h-5 text-rose-400" />
+              <h2 className="text-xl font-semibold text-white">Medien</h2>
+              {isMediaComplete && (
+                <span className="text-xs bg-emerald-500 text-white px-2 py-1 rounded-full">✅</span>
+              )}
+            </div>
+
             {gift.project === "memoria" ? (
-              <CustomerSetupInput
-                type="file"
-                label="Bild für die Gravur"
-                description="Ein scharfes Bild für die Gravur (Hochformat empfohlen)"
-                accept="image/jpeg,image/png,image/webp"
-                onFileUpload={handleMemoriaImageUpload}
-                uploading={uploadingMemoriaDesign}
-                previewUrl={memoriaDesignImage}
-                onPreviewRemove={handleRemoveMemoriaImage}
-                icon={<ImageIcon />}
-              />
+              <div>
+                <label className="block text-sm font-medium text-stone-300 mb-2">
+                  Bild für die Gravur
+                </label>
+                {memoriaDesignImage ? (
+                  <div className="relative group">
+                    <div className="w-full max-w-xs mx-auto aspect-[3/4] bg-stone-950 rounded-xl overflow-hidden border border-stone-700 shadow-xl">
+                      <img
+                        src={memoriaDesignImage}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <button
+                      onClick={handleRemoveMemoriaImage}
+                      className="absolute top-2 right-2 w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-stone-600 rounded-xl cursor-pointer hover:border-rose-500/50 hover:bg-stone-800/30 transition-all">
+                    <Upload className="w-8 h-8 text-stone-400 mb-2" />
+                    <span className="text-stone-400 text-sm">Bild hochladen</span>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={handleMemoriaImageUpload}
+                      disabled={uploadingMemoriaDesign}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
             ) : (
-              <div className="space-y-4">
-                {/* Image Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              <div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-6">
                   {albumImages.map((url, index) => (
                     <div key={url} className="relative group">
                       <div className="aspect-square bg-stone-950 rounded-lg overflow-hidden border border-stone-700">
@@ -726,7 +641,6 @@ export default function CustomerSetup() {
                         <button
                           onClick={() => handleRemoveAlbumImage(index)}
                           className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                          title="Bild entfernen"
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
@@ -735,38 +649,36 @@ export default function CustomerSetup() {
                   ))}
                 </div>
 
-                {/* Upload Button */}
                 {albumImages.length < ALBUM_MAX_FILES && !locked && (
-                  <CustomerSetupInput
-                    type="file"
-                    label="Foto hinzufügen"
-                    description={`Noch ${ALBUM_MAX_FILES - albumImages.length} Fotos möglich`}
-                    accept="image/jpeg,image/png,image/webp"
-                    onFileUpload={handleAlbumImageUpload}
-                    uploading={uploadingAlbum}
-                    icon={<Upload />}
-                  />
+                  <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-stone-600 rounded-xl cursor-pointer hover:border-rose-500/50 hover:bg-stone-800/30 transition-all">
+                    <Upload className="w-6 h-6 text-stone-400 mb-2" />
+                    <span className="text-stone-400 text-sm">
+                      Foto hinzufügen ({albumImages.length}/{ALBUM_MAX_FILES})
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={handleAlbumImageUpload}
+                      disabled={uploadingAlbum}
+                      className="hidden"
+                    />
+                  </label>
                 )}
               </div>
             )}
-          </CustomerSetupSection>
+          </section>
         )}
 
         {/* Messages Section */}
-        <CustomerSetupSection
-          title="Persönliche Nachrichten"
-          description="Füge persönliche Worte und Erinnerungen hinzu"
-          icon={<MessageSquare />}
-          isCompleted={completedSteps.includes("messages")}
-          isActive={currentStep === "messages"}
-          badge="Emotional"
-          defaultOpen={false}
-          tips={[
-            "Schreibe aus dem Herzen - das berührt am meisten.",
-            "Du kannst verschiedene Nachrichtentypen hinzufügen.",
-            "Füge Bilder, Videos oder Audio hinzu.",
-          ]}
-        >
+        <section className="bg-stone-900/40 backdrop-blur-sm rounded-2xl border border-stone-800/50 p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <MessageSquare className="w-5 h-5 text-rose-400" />
+            <h2 className="text-xl font-semibold text-white">Persönliche Nachrichten</h2>
+            {isMessagesComplete && (
+              <span className="text-xs bg-emerald-500 text-white px-2 py-1 rounded-full">✅</span>
+            )}
+          </div>
+          
           <WizardMessageEditor
             messages={messages}
             onAdd={handleAddMessage}
@@ -775,29 +687,21 @@ export default function CustomerSetup() {
             widgetMode={false}
             darkMode={true}
           />
-        </CustomerSetupSection>
+        </section>
 
         {/* Social Gifting Section */}
         {gift?.allowContributions && (
-          <CustomerSetupSection
-            title="Gemeinschaftliches Geschenk"
-            description="Freunde und Familie können ebenfalls Beiträge hinzufügen"
-            icon={<Users />}
-            isCompleted={contributions.length > 0}
-            defaultOpen={false}
-            tips={[
-              "Teile den Link nach dem Absenden mit Freunden.",
-              "Jeder kann eine persönliche Nachricht hinterlassen.",
-              "Alle Beiträge werden im Geschenk angezeigt.",
-            ]}
-          >
+          <section className="bg-stone-900/40 backdrop-blur-sm rounded-2xl border border-stone-800/50 p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <Users className="w-5 h-5 text-rose-400" />
+              <h2 className="text-xl font-semibold text-white">Gemeinschaftliches Geschenk</h2>
+            </div>
+            
             <div className="space-y-4">
               <div className="bg-stone-800/50 rounded-xl p-4 border border-stone-700">
                 <div className="flex items-center gap-3 mb-3">
                   <Share2 className="w-5 h-5 text-stone-400" />
-                  <h3 className="text-lg font-semibold text-white">
-                    Beitrags-Link
-                  </h3>
+                  <h3 className="text-lg font-semibold text-white">Beitrags-Link</h3>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <input
@@ -837,23 +741,32 @@ export default function CustomerSetup() {
                 </div>
               )}
             </div>
-          </CustomerSetupSection>
+          </section>
         )}
       </main>
 
-      {/* Action Bar */}
-      <CustomerSetupActionBar
-        onSaveDraft={handleSaveDraft}
-        onSaveAndLock={handleSaveAndLock}
-        onPreview={null}
-        onShare={null}
-        saving={saving}
-        canSave={canSave}
-        canLock={canLock}
-        showPreview={false}
-        isLocked={locked}
-        progressPercentage={progressPercentage}
-      />
+      {/* Fixed Action Bar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-stone-950/95 backdrop-blur-md border-t border-stone-800 p-4 z-20">
+        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row gap-4">
+          <button
+            onClick={handleSaveDraft}
+            disabled={saving || !canSave}
+            className="flex-1 px-6 py-3 bg-stone-800 hover:bg-stone-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            <Save className="w-4 h-4" />
+            {saving ? "Speichert..." : "Entwurf speichern"}
+          </button>
+          
+          <button
+            onClick={handleSaveAndLock}
+            disabled={saving || !canLock}
+            className="flex-1 px-6 py-3 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            <Lock className="w-4 h-4" />
+            {saving ? "Speichert..." : "Geschenk versiegeln"}
+          </button>
+        </div>
+      </div>
 
       {/* Confirmation Modal */}
       <AnimatePresence>
@@ -863,7 +776,7 @@ export default function CustomerSetup() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-stone-900 rounded-2xl shadow-2xl max-w-md w-full"
+              className="bg-stone-900 rounded-2xl shadow-2xl max-w-md w-full p-6"
             >
               <div className="p-6">
                 <div className="flex items-center gap-3 mb-4">
@@ -944,24 +857,6 @@ export default function CustomerSetup() {
               </button>
             </Motion.div>
           </Motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Preview Modal */}
-      <AnimatePresence>
-        {showPreview && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-            <Motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-stone-900 rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col"
-            >
-              <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
-                <MugViewer gift={gift} />
-              </div>
-            </Motion.div>
-          </div>
         )}
       </AnimatePresence>
     </div>
