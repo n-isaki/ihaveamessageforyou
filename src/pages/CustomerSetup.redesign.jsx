@@ -43,7 +43,7 @@ export default function CustomerSetup() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const accessCode = searchParams.get("access");
+  const token = searchParams.get("token");
 
   // Core state
   const [gift, setGift] = useState(null);
@@ -103,7 +103,7 @@ export default function CustomerSetup() {
     const loadGift = async () => {
       try {
         setLoading(true);
-        const data = await getGiftById(id, accessCode);
+        const data = await getGiftById(id, token);
         
         if (!data) {
           setAccessDenied(true);
@@ -177,7 +177,7 @@ export default function CustomerSetup() {
     if (id) {
       loadGift();
     }
-  }, [id, accessCode]);
+  }, [id, token]);
 
   // Message handlers
   const handleAddMessage = () => {
