@@ -40,9 +40,10 @@ import CustomerSetupInput from "../components/CustomerSetupInput";
 import CustomerSetupActionBar from "../components/CustomerSetupActionBar";
 
 export default function CustomerSetup() {
-  const { id, token } = useParams();
+  const { id } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const token = searchParams.get("token");
 
   // Core state
   const [gift, setGift] = useState(null);
