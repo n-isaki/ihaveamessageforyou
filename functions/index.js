@@ -60,6 +60,27 @@ exports.comparePin = onCall({ cors: true }, async (request) => {
  * Data: { giftId: string, pin: string }
  * Returns: { match: boolean, giftData: object | null }
  */
+/**
+ * Setup-Link: Gift per securityToken laden (Kunde öffnet /setup/:id?token=xxx oder /setup/:id/:token)
+ * Erlaubt Zugriff auch ohne Auth und unabhängig von Firestore request.query (getDoc hat kein query).
+ */
+exports.getGiftBySetupToken = onCall(async (request) => {
+  const { giftId, token } = request.data;
+  if (!giftId || !token) {
+    throw new HttpsError("invalid-argument", "giftId and token required");
+  }
+  const docRef = db.collection("gift_orders").doc(giftId);
+  const snap = await docRef.get();
+  if (!snap.exists) {
+    throw new HttpsError("not-found", "Geschenk nicht gefunden.");
+  }
+  const data = snap.data();
+  if (data.securityToken !== token) {
+    throw new HttpsError("permission-denied", "Ungültiger Link.");
+  }
+  return { id: snap.id, ...data };
+});
+
 // [NEW] Social Gifting: Secure Lookup by Token
 // Contributors need to see Recipient Name/Title but NOT other messages
 exports.getGiftByContributionToken = onCall(async (request) => {

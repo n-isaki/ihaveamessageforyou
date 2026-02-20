@@ -38,7 +38,7 @@ export default function MemoriaModal({ isOpen, onClose, onSuccess }) {
 
       if (createdGift) {
         const tokenPart = createdGift.securityToken
-          ? `?token=${createdGift.securityToken}`
+          ? `/${createdGift.securityToken}`
           : "";
         const isStaging =
           window.location.hostname.includes("staging") ||

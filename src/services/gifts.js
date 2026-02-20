@@ -347,6 +347,18 @@ export const getGiftById = async (id, retries = 3) => {
   return null;
 };
 
+/**
+ * Setup-Link: Gift per securityToken laden (Cloud Function).
+ * Nutzen wenn Kunde Link mit Token öffnet (/setup/:id?token=xxx oder /setup/:id/:token).
+ */
+export const getGiftBySetupToken = async (giftId, token) => {
+  const { httpsCallable, getFunctions } = await import("firebase/functions");
+  const functions = getFunctions();
+  const fn = httpsCallable(functions, "getGiftBySetupToken");
+  const result = await fn({ giftId, token });
+  return result.data;
+};
+
 // ============================================
 // SOCIAL GIFTING (CONTRIBUTIONS)
 // ============================================

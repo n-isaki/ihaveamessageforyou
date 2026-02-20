@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
-import { getGiftById, updateGift, getContributions } from "../services/gifts";
+import { getGiftById, getGiftBySetupToken, updateGift, getContributions } from "../services/gifts";
 import WizardMessageEditor from "../modules/anima/experiences/multimedia-gift/components/WizardMessageEditor";
 import {
   Loader,
@@ -40,10 +40,10 @@ import CustomerSetupInput from "../components/CustomerSetupInput";
 import CustomerSetupActionBar from "../components/CustomerSetupActionBar";
 
 export default function CustomerSetup() {
-  const { id } = useParams();
+  const { id, token: tokenFromPath } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const token = searchParams.get("token");
+  const token = tokenFromPath || searchParams.get("token");
 
   // Core state
   const [gift, setGift] = useState(null);
@@ -101,10 +101,20 @@ export default function CustomerSetup() {
 
   useEffect(() => {
     const loadGift = async () => {
+      if (!id) return;
       try {
         setLoading(true);
-        const data = await getGiftById(id, token);
-        
+        let data = null;
+        if (token) {
+          try {
+            data = await getGiftBySetupToken(id, token);
+          } catch (err) {
+            console.warn("getGiftBySetupToken failed, falling back to getGiftById:", err?.message);
+          }
+        }
+        if (!data) {
+          data = await getGiftById(id);
+        }
         if (!data) {
           setAccessDenied(true);
           return;

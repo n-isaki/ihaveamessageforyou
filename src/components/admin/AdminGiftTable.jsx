@@ -35,7 +35,7 @@ export default function AdminGiftTable({
 }) {
   const handleCopyLink = (e, gift) => {
     e.stopPropagation();
-    const tokenPart = gift.securityToken ? `?token=${gift.securityToken}` : "";
+    const tokenPart = gift.securityToken ? `/${gift.securityToken}` : "";
     const name =
       gift.customerName || gift.senderName || gift.recipientName || "Kunde";
 
