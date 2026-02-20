@@ -282,7 +282,8 @@ export default function CustomerSetup() {
 
     try {
       setSaving(true);
-      const draftUpdates = {
+      const validMessages = messages.filter((msg) => isValidMessage(msg.content));
+      const updates = {
         headline: sanitizeInput(headline, 200),
         subheadline: sanitizeInput(subheadline, 200),
         recipientName: sanitizeInput(recipientName, 100),
@@ -290,39 +291,39 @@ export default function CustomerSetup() {
         engravingText: sanitizeInput(engravingText, 30),
         isPublic: accessChoice === "public",
         accessCode: customerPin,
-        messages: messages.filter((msg) => isValidMessage(msg.content)),
+        messages: validMessages,
         albumImages: albumImages,
       };
 
       if (gift.project === "memoria") {
-        draftUpdates.deceasedName = sanitizeInput(memoriaData.deceasedName, 200);
-        draftUpdates.lifeDates = sanitizeInput(memoriaData.lifeDates, 100);
-        draftUpdates.meaningText = sanitizeInput(memoriaData.meaningText, 5000);
-        draftUpdates.designImage = memoriaDesignImage;
+        updates.deceasedName = sanitizeInput(memoriaData.deceasedName, 200);
+        updates.lifeDates = sanitizeInput(memoriaData.lifeDates, 100);
+        updates.meaningText = sanitizeInput(memoriaData.meaningText, 5000);
+        updates.designImage = memoriaDesignImage;
       }
 
-      await updateGift(id, draftUpdates);
-      setGift((prev) => ({ ...prev, ...draftUpdates }));
+      await updateGift(id, updates);
+      setGift((prev) => ({ ...prev, ...updates }));
 
       // Update completed steps (newCompleted must be declared before any use)
       const newCompleted = [...completedSteps];
       if (
-        draftUpdates.headline ||
-        draftUpdates.subheadline ||
-        draftUpdates.recipientName ||
-        draftUpdates.senderName
+        updates.headline ||
+        updates.subheadline ||
+        updates.recipientName ||
+        updates.senderName
       ) {
         if (!newCompleted.includes("basic")) newCompleted.push("basic");
       }
       if (validMessages.length > 0) {
         if (!newCompleted.includes("messages")) newCompleted.push("messages");
       }
-      if (draftUpdates.albumImages && draftUpdates.albumImages.length > 0) {
+      if (updates.albumImages && updates.albumImages.length > 0) {
         if (!newCompleted.includes("media")) newCompleted.push("media");
       }
       if (
         gift.project === "memoria" &&
-        (draftUpdates.deceasedName || draftUpdates.designImage)
+        (updates.deceasedName || updates.designImage)
       ) {
         if (!newCompleted.includes("basic")) newCompleted.push("basic");
         if (!newCompleted.includes("media")) newCompleted.push("media");
