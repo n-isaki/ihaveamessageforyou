@@ -510,7 +510,8 @@ export default function CustomerSetup() {
           ].filter(Boolean)}
         >
           <div className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Basic Info Fields */}
+            <div className="space-y-4">
               <CustomerSetupInput
                 label="Titel"
                 description="Erste Zeile auf dem Cover"
@@ -561,8 +562,10 @@ export default function CustomerSetup() {
                     Auch bei „Öffentlich“: Nur wer den Link hat, kann das Geschenk öffnen. Der Link enthält eine zufällig generierte ID – ohne den Link ist das Geschenk nicht auffindbar. Die Geschenk-Seiten werden von Suchmaschinen (z. B. Google) nicht indexiert.
                   </p>
                 </div>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-w-0">
-                  <div className="min-w-0">
+                
+                {/* Access Options */}
+                <div className="space-y-4">
+                  <div>
                     <label className="flex items-center gap-3 text-stone-300 mb-3">
                       <input
                         type="radio"
@@ -578,7 +581,8 @@ export default function CustomerSetup() {
                       Jeder mit dem Link kann das Geschenk öffnen – ohne PIN-Eingabe.
                     </p>
                   </div>
-                  <div className="min-w-0">
+                  
+                  <div>
                     <label className="flex items-center gap-3 text-stone-300 mb-3">
                       <input
                         type="radio"
