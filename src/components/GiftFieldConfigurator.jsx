@@ -15,10 +15,12 @@ export default function GiftFieldConfigurator({ giftId, onClose }) {
   const [savedConfigs, setSavedConfigs] = useState({});
 
   useEffect(() => {
-    // Load existing config for this gift
+    // Load existing config for this gift (sync setState in effect: initial load from storage)
     const existingConfig = getGiftFieldConfig(giftId);
     if (existingConfig) {
+      /* eslint-disable react-hooks/set-state-in-effect -- initial load from localStorage */
       setFieldConfig(existingConfig);
+      /* eslint-enable react-hooks/set-state-in-effect */
       // Extract project type from the first enabled field
       const firstEnabledField = Object.values(existingConfig).find(category => 
         Object.values(category).find(field => field.enabled?.includes(projectType))
@@ -82,7 +84,7 @@ export default function GiftFieldConfigurator({ giftId, onClose }) {
     setHasChanges(true);
   };
 
-  const deleteConfig = () => {
+  const _deleteConfig = () => {
     if (confirm(`Möchtest du die Konfiguration für Geschenk ${giftId} wirklich löschen?`)) {
       deleteGiftFieldConfig(giftId);
       setFieldConfig(FIELD_CONFIG);
@@ -338,7 +340,7 @@ export default function GiftFieldConfigurator({ giftId, onClose }) {
                     {/* Show first few enabled fields as preview */}
                     <div className="text-xs text-stone-400">
                       {Object.entries(config).slice(0, 2).map(([category, fields]) => {
-                        const enabledFields = Object.entries(fields).filter(([_, field]) => 
+                        const enabledFields = Object.entries(fields).filter(([, field]) => 
                           field.enabled?.includes(projectType)
                         );
                         return (

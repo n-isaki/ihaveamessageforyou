@@ -50,7 +50,7 @@ export default function CustomerSetupProgress({
       <div className="flex justify-between gap-1">
         {steps.map((step) => {
           const status = getStepStatus(step.id);
-          const isActive = currentStep === step.id;
+          const _isActive = currentStep === step.id;
           
           return (
             <button

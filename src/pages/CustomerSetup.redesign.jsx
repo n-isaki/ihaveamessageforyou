@@ -32,13 +32,12 @@ import { ALBUM_MAX_FILES } from "../utils/security";
 import MugViewer from "../modules/anima/experiences/multimedia-gift/pages/Viewer";
 import { v4 as uuidv4 } from "uuid";
 import { motion as Motion, AnimatePresence } from "framer-motion";
-import { getExperience } from "../modules/registry";
 import { sanitizeInput, isValidMessage } from "../utils/security";
 
 export default function CustomerSetup() {
   const { id, token: tokenFromPath } = useParams();
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const token = tokenFromPath || searchParams.get("token");
 
   // Core state
@@ -76,9 +75,9 @@ export default function CustomerSetup() {
   // UI state
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [messageModal, setMessageModal] = useState(null);
-  const [showPreview, setShowPreview] = useState(false);
+  const [_showPreview, _setShowPreview] = useState(false);
   const [contributions, setContributions] = useState([]);
-  const [contributionLink, setContributionLink] = useState("");
+  const [_contributionLink, setContributionLink] = useState("");
 
   // Calculate completion status
   const isBasicComplete = headline || subheadline || recipientName || senderName;

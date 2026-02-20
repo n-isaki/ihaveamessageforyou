@@ -4,13 +4,9 @@ import { Save, Lock, Eye, Share2, Loader } from 'lucide-react';
 export default function CustomerSetupActionBar({ 
   onSaveDraft, 
   onSaveAndLock, 
-  onPreview, 
-  onShare,
   saving = false,
   canSave = true,
   canLock = false,
-  showPreview = false,
-  isLocked = false,
   progressPercentage = 0
 }) {
   return (
