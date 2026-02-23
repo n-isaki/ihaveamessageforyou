@@ -15,6 +15,7 @@ import {
   Gift,
   Share2,
   Copy,
+  RefreshCw,
   Trash2,
   Upload,
   MessageSquare,
@@ -77,11 +78,12 @@ export default function CustomerSetup() {
   const [messageModal, setMessageModal] = useState(null);
   const [_showPreview, _setShowPreview] = useState(false);
   const [contributions, setContributions] = useState([]);
+  const [refreshingContributions, setRefreshingContributions] = useState(false);
   const [_contributionLink, setContributionLink] = useState("");
 
   // Calculate completion status
   const isBasicComplete = headline || subheadline || recipientName || senderName;
-  const isMessagesComplete = messages.filter((msg) => isValidMessage(msg.content)).length > 0;
+  const isMessagesComplete = messages.filter((msg) => isValidMessage(msg)).length > 0;
   const isMediaComplete = albumImages.length > 0 || memoriaDesignImage || memoriaData.deceasedName;
 
   useEffect(() => {
@@ -240,7 +242,13 @@ export default function CustomerSetup() {
 
     try {
       setSaving(true);
-      const validMessages = messages.filter((msg) => isValidMessage(msg.content));
+      // Alle Nachrichten speichern (nur Inhalte sanitizen), keine Filterung – so gehen keine Texte/Medien verloren
+      const messagesToSave = messages.map((m) => ({
+        id: m.id,
+        type: m.type || "text",
+        content: sanitizeInput(typeof m.content === "string" ? m.content : "", 2000),
+        author: typeof m.author === "string" ? m.author.slice(0, 100) : "",
+      }));
       const updates = {
         headline: sanitizeInput(headline, 200),
         subheadline: sanitizeInput(subheadline, 200),
@@ -248,10 +256,10 @@ export default function CustomerSetup() {
         senderName: sanitizeInput(senderName, 100),
         isPublic: accessChoice === "public",
         accessCode: customerPin,
-        messages: validMessages,
+        messages: messagesToSave,
         albumImages: albumImages,
       };
-      if (gift.allowCustomerEngraving) updates.engravingText = sanitizeInput(engravingText, 30);
+      if (gift?.allowCustomerEngraving) updates.engravingText = sanitizeInput(engravingText, 30);
       if (gift.securityToken) updates.securityToken = gift.securityToken;
 
       if (gift.project === "memoria") {
@@ -299,7 +307,12 @@ export default function CustomerSetup() {
       setSaving(true);
       setShowConfirmModal(false);
 
-      const validMessages = messages.filter((msg) => isValidMessage(msg.content));
+      const messagesToSave = messages.map((m) => ({
+        id: m.id,
+        type: m.type || "text",
+        content: sanitizeInput(typeof m.content === "string" ? m.content : "", 2000),
+        author: typeof m.author === "string" ? m.author.slice(0, 100) : "",
+      }));
       const updates = {
         headline: sanitizeInput(headline, 200),
         subheadline: sanitizeInput(subheadline, 200),
@@ -307,11 +320,11 @@ export default function CustomerSetup() {
         senderName: sanitizeInput(senderName, 100),
         isPublic: accessChoice === "public",
         accessCode: customerPin,
-        messages: validMessages,
+        messages: messagesToSave,
         albumImages: albumImages,
         locked: true,
       };
-      if (gift.allowCustomerEngraving) updates.engravingText = sanitizeInput(engravingText, 30);
+      if (gift?.allowCustomerEngraving) updates.engravingText = sanitizeInput(engravingText, 30);
       if (gift.securityToken) updates.securityToken = gift.securityToken;
 
       if (gift.project === "memoria") {
@@ -351,6 +364,26 @@ export default function CustomerSetup() {
       setContributionLink(link);
       navigator.clipboard.writeText(link);
       setMessageModal({ type: "success", text: "Link kopiert!" });
+    }
+  };
+
+  const handleRefreshContributions = async () => {
+    if (!id) return;
+    setRefreshingContributions(true);
+    try {
+      const contribs = await getContributions(id);
+      setContributions(contribs);
+      setMessageModal({
+        type: "success",
+        text: contribs.length > 0
+          ? `${contribs.length} Beitrag${contribs.length === 1 ? "" : "räge"} aktuell.`
+          : "Noch keine Beiträge eingegangen.",
+      });
+    } catch (err) {
+      console.error("Refresh contributions failed", err);
+      setMessageModal({ type: "error", text: "Beiträge konnten nicht geladen werden." });
+    } finally {
+      setRefreshingContributions(false);
     }
   };
 
@@ -559,8 +592,8 @@ export default function CustomerSetup() {
             </div>
           )}
 
-          {/* Engraving Text – nur wenn Admin es erlaubt hat (Gravurtext vom Kunden erlauben) */}
-          {gift.productType !== "noor" && gift.allowCustomerEngraving && (
+          {/* Engraving Text – genau wie Social Gifting: nur wenn Admin „Gravurtext vom Kunden erlauben“ aktiv hat */}
+          {gift.productType !== "noor" && gift?.allowCustomerEngraving && (
             <div className="mt-8">
               <label className="block text-sm font-medium text-brand-anthracite mb-2">
                 Gravur Text
@@ -719,6 +752,19 @@ export default function CustomerSetup() {
                     Kopieren
                   </button>
                 </div>
+                <button
+                  type="button"
+                  onClick={handleRefreshContributions}
+                  disabled={refreshingContributions}
+                  className="mt-3 w-full sm:w-auto px-4 py-2.5 btn-secondary rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+                >
+                  {refreshingContributions ? (
+                    <Loader className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="w-4 h-4" />
+                  )}
+                  {refreshingContributions ? "Lädt…" : "Nachsehen, ob jemand was geschrieben hat"}
+                </button>
               </div>
 
               {contributions.length > 0 && (
