@@ -16,7 +16,9 @@ const RedirectToSetup = ({ id }) => {
   return null;
 };
 
-export default function GiftReveal({ initialData }) {
+// UniversalViewer übergibt gift={gift}; beide Props damit Daten bei useGiftLogic ankommen
+export default function GiftReveal({ gift: giftProp, initialData: initialDataProp }) {
+  const initialData = giftProp ?? initialDataProp;
   const { id } = useParams();
   const [fontSizeLevel, setFontSizeLevel] = useState(0); // 0=Normal, 1=Large, 2=Extra Large
 

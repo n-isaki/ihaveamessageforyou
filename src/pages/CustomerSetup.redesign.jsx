@@ -147,11 +147,11 @@ export default function CustomerSetup() {
     }
   }, [id, token]);
 
-  // Message handlers
-  const handleAddMessage = () => {
+  // Message handlers (type = "text" | "video" | "image" from WizardMessageEditor)
+  const handleAddMessage = (type = "text") => {
     const newMessage = {
       id: uuidv4(),
-      type: "text",
+      type: type || "text",
       content: "",
       author: "",
       title: "",
@@ -246,12 +246,13 @@ export default function CustomerSetup() {
         subheadline: sanitizeInput(subheadline, 200),
         recipientName: sanitizeInput(recipientName, 100),
         senderName: sanitizeInput(senderName, 100),
-        engravingText: sanitizeInput(engravingText, 30),
         isPublic: accessChoice === "public",
         accessCode: customerPin,
         messages: validMessages,
         albumImages: albumImages,
       };
+      if (gift.allowCustomerEngraving) updates.engravingText = sanitizeInput(engravingText, 30);
+      if (gift.securityToken) updates.securityToken = gift.securityToken;
 
       if (gift.project === "memoria") {
         updates.deceasedName = sanitizeInput(memoriaData.deceasedName, 200);
@@ -304,13 +305,14 @@ export default function CustomerSetup() {
         subheadline: sanitizeInput(subheadline, 200),
         recipientName: sanitizeInput(recipientName, 100),
         senderName: sanitizeInput(senderName, 100),
-        engravingText: sanitizeInput(engravingText, 30),
         isPublic: accessChoice === "public",
         accessCode: customerPin,
         messages: validMessages,
         albumImages: albumImages,
         locked: true,
       };
+      if (gift.allowCustomerEngraving) updates.engravingText = sanitizeInput(engravingText, 30);
+      if (gift.securityToken) updates.securityToken = gift.securityToken;
 
       if (gift.project === "memoria") {
         updates.deceasedName = sanitizeInput(
@@ -354,21 +356,21 @@ export default function CustomerSetup() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-stone-950">
-        <Loader className="animate-spin text-stone-500" />
+      <div className="min-h-screen flex items-center justify-center bg-brand-cream">
+        <Loader className="animate-spin text-brand-patina" />
       </div>
     );
   }
 
   if (accessDenied) {
     return (
-      <div className="min-h-screen bg-stone-950 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-stone-900 rounded-3xl shadow-2xl p-8 text-center space-y-6 border border-red-900/50">
+      <div className="min-h-screen bg-brand-cream flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-brand p-8 text-center space-y-6 border border-red-200">
           <ShieldAlert className="h-12 w-12 text-red-500 mx-auto" />
-          <h1 className="text-xl font-serif font-bold text-stone-100">
+          <h1 className="text-xl font-display font-bold text-brand-anthracite">
             Dieser Link funktioniert nicht
           </h1>
-          <p className="text-stone-400 text-sm leading-relaxed">
+          <p className="text-brand-text text-sm leading-relaxed">
             Der Link ist ungültig oder wurde nicht vollständig kopiert. Bitte
             öffne den Link genau so, wie er dir zugeschickt wurde.
           </p>
@@ -379,7 +381,7 @@ export default function CustomerSetup() {
 
   if (!gift) {
     return (
-      <div className="min-h-screen bg-stone-950 flex items-center justify-center text-stone-500">
+      <div className="min-h-screen bg-brand-cream flex items-center justify-center text-brand-text">
         Geschenk nicht gefunden.
       </div>
     );
@@ -387,14 +389,14 @@ export default function CustomerSetup() {
 
   if (locked) {
     return (
-      <div className="min-h-screen bg-stone-950 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-stone-900/50 backdrop-blur-md rounded-3xl shadow-2xl p-8 text-center space-y-6 border border-stone-800">
-          <CheckCircle className="h-16 w-16 text-green-500 mx-auto" />
+      <div className="min-h-screen bg-brand-cream flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-3xl shadow-brand p-8 text-center space-y-6 border border-brand-border">
+          <CheckCircle className="h-16 w-16 text-emerald-500 mx-auto" />
           <div>
-            <h1 className="text-3xl font-serif font-bold text-white mb-2">
+            <h1 className="text-3xl font-display font-bold text-brand-anthracite mb-2">
               Vielen Dank!
             </h1>
-            <p className="text-stone-400 leading-relaxed">
+            <p className="text-brand-text leading-relaxed">
               Wir beginnen nun mit der Veredelung deines Geschenks.
             </p>
           </div>
@@ -407,11 +409,11 @@ export default function CustomerSetup() {
   const canLock = canSave && messages.length > 0;
 
   return (
-    <div className="min-h-screen bg-stone-950 text-stone-200 pb-32 font-setup">
+    <div className="min-h-screen bg-brand-cream text-brand-text pb-32 font-sans">
       {/* Header */}
-      <header className="sticky top-0 z-20 bg-stone-950/95 backdrop-blur-md border-b border-stone-800">
+      <header className="sticky top-0 z-20 bg-brand-cream/95 backdrop-blur-md border-b border-brand-border">
         <div className="px-4 py-4 text-center">
-          <h1 className="font-setup-heading text-xl sm:text-2xl text-white">
+          <h1 className="font-display font-semibold text-xl sm:text-2xl text-brand-anthracite">
             {gift.project === "memoria"
               ? "Memoria"
               : gift.project === "noor"
@@ -427,10 +429,10 @@ export default function CustomerSetup() {
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
         {/* Basic Information Section */}
-        <section className="bg-stone-900/40 backdrop-blur-sm rounded-2xl border border-stone-800/50 p-6">
+        <section className="bg-white rounded-2xl border border-brand-border shadow-brand p-6">
           <div className="flex items-center gap-3 mb-6">
-            <Edit2 className="w-5 h-5 text-rose-400" />
-            <h2 className="text-xl font-semibold text-white">Grundinformationen</h2>
+            <Edit2 className="w-5 h-5 text-brand-patina" />
+            <h2 className="text-xl font-semibold text-brand-anthracite">Grundinformationen</h2>
             {isBasicComplete && (
               <span className="text-xs bg-emerald-500 text-white px-2 py-1 rounded-full">✅</span>
             )}
@@ -439,7 +441,7 @@ export default function CustomerSetup() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-stone-300 mb-2">
+                <label className="block text-sm font-medium text-brand-anthracite mb-2">
                   Titel
                 </label>
                 <input
@@ -447,12 +449,12 @@ export default function CustomerSetup() {
                   value={headline}
                   onChange={(e) => setHeadline(e.target.value)}
                   placeholder="Für die beste Mama"
-                  className="w-full bg-stone-950 border border-stone-800 rounded-xl px-4 py-3 text-white placeholder-stone-500 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition-all"
+                  className="input-base w-full rounded-xl px-4 py-3"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-stone-300 mb-2">
+                <label className="block text-sm font-medium text-brand-anthracite mb-2">
                   Empfänger
                 </label>
                 <input
@@ -460,14 +462,14 @@ export default function CustomerSetup() {
                   value={recipientName}
                   onChange={(e) => setRecipientName(e.target.value)}
                   placeholder="Name des Empfängers"
-                  className="w-full bg-stone-950 border border-stone-800 rounded-xl px-4 py-3 text-white placeholder-stone-500 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition-all"
+                  className="input-base w-full rounded-xl px-4 py-3"
                 />
               </div>
             </div>
             
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-stone-300 mb-2">
+                <label className="block text-sm font-medium text-brand-anthracite mb-2">
                   Absender
                 </label>
                 <input
@@ -475,12 +477,12 @@ export default function CustomerSetup() {
                   value={senderName}
                   onChange={(e) => setSenderName(e.target.value)}
                   placeholder="Dein Name"
-                  className="w-full bg-stone-950 border border-stone-800 rounded-xl px-4 py-3 text-white placeholder-stone-500 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition-all"
+                  className="input-base w-full rounded-xl px-4 py-3"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-stone-300 mb-2">
+                <label className="block text-sm font-medium text-brand-anthracite mb-2">
                   Untertitel
                 </label>
                 <input
@@ -488,7 +490,7 @@ export default function CustomerSetup() {
                   value={subheadline}
                   onChange={(e) => setSubheadline(e.target.value)}
                   placeholder="Zu deinem Geburtstag"
-                  className="w-full bg-stone-950 border border-stone-800 rounded-xl px-4 py-3 text-white placeholder-stone-500 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition-all"
+                  className="input-base w-full rounded-xl px-4 py-3"
                 />
               </div>
             </div>
@@ -497,9 +499,9 @@ export default function CustomerSetup() {
           {/* Access Options */}
           {gift.project !== "noor" && (
             <div className="mt-8">
-              <h3 className="text-lg font-semibold text-white mb-4">Zugangsoptionen</h3>
-              <div className="bg-stone-800/50 border border-stone-700 rounded-xl p-4 mb-4">
-                <p className="text-sm text-stone-400 leading-relaxed">
+              <h3 className="text-lg font-semibold text-brand-anthracite mb-4">Zugangsoptionen</h3>
+              <div className="bg-brand-cream-tint border border-brand-border rounded-xl p-4 mb-4">
+                <p className="text-sm text-brand-text leading-relaxed">
                   Auch bei "Öffentlich": Nur wer den Link hat, kann das Geschenk
                   öffnen. Der Link enthält eine zufällig generierte ID – ohne den
                   Link ist das Geschenk nicht auffindbar. Die Geschenk-Seiten
@@ -509,37 +511,37 @@ export default function CustomerSetup() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="flex items-center gap-3 text-stone-300 mb-3">
+                  <label className="flex items-center gap-3 text-brand-anthracite mb-3">
                     <input
                       type="radio"
                       name="access"
                       value="public"
                       checked={accessChoice === "public"}
                       onChange={(e) => setAccessChoice(e.target.value)}
-                      className="w-4 h-4 text-rose-500 focus:ring-rose-500"
+                      className="w-4 h-4 text-brand-patina focus:ring-brand-patina"
                     />
                     <span>Öffentlich (kein PIN)</span>
                   </label>
-                  <p className="text-sm text-stone-500">
+                  <p className="text-sm text-brand-text">
                     Jeder mit dem Link kann das Geschenk öffnen – ohne
                     PIN-Eingabe.
                   </p>
                 </div>
 
                 <div>
-                  <label className="flex items-center gap-3 text-stone-300 mb-3">
+                  <label className="flex items-center gap-3 text-brand-anthracite mb-3">
                     <input
                       type="radio"
                       name="access"
                       value="pin"
                       checked={accessChoice === "pin"}
                       onChange={(e) => setAccessChoice(e.target.value)}
-                      className="w-4 h-4 text-rose-500 focus:ring-rose-500"
+                      className="w-4 h-4 text-brand-patina focus:ring-brand-patina"
                     />
                     <span>PIN-geschützt</span>
                   </label>
                   <div>
-                    <label className="block text-sm font-medium text-stone-300 mb-2">
+                    <label className="block text-sm font-medium text-brand-anthracite mb-2">
                       PIN-Code
                     </label>
                     <input
@@ -549,7 +551,7 @@ export default function CustomerSetup() {
                       placeholder="1234"
                       maxLength={4}
                       disabled={accessChoice !== "pin"}
-                      className="w-full bg-stone-950 border border-stone-800 rounded-xl px-4 py-3 text-white placeholder-stone-500 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition-all disabled:opacity-50"
+                      className="input-base w-full rounded-xl px-4 py-3 disabled:opacity-50"
                     />
                   </div>
                 </div>
@@ -557,10 +559,10 @@ export default function CustomerSetup() {
             </div>
           )}
 
-          {/* Engraving Text */}
-          {gift.productType !== "noor" && (
+          {/* Engraving Text – nur wenn Admin es erlaubt hat (Gravurtext vom Kunden erlauben) */}
+          {gift.productType !== "noor" && gift.allowCustomerEngraving && (
             <div className="mt-8">
-              <label className="block text-sm font-medium text-stone-300 mb-2">
+              <label className="block text-sm font-medium text-brand-anthracite mb-2">
                 Gravur Text
               </label>
               <input
@@ -569,9 +571,9 @@ export default function CustomerSetup() {
                 onChange={(e) => setEngravingText(e.target.value)}
                 placeholder="Für die beste Oma"
                 maxLength={30}
-                className="w-full bg-stone-950 border border-stone-800 rounded-xl px-4 py-3 text-white placeholder-stone-500 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition-all"
+                className="input-base w-full rounded-xl px-4 py-3"
               />
-              <p className="text-xs text-stone-500 mt-1">
+              <p className="text-xs text-brand-text mt-1">
                 {engravingText.length}/30 Zeichen
               </p>
             </div>
@@ -580,10 +582,10 @@ export default function CustomerSetup() {
 
         {/* Media Section */}
         {gift.project !== "noor" && (
-          <section className="bg-stone-900/40 backdrop-blur-sm rounded-2xl border border-stone-800/50 p-6">
+          <section className="bg-white rounded-2xl border border-brand-border shadow-brand p-6">
             <div className="flex items-center gap-3 mb-6">
-              <ImageIcon className="w-5 h-5 text-rose-400" />
-              <h2 className="text-xl font-semibold text-white">Medien</h2>
+              <ImageIcon className="w-5 h-5 text-brand-patina" />
+              <h2 className="text-xl font-semibold text-brand-anthracite">Medien</h2>
               {isMediaComplete && (
                 <span className="text-xs bg-emerald-500 text-white px-2 py-1 rounded-full">✅</span>
               )}
@@ -591,12 +593,12 @@ export default function CustomerSetup() {
 
             {gift.project === "memoria" ? (
               <div>
-                <label className="block text-sm font-medium text-stone-300 mb-2">
+                <label className="block text-sm font-medium text-brand-anthracite mb-2">
                   Bild für die Gravur
                 </label>
                 {memoriaDesignImage ? (
                   <div className="relative group">
-                    <div className="w-full max-w-xs mx-auto aspect-[3/4] bg-stone-950 rounded-xl overflow-hidden border border-stone-700 shadow-xl">
+                    <div className="w-full max-w-xs mx-auto aspect-[3/4] bg-brand-cream-tint rounded-xl overflow-hidden border border-brand-border shadow-xl">
                       <img
                         src={memoriaDesignImage}
                         alt="Preview"
@@ -611,9 +613,9 @@ export default function CustomerSetup() {
                     </button>
                   </div>
                 ) : (
-                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-stone-600 rounded-xl cursor-pointer hover:border-rose-500/50 hover:bg-stone-800/30 transition-all">
-                    <Upload className="w-8 h-8 text-stone-400 mb-2" />
-                    <span className="text-stone-400 text-sm">Bild hochladen</span>
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-brand-border rounded-xl cursor-pointer hover:border-brand-patina hover:bg-brand-cream-tint transition-all">
+                    <Upload className="w-8 h-8 text-brand-text mb-2" />
+                    <span className="text-brand-text text-sm">Bild hochladen</span>
                     <input
                       type="file"
                       accept="image/jpeg,image/png,image/webp"
@@ -629,7 +631,7 @@ export default function CustomerSetup() {
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mb-6">
                   {albumImages.map((url, index) => (
                     <div key={url} className="relative group">
-                      <div className="aspect-square bg-stone-950 rounded-lg overflow-hidden border border-stone-700">
+                      <div className="aspect-square bg-brand-cream-tint rounded-lg overflow-hidden border border-brand-border">
                         <img
                           src={url}
                           alt={`Album image ${index + 1}`}
@@ -649,9 +651,9 @@ export default function CustomerSetup() {
                 </div>
 
                 {albumImages.length < ALBUM_MAX_FILES && !locked && (
-                  <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-stone-600 rounded-xl cursor-pointer hover:border-rose-500/50 hover:bg-stone-800/30 transition-all">
-                    <Upload className="w-6 h-6 text-stone-400 mb-2" />
-                    <span className="text-stone-400 text-sm">
+                  <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-brand-border rounded-xl cursor-pointer hover:border-brand-patina hover:bg-brand-cream-tint transition-all">
+                    <Upload className="w-6 h-6 text-brand-text mb-2" />
+                    <span className="text-brand-text text-sm">
                       Foto hinzufügen ({albumImages.length}/{ALBUM_MAX_FILES})
                     </span>
                     <input
@@ -669,10 +671,10 @@ export default function CustomerSetup() {
         )}
 
         {/* Messages Section */}
-        <section className="bg-stone-900/40 backdrop-blur-sm rounded-2xl border border-stone-800/50 p-6">
+        <section className="bg-white rounded-2xl border border-brand-border shadow-brand p-6">
           <div className="flex items-center gap-3 mb-6">
-            <MessageSquare className="w-5 h-5 text-rose-400" />
-            <h2 className="text-xl font-semibold text-white">Persönliche Nachrichten</h2>
+            <MessageSquare className="w-5 h-5 text-brand-patina" />
+            <h2 className="text-xl font-semibold text-brand-anthracite">Persönliche Nachrichten</h2>
             {isMessagesComplete && (
               <span className="text-xs bg-emerald-500 text-white px-2 py-1 rounded-full">✅</span>
             )}
@@ -684,34 +686,34 @@ export default function CustomerSetup() {
             onRemove={handleRemoveMessage}
             onUpdate={handleUpdateMessage}
             widgetMode={false}
-            darkMode={true}
+            darkMode={false}
           />
         </section>
 
         {/* Social Gifting Section */}
         {gift?.allowContributions && (
-          <section className="bg-stone-900/40 backdrop-blur-sm rounded-2xl border border-stone-800/50 p-6">
+          <section className="bg-white rounded-2xl border border-brand-border shadow-brand p-6">
             <div className="flex items-center gap-3 mb-6">
-              <Users className="w-5 h-5 text-rose-400" />
-              <h2 className="text-xl font-semibold text-white">Gemeinschaftliches Geschenk</h2>
+              <Users className="w-5 h-5 text-brand-patina" />
+              <h2 className="text-xl font-semibold text-brand-anthracite">Gemeinschaftliches Geschenk</h2>
             </div>
             
             <div className="space-y-4">
-              <div className="bg-stone-800/50 rounded-xl p-4 border border-stone-700">
+              <div className="bg-brand-cream-tint rounded-xl p-4 border border-brand-border">
                 <div className="flex items-center gap-3 mb-3">
-                  <Share2 className="w-5 h-5 text-stone-400" />
-                  <h3 className="text-lg font-semibold text-white">Beitrags-Link</h3>
+                  <Share2 className="w-5 h-5 text-brand-text" />
+                  <h3 className="text-lg font-semibold text-brand-anthracite">Beitrags-Link</h3>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <input
                     type="text"
                     value={`${window.location.origin}/join/${gift.contributionToken}`}
                     readOnly
-                    className="flex-1 bg-stone-900 border border-stone-700 rounded-lg px-4 py-3 text-stone-300 font-mono text-sm"
+                    className="flex-1 bg-white border border-brand-border rounded-lg px-4 py-3 text-brand-anthracite font-mono text-sm"
                   />
                   <button
                     onClick={handleShare}
-                    className="px-4 py-3 bg-rose-600 hover:bg-rose-500 text-white rounded-lg transition-colors flex items-center justify-center gap-2"
+                    className="px-4 py-3 btn-primary rounded-lg transition-colors flex items-center justify-center gap-2"
                   >
                     <Copy className="w-4 h-4" />
                     Kopieren
@@ -721,19 +723,19 @@ export default function CustomerSetup() {
 
               {contributions.length > 0 && (
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-3">
+                  <h3 className="text-lg font-semibold text-brand-anthracite mb-3">
                     Eingegangene Beiträge ({contributions.length})
                   </h3>
                   <div className="space-y-3 max-h-64 overflow-y-auto">
                     {contributions.map((c) => (
                       <div
                         key={c.id}
-                        className="bg-stone-800/50 rounded-xl p-4 border border-stone-700"
+                        className="bg-brand-cream-tint rounded-xl p-4 border border-brand-border"
                       >
-                        <div className="font-medium text-stone-300">
+                        <div className="font-medium text-brand-anthracite">
                           {c.author || "Gast"}
                         </div>
-                        <p className="text-stone-400 mt-1">{c.content}</p>
+                        <p className="text-brand-text mt-1">{c.content}</p>
                       </div>
                     ))}
                   </div>
@@ -745,12 +747,12 @@ export default function CustomerSetup() {
       </main>
 
       {/* Fixed Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-stone-950/95 backdrop-blur-md border-t border-stone-800 p-4 z-20">
+      <div className="fixed bottom-0 left-0 right-0 bg-brand-cream/95 backdrop-blur-md border-t border-brand-border p-4 z-20">
         <div className="max-w-4xl mx-auto flex flex-col sm:flex-row gap-4">
           <button
             onClick={handleSaveDraft}
             disabled={saving || !canSave}
-            className="flex-1 px-6 py-3 bg-stone-800 hover:bg-stone-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="flex-1 px-6 py-3 btn-secondary rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             <Save className="w-4 h-4" />
             {saving ? "Speichert..." : "Entwurf speichern"}
@@ -759,7 +761,7 @@ export default function CustomerSetup() {
           <button
             onClick={handleSaveAndLock}
             disabled={saving || !canLock}
-            className="flex-1 px-6 py-3 bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="flex-1 px-6 py-3 bg-gradient-to-r btn-primary rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             <Lock className="w-4 h-4" />
             {saving ? "Speichert..." : "Geschenk versiegeln"}
@@ -775,24 +777,24 @@ export default function CustomerSetup() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-stone-900 rounded-2xl shadow-2xl max-w-md w-full p-6"
+              className="bg-white rounded-2xl shadow-brand border border-brand-border max-w-md w-full p-6"
             >
               <div className="p-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <Lock className="w-6 h-6 text-rose-500" />
-                  <h3 className="text-xl font-semibold text-white">
+                  <Lock className="w-6 h-6 text-brand-patina" />
+                  <h3 className="text-xl font-semibold text-brand-anthracite">
                     Geschenk versiegeln?
                   </h3>
                 </div>
-                <p className="text-stone-300 mb-6 leading-relaxed">
+                <p className="text-brand-anthracite mb-6 leading-relaxed">
                   Bist du sicher, dass du dieses Geschenk versiegeln möchtest?
                   Nach dem Versiegeln können keine Änderungen mehr vorgenommen
                   werden.
                 </p>
                 {accessChoice === "pin" && (
-                  <div className="bg-stone-800 rounded-lg p-3 mb-6">
-                    <p className="text-sm text-stone-400">
-                      <span className="font-medium text-stone-300">
+                  <div className="bg-brand-cream-tint rounded-lg p-3 mb-6">
+                    <p className="text-sm text-brand-text">
+                      <span className="font-medium text-brand-anthracite">
                         PIN-Code:
                       </span>{" "}
                       {customerPin || "Nicht festgelegt"}
@@ -802,14 +804,14 @@ export default function CustomerSetup() {
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShowConfirmModal(false)}
-                    className="flex-1 px-4 py-3 rounded-lg bg-stone-800 text-stone-300 border border-stone-700 hover:bg-stone-700 transition-colors"
+                    className="btn-secondary flex-1 px-4 py-3 rounded-lg"
                   >
                     Abbrechen
                   </button>
                   <button
                     onClick={confirmSaveAndLock}
                     disabled={saving}
-                    className="flex-1 px-4 py-3 rounded-lg bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white font-semibold transition-colors disabled:opacity-50"
+                    className="flex-1 px-4 py-3 rounded-lg bg-gradient-to-r btn-primary font-semibold transition-colors disabled:opacity-50"
                   >
                     {saving ? "Wird gespeichert..." : "Versiegeln"}
                   </button>
@@ -834,23 +836,23 @@ export default function CustomerSetup() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-stone-900 rounded-2xl shadow-2xl max-w-md w-full p-6"
+              className="bg-white rounded-2xl shadow-brand border border-brand-border max-w-md w-full p-6"
             >
               <div className="flex items-start gap-3">
                 {messageModal.type === "success" ? (
                   <CheckCircle className="w-6 h-6 text-emerald-500 shrink-0 mt-0.5" />
                 ) : (
-                  <ShieldAlert className="w-6 h-6 text-rose-500 shrink-0 mt-0.5" />
+                  <ShieldAlert className="w-6 h-6 text-brand-patina shrink-0 mt-0.5" />
                 )}
                 <p
-                  className={`text-sm leading-relaxed ${messageModal.type === "success" ? "text-stone-200" : "text-stone-300"}`}
+                  className={`text-sm leading-relaxed ${messageModal.type === "success" ? "text-brand-anthracite" : "text-brand-anthracite"}`}
                 >
                   {messageModal.text}
                 </p>
               </div>
               <button
                 onClick={() => setMessageModal(null)}
-                className="mt-4 w-full px-4 py-3 bg-stone-800 hover:bg-stone-700 text-white rounded-lg transition-colors"
+                className="mt-4 w-full px-4 py-3 btn-secondary rounded-lg transition-colors"
               >
                 OK
               </button>

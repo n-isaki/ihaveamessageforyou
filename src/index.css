@@ -1,20 +1,95 @@
 @import "tailwindcss";
 
+/* ========== Design System: Kamlimos Brand (Tailwind v4 @theme) ========== */
+@theme {
+  --color-brand-cream: #F6F5F2;
+  --color-brand-cream-tint: #F0EFEA;
+  --color-brand-anthracite: #2C2C2C;
+  --color-brand-anthracite-deep: #1A1A1A;
+  --color-brand-text: #4A4A4A;
+  --color-brand-patina: #4A707A;
+  --color-brand-patina-hover: #385860;
+  --color-brand-border: #E5E3DC;
+  --color-brand-input-border: #D8D6D0;
+  --color-brand-variant-border-hover: #C4C2BC;
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ========== Base ========== */
 @layer base {
   body {
-    @apply bg-stone-50 text-stone-900;
+    @apply bg-brand-cream text-brand-text font-sans antialiased;
+    line-height: 1.5;
+  }
+
+  /* H1 / Title – Playfair Display, Bold, Anthracite */
+  h1 {
+    @apply font-display font-bold text-brand-anthracite;
+  }
+
+  /* H2 – Playfair Display, Medium/SemiBold */
+  h2 {
+    @apply font-display font-semibold text-brand-anthracite;
+  }
+
+  /* H3 – Inter Bold */
+  h3 {
+    @apply font-sans font-bold text-brand-anthracite;
+  }
+
+  /* Body / Fließtext */
+  p {
+    @apply text-brand-text leading-[1.5];
+  }
+
+  /* Links */
+  a {
+    @apply text-brand-patina hover:text-brand-patina-hover transition-colors;
   }
 }
 
-/* Setup: eine lesbare Schrift, großzügige Größen */
-.font-setup {
-  font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-  font-size: 1rem;
-  line-height: 1.6;
-  letter-spacing: 0.01em;
+/* Section overline (UNSERE BESTSELLER) */
+.font-overline {
+  @apply font-sans font-semibold uppercase tracking-[0.1em] text-brand-patina;
 }
-.font-setup-heading {
-  font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+
+/* Quote / Testimonial – Playfair Italic */
+.font-quote {
+  @apply font-display italic text-brand-patina;
+}
+
+/* ========== Component classes (use in JSX) ========== */
+.btn-primary {
+  @apply bg-brand-patina text-white border-0 rounded-lg font-medium transition-colors;
+  @apply hover:bg-brand-patina-hover focus:outline-none focus:ring-2 focus:ring-brand-patina focus:ring-offset-2 focus:ring-offset-brand-cream;
+}
+
+.btn-secondary {
+  @apply bg-transparent text-brand-anthracite border border-brand-anthracite rounded-lg font-medium transition-colors;
+  @apply hover:bg-brand-cream-tint focus:outline-none focus:ring-2 focus:ring-brand-anthracite focus:ring-offset-2 focus:ring-offset-brand-cream;
+}
+
+.input-base {
+  @apply w-full bg-white text-brand-anthracite border border-brand-input-border rounded-lg;
+  @apply focus:outline-none focus:ring-2 focus:border-brand-patina focus:border-2;
+  @apply placeholder:text-brand-text/70;
+}
+
+.variant-option {
+  @apply bg-white text-brand-text border border-brand-border rounded-lg transition-colors;
+  @apply hover:bg-brand-cream-tint hover:text-brand-anthracite hover:border-brand-variant-border-hover;
+}
+
+.variant-option-selected {
+  @apply bg-brand-anthracite text-white border border-brand-anthracite rounded-lg transition-colors;
+  @apply hover:bg-brand-anthracite-deep hover:border-brand-anthracite-deep;
+}
+
+.card-border {
+  @apply border border-brand-border;
+}
+
+.shadow-brand {
+  box-shadow: 0 2px 12px rgba(44, 44, 44, 0.08);
 }

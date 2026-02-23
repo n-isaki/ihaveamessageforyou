@@ -30,20 +30,20 @@ export default function WizardMessageEditor({
   const theme = {
     bg: darkMode ? "bg-stone-900" : "bg-white",
     cardBg: darkMode ? "bg-stone-900/50" : "bg-white",
-    border: darkMode ? "border-stone-800" : "border-stone-200",
-    text: darkMode ? "text-stone-200" : "text-stone-800",
-    subText: darkMode ? "text-stone-500" : "text-stone-400",
+    border: darkMode ? "border-stone-800" : "border-brand-border",
+    text: darkMode ? "text-stone-200" : "text-brand-anthracite",
+    subText: darkMode ? "text-stone-500" : "text-brand-text",
     input: darkMode
       ? "bg-stone-950 border-stone-800 text-stone-200 focus:bg-stone-900"
-      : "bg-white border-stone-200 text-stone-700 focus:bg-white",
+      : "bg-white border-brand-input-border text-brand-anthracite placeholder:text-brand-text/60 focus:border-brand-patina focus:ring-2 focus:ring-brand-patina/20",
     btnSecondary: darkMode
       ? "bg-stone-800/80 text-stone-300 border-stone-700 hover:bg-stone-700 hover:text-white"
-      : "bg-stone-100 text-stone-700 border-stone-200 hover:bg-white hover:shadow-sm",
+      : "variant-option text-brand-text hover:text-brand-anthracite",
   };
 
   const styles = {
-    input: `w-full p-3 sm:p-4 rounded-xl border focus:ring-2 focus:ring-rose-500/30 focus:border-rose-500/40 outline-none transition-all resize-none text-base leading-relaxed ${theme.input} ${theme.border}`,
-    inputSm: `w-full p-2.5 rounded-lg border focus:ring-2 focus:ring-rose-500 focus:border-transparent outline-none transition-all text-base mb-2 leading-relaxed ${theme.input} ${theme.border}`,
+    input: `w-full p-3 sm:p-4 rounded-xl border outline-none transition-all resize-none text-base leading-relaxed ${theme.input} ${theme.border}`,
+    inputSm: `w-full p-2.5 rounded-lg border outline-none transition-all text-base mb-2 leading-relaxed ${theme.input} ${theme.border}`,
   };
 
   const iconOnlyMode = !widgetMode && darkMode;
@@ -71,7 +71,11 @@ export default function WizardMessageEditor({
                   key={type}
                   type="button"
                   onClick={() => handleAdd(type)}
-                  className="flex items-center justify-center w-11 h-11 rounded-xl border border-stone-700 bg-stone-800/80 text-stone-400 hover:bg-stone-700 hover:text-white hover:border-stone-600 transition-all touch-manipulation"
+                  className={
+                    darkMode
+                      ? "flex items-center justify-center w-11 h-11 rounded-xl border border-stone-700 bg-stone-800/80 text-stone-400 hover:bg-stone-700 hover:text-white hover:border-stone-600 transition-all touch-manipulation"
+                      : "flex items-center justify-center w-11 h-11 rounded-xl border border-brand-border bg-white text-brand-text hover:bg-brand-cream-tint hover:text-brand-anthracite hover:border-brand-variant-border-hover transition-all touch-manipulation"
+                  }
                   title={label + " hinzufügen"}
                   aria-label={label + " hinzufügen"}
                 >
@@ -84,7 +88,11 @@ export default function WizardMessageEditor({
               <button
                 type="button"
                 onClick={() => setAddMenuOpen((o) => !o)}
-                className="flex items-center justify-center w-11 h-11 rounded-xl border border-stone-600 bg-stone-800 text-rose-400/90 hover:bg-rose-500/20 hover:border-rose-500/40 hover:text-rose-400 transition-all touch-manipulation"
+                className={
+                  darkMode
+                    ? "flex items-center justify-center w-11 h-11 rounded-xl border border-stone-600 bg-stone-800 text-rose-400/90 hover:bg-rose-500/20 hover:border-rose-500/40 hover:text-rose-400 transition-all touch-manipulation"
+                    : "btn-primary flex items-center justify-center w-11 h-11 rounded-xl touch-manipulation"
+                }
                 title="Inhalt hinzufügen"
                 aria-label="Inhalt hinzufügen"
                 aria-expanded={addMenuOpen}
@@ -92,16 +100,26 @@ export default function WizardMessageEditor({
                 <Plus className="w-5 h-5" />
               </button>
               {addMenuOpen && (
-                <div className="absolute right-0 top-full mt-1.5 py-1.5 min-w-[160px] rounded-xl border border-stone-700 bg-stone-900 shadow-xl z-20">
+                <div
+                  className={
+                    darkMode
+                      ? "absolute right-0 top-full mt-1.5 py-1.5 min-w-[160px] rounded-xl border border-stone-700 bg-stone-900 shadow-xl z-20"
+                      : "absolute right-0 top-full mt-1.5 py-1.5 min-w-[160px] rounded-xl border border-brand-border bg-white shadow-brand z-20"
+                  }
+                >
                   {/* eslint-disable-next-line no-unused-vars -- Icon used in JSX below */}
                   {addOptions.map(({ type, label, Icon }) => (
                     <button
                       key={type}
                       type="button"
                       onClick={() => handleAdd(type)}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-left text-base text-stone-300 hover:bg-stone-800 hover:text-white transition-colors"
+                      className={
+                        darkMode
+                          ? "w-full flex items-center gap-3 px-4 py-3 text-left text-base text-stone-300 hover:bg-stone-800 hover:text-white transition-colors"
+                          : "w-full flex items-center gap-3 px-4 py-3 text-left text-base text-brand-text hover:bg-brand-cream-tint hover:text-brand-anthracite transition-colors"
+                      }
                     >
-                      <Icon className="w-4 h-4 text-stone-500" />
+                      <Icon className="w-4 h-4 text-brand-text" />
                       {label} hinzufügen
                     </button>
                   ))}
@@ -148,7 +166,7 @@ export default function WizardMessageEditor({
           >
             <button
               onClick={() => onRemove(msg.id)}
-              className="absolute top-3 right-3 p-1.5 text-stone-300 hover:text-red-400 opacity-100 transition-all z-10 hover:bg-red-500/10 rounded-lg"
+              className={`absolute top-3 right-3 p-1.5 opacity-100 transition-all z-10 hover:bg-red-500/10 rounded-lg ${darkMode ? "text-stone-300 hover:text-red-400" : "text-brand-text hover:text-red-500"}`}
               title="Löschen"
               aria-label="Löschen"
             >
@@ -158,12 +176,12 @@ export default function WizardMessageEditor({
             <div className="flex justify-between items-center mb-3">
               <span
                 className={`text-xs font-semibold uppercase tracking-wider px-2.5 py-1 rounded-lg ${msg.type === "video"
-                  ? "bg-red-500/10 text-red-400"
+                  ? "bg-red-500/10 text-red-500"
                   : msg.type === "image"
-                    ? "bg-blue-500/10 text-blue-400"
+                    ? "bg-blue-500/10 text-blue-500"
                     : darkMode
                       ? "bg-stone-800 text-stone-400"
-                      : "bg-stone-100 text-stone-600"
+                      : "variant-option-selected bg-brand-anthracite text-white"
                   }`}
               >
                 {msg.type === "video"

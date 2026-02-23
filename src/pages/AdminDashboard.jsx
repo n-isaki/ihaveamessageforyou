@@ -201,14 +201,14 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-stone-50">
-        <Loader className="h-8 w-8 animate-spin text-rose-600" />
+      <div className="min-h-screen flex items-center justify-center bg-brand-cream">
+        <Loader className="h-8 w-8 animate-spin text-brand-patina" />
       </div>
     );
   }
 
   return (
-    <div className="flex bg-stone-50 min-h-screen font-sans">
+    <div className="flex bg-brand-cream min-h-screen font-sans">
       <AdminSidebar
         activeView={viewMode}
         onViewChange={setViewMode}
@@ -230,15 +230,15 @@ export default function AdminDashboard() {
                   <div className="flex items-center gap-4">
                     <button
                       onClick={() => setSidebarOpen(true)}
-                      className="md:hidden p-2 -ml-2 text-stone-600 hover:bg-stone-200 rounded-lg"
+                      className="md:hidden p-2 -ml-2 text-brand-text hover:bg-brand-cream-tint rounded-lg"
                     >
                       <Menu className="h-6 w-6" />
                     </button>
                     <div className="flex-1">
-                      <h1 className="text-3xl font-bold text-stone-900">
+                      <h1 className="text-3xl font-display font-bold text-brand-anthracite">
                         Dashboard
                       </h1>
-                      <p className="text-stone-500 mt-1">
+                      <p className="text-brand-text mt-1">
                         Verwalte deine Connected Produkte
                       </p>
                     </div>
@@ -249,10 +249,10 @@ export default function AdminDashboard() {
                     {/* Bulk Select Toggle */}
                     <button
                       onClick={toggleSelectMode}
-                      className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                         isSelectMode
-                          ? "bg-rose-600 text-white"
-                          : "bg-stone-200 text-stone-700 hover:bg-stone-300"
+                          ? "btn-primary"
+                          : "btn-secondary"
                       }`}
                     >
                       {isSelectMode ? "Auswahl beenden" : "Auswählen"}
@@ -262,18 +262,18 @@ export default function AdminDashboard() {
                     {activeTab === "kamlimos" && (
                       <button
                         onClick={() => setShowEtsyModal(true)}
-                        className="inline-flex items-center px-4 py-2 border border-stone-200 rounded-xl shadow-sm text-sm font-medium text-stone-700 bg-white hover:bg-stone-50 transition-colors shrink-0"
+                        className="btn-secondary inline-flex items-center px-4 py-2 rounded-lg text-sm shrink-0"
                       >
-                        <ShoppingBag className="h-5 w-5 mr-2 text-rose-600" />
+                        <ShoppingBag className="h-5 w-5 mr-2 text-brand-patina" />
                         Etsy Simulieren
                       </button>
                     )}
                     {activeTab === "memoria" && (
                       <button
                         onClick={() => setShowMemoriaModal(true)}
-                        className="inline-flex items-center px-4 py-2 border border-stone-200 rounded-xl shadow-sm text-sm font-medium text-stone-700 bg-white hover:bg-stone-50 transition-colors shrink-0"
+                        className="btn-secondary inline-flex items-center px-4 py-2 rounded-lg text-sm shrink-0"
                       >
-                        <Heart className="h-5 w-5 mr-2 text-rose-600" />
+                        <Heart className="h-5 w-5 mr-2 text-brand-patina" />
                         Memoria Auftrag
                       </button>
                     )}
@@ -289,7 +289,7 @@ export default function AdminDashboard() {
                           ? "/admin/create?project=ritual"
                           : "/admin/create?project=tasse"
                       }
-                      className="inline-flex items-center px-4 py-2 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-stone-900 hover:bg-stone-800 transition-colors shrink-0"
+                      className="btn-primary inline-flex items-center px-4 py-2 rounded-lg text-sm shrink-0"
                     >
                       <Plus className="h-5 w-5 mr-2" />
                       Neuer Auftrag
@@ -298,7 +298,7 @@ export default function AdminDashboard() {
                 </div>
                 
                 {/* TABS */}
-                <div className="flex gap-1 border-b border-stone-200 overflow-x-auto">
+                <div className="flex gap-1 border-b border-brand-border overflow-x-auto">
                   {["kamlimos", "noor", "memoria", "ritual"].map((tab) => (
                     <button
                       key={tab}
@@ -309,8 +309,8 @@ export default function AdminDashboard() {
                       }}
                       className={`px-4 py-2 text-sm font-medium transition-all whitespace-nowrap capitalize border-b-2 ${
                         activeTab === tab
-                          ? "text-[#2C2C2C] border-[#2C2C2C]"
-                          : "text-stone-500 border-transparent hover:text-stone-700 hover:border-stone-300"
+                          ? "text-brand-anthracite border-brand-anthracite"
+                          : "text-brand-text border-transparent hover:text-brand-anthracite hover:border-brand-border"
                       }`}
                     >
                       {tab === "kamlimos"
@@ -326,26 +326,26 @@ export default function AdminDashboard() {
               {/* Search Input */}
               <div className="max-w-6xl mx-auto mb-6">
                 <div className="relative">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-stone-400" />
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-brand-text/70" />
                   <input
                     type="text"
                     placeholder="Suche nach Name, Email, Bestellnummer, ID..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-12 pr-12 py-3 border border-stone-200 rounded-xl bg-white text-stone-900 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all"
+                    className="input-base w-full pl-12 pr-12 py-3 rounded-xl"
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery("")}
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 hover:bg-stone-100 rounded-lg transition-colors"
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 p-1 hover:bg-brand-cream-tint rounded-lg transition-colors"
                       title="Suche löschen"
                     >
-                      <X className="h-4 w-4 text-stone-400" />
+                      <X className="h-4 w-4 text-brand-text/70" />
                     </button>
                   )}
                 </div>
                 {searchQuery && (
-                  <p className="mt-2 text-sm text-stone-500">
+                  <p className="mt-2 text-sm text-brand-text">
                     {filteredGifts.length}{" "}
                     {filteredGifts.length === 1 ? "Ergebnis" : "Ergebnisse"}{" "}
                     gefunden
@@ -358,9 +358,9 @@ export default function AdminDashboard() {
 
                 {/* Bulk Actions Toolbar */}
                 {isSelectMode && selectedGifts.size > 0 && (
-                  <div className="mb-4 p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-center justify-between">
+                  <div className="mb-4 p-4 bg-brand-patina/10 border border-brand-patina/30 rounded-xl flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <span className="text-sm font-medium text-rose-900">
+                      <span className="text-sm font-medium text-brand-anthracite">
                         {selectedGifts.size}{" "}
                         {selectedGifts.size === 1 ? "Item" : "Items"} ausgewählt
                       </span>
@@ -370,7 +370,7 @@ export default function AdminDashboard() {
                             ? deselectAll
                             : selectAll
                         }
-                        className="text-sm text-rose-700 hover:text-rose-900 underline"
+                        className="text-sm text-brand-patina hover:text-brand-patina-hover underline"
                       >
                         {selectedGifts.size === filteredGifts.length
                           ? "Alle abwählen"

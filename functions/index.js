@@ -151,6 +151,9 @@ exports.verifyGiftPin = onCall({ cors: true }, async (request) => {
     }
 
     const giftData = giftDoc.data();
+    // Fakten-Log: Was steht in Firestore für dieses Geschenk?
+    const messagesInDoc = giftData.messages;
+    console.log("[verifyGiftPin] giftId=" + giftId + " | messages in doc: isArray=" + Array.isArray(messagesInDoc) + " count=" + (Array.isArray(messagesInDoc) ? messagesInDoc.length : (messagesInDoc ? "n/a" : "undefined")));
 
     // ============================================
     // TIME CAPSULE CHECK
@@ -194,42 +197,47 @@ exports.verifyGiftPin = onCall({ cors: true }, async (request) => {
     }
 
     if (match) {
-      // Return full gift data on success, BUT SANITIZED
-      // Remove sensitive fields so they don't leak to client memory
-      const safeGiftData = { ...giftData, id: giftDoc.id };
-      delete safeGiftData.accessCode;
-      delete safeGiftData.accessCodeHash;
-      delete safeGiftData.securityToken; // Also hide token if not needed
+      // Return full gift data: build plain object so callable response serializes reliably (messages, albumImages)
+      const toMillis = (v) =>
+        v && typeof v.toMillis === "function" ? v.toMillis() : (v ? new Date(v).getTime() : undefined);
 
-      // CONVERT TIMESTAMP TO MILLIS
-      if (
-        safeGiftData.unlockDate &&
-        typeof safeGiftData.unlockDate.toMillis === "function"
-      ) {
-        safeGiftData.unlockDate = safeGiftData.unlockDate.toMillis();
-      } else if (safeGiftData.unlockDate) {
-        safeGiftData.unlockDate = new Date(safeGiftData.unlockDate).getTime();
-      }
+      const safeGiftData = {
+        id: giftDoc.id,
+        project: giftData.project,
+        productType: giftData.productType,
+        headline: giftData.headline,
+        subheadline: giftData.subheadline,
+        messages: Array.isArray(giftData.messages) ? giftData.messages.map((m) => ({ ...m })) : [],
+        albumImages: Array.isArray(giftData.albumImages) ? [...giftData.albumImages] : [],
+        locked: giftData.locked,
+        viewed: giftData.viewed,
+        openingAnimation: giftData.openingAnimation,
+        unlockDate: giftData.unlockDate ? toMillis(giftData.unlockDate) : undefined,
+        engravingText: giftData.engravingText,
+        meaningText: giftData.meaningText,
+      };
 
-      // [NEW] Social Gifting: Fetch contributions for the viewer
-      // Since the gift is locked, the frontend cannot query the sub-collection directly (rules block it).
-      // We fetch them here securely with Admin privileges.
+      // Social Gifting: contributions for viewer
       try {
         const contribsRef = db.collection("gift_orders").doc(giftId).collection("contributions");
-        // Order by timestamp asc
         const contribsSnapshot = await contribsRef.orderBy("timestamp", "asc").get();
-        const contributions = contribsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          // Convert timestamp if needed, but client usually handles ISO/Millis mix
-        }));
+        const contributions = contribsSnapshot.docs.map((doc) => {
+          const d = doc.data();
+          return {
+            id: doc.id,
+            type: d.type,
+            content: d.content,
+            author: d.author,
+            timestamp: d.timestamp && typeof d.timestamp.toMillis === "function" ? d.timestamp.toMillis() : d.timestamp,
+          };
+        });
         safeGiftData.contributions = contributions;
       } catch (err) {
         console.error("Error fetching contributions in verifyGiftPin:", err);
-        // Don't fail the whole PIN check just because contributions failed, but log it
         safeGiftData.contributions = [];
       }
 
+      console.log("[verifyGiftPin] returning giftData with messages count=" + (safeGiftData.messages ? safeGiftData.messages.length : 0));
       return { match: true, giftData: safeGiftData };
     } else {
       // Invalid PIN

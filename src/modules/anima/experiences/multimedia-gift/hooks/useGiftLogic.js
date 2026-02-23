@@ -232,6 +232,8 @@ export function useGiftLogic(id, initialData) {
                 resetRateLimit(`pin_${id}`);
                 setUnlocked(true);
                 if (fullGiftData) {
+                    // Fakten-Log: Was kommt nach PIN vom Server an?
+                    console.log("[useGiftLogic] after PIN: giftData.messages count=" + (fullGiftData.messages ? fullGiftData.messages.length : "undefined"));
                     // [NEW] Social Gifting: Merge server-side fetched contributions
                     if (fullGiftData.contributions && fullGiftData.contributions.length > 0) {
                         const socialMessages = fullGiftData.contributions.map(c => ({

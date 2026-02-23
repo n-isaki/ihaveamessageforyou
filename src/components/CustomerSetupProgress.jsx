@@ -45,7 +45,7 @@ export default function CustomerSetupProgress({
   };
 
   return (
-    <div className="bg-stone-900/30 backdrop-blur-sm rounded-lg p-2 sm:p-3 border border-stone-800/30 mb-3 sm:mb-4">
+    <div className="bg-white rounded-lg p-2 sm:p-3 border border-brand-border shadow-brand mb-3 sm:mb-4">
       {/* Fortschritt: nur Schritt-Namen, ohne Progressbalken */}
       <div className="flex justify-between gap-1">
         {steps.map((step) => {
@@ -59,10 +59,10 @@ export default function CustomerSetupProgress({
               disabled={isLocked}
               className={`
                 relative px-1 py-1 rounded text-[10px] sm:text-xs transition-all duration-200
-                ${status === 'completed' ? 'text-emerald-400 font-medium' : ''}
-                ${status === 'active' ? 'text-rose-400 font-semibold' : ''}
-                ${status === 'pending' ? 'text-stone-500' : ''}
-                ${!isLocked && status !== 'completed' ? 'hover:text-stone-300 cursor-pointer' : ''}
+                ${status === 'completed' ? 'text-emerald-500 font-medium' : ''}
+                ${status === 'active' ? 'text-brand-patina font-semibold' : ''}
+                ${status === 'pending' ? 'text-brand-text' : ''}
+                ${!isLocked && status !== 'completed' ? 'hover:text-brand-anthracite cursor-pointer' : ''}
                 ${isLocked ? 'cursor-not-allowed opacity-50' : ''}
               `}
             >

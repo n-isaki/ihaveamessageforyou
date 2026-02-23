@@ -75,6 +75,7 @@ service cloud.firestore {
                       && hasValidTokenInUpdate()
                       && onlyAllowedFields(['messages', 'headline', 'subheadline', 'albumImages', 'locked', 
                                             'setupCompletedAt', 'setupStarted', 'setupStartedAt',
+                                            'recipientName', 'senderName',
                                             'deceasedName', 'lifeDates', 'meaningText',
                                             'engravingText', 'meaningText', 'designImage', 'accessCode', 'accessCodeHash', 'securityToken', 'updatedAt', 'allowContributions', 'isPublic']))
                   || (!isLocked() 

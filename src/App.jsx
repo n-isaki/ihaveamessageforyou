@@ -24,8 +24,8 @@ const UniversalViewer = lazy(() =>
 
 // Loading component
 const PageLoader = () => (
-  <div className="min-h-screen bg-stone-950 flex items-center justify-center">
-    <Loader className="animate-spin text-rose-500 h-8 w-8" />
+  <div className="min-h-screen bg-brand-cream flex items-center justify-center">
+    <Loader className="animate-spin text-brand-patina h-8 w-8" />
   </div>
 );
 

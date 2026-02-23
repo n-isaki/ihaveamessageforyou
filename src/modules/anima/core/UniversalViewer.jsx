@@ -39,22 +39,22 @@ export default function UniversalViewer() {
     };
 
     if (loading) return (
-        <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+        <div className="min-h-screen bg-stone-950 flex items-center justify-center">
             <Loader className="h-8 w-8 animate-spin text-stone-400" />
         </div>
     );
 
     if (error) return (
-        <div className="min-h-screen bg-stone-50 flex items-center justify-center text-stone-500">
+        <div className="min-h-screen bg-stone-950 flex items-center justify-center text-stone-300">
             {error}
         </div>
     );
 
     // Note: Using an IIFE or separate component renders cleaner with Suspense than multiple return statements outside
-    // Provide a Suspense fallback specifically for the experience loading
+    // Generierte Geschenk-Seiten: Dark Mode (Viewer/Erlebnis bleibt dunkel)
     return (
         <Suspense fallback={
-            <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+            <div className="min-h-screen bg-stone-950 flex items-center justify-center">
                 <Loader className="h-8 w-8 animate-spin text-stone-400" />
             </div>
         }>
