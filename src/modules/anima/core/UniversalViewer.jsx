@@ -15,10 +15,6 @@ export default function UniversalViewer() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    useEffect(() => {
-        loadGift();
-    }, [id, loadGift]);
-
     const loadGift = useCallback(async () => {
         try {
             const data = await getGiftById(id);
@@ -37,6 +33,10 @@ export default function UniversalViewer() {
             setLoading(false);
         }
     }, [id]);
+
+    useEffect(() => {
+        loadGift();
+    }, [id, loadGift]);
 
     if (loading) return (
         <div className="min-h-screen bg-stone-950 flex items-center justify-center">
