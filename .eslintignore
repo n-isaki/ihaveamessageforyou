@@ -1,0 +1,15 @@
+shopify-theme/
+functions/
+karakedimartin/
+node_modules/
+dist/
+build/
+coverage/
+*.config.js
+tailwind.config.js
+vite.config.js
+vite.widget.config.js
+src/**/*.test.*
+src/**/*.spec.*
+src/__mocks__/
+src/setupTests.js

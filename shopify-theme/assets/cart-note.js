@@ -33,7 +33,8 @@ class CartNote extends Component {
         ...config,
         signal: abortController.signal,
       });
-    } catch (error) {
+    } catch {
+      // Handle error silently
     } finally {
       this.#activeFetch = null;
       cartPerformance.measureFromEvent('note-update:user-action', event);

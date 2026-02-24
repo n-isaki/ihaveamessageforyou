@@ -8,7 +8,7 @@
     "build": "vite build",
     "build:widget": "vite build --config vite.widget.config.js",
     "build:all": "npm run build && npm run build:widget",
-    "lint": "eslint .",
+    "lint": "eslint src --ext .js,.jsx --ignore-pattern 'src/**/*.test.*' --ignore-pattern 'src/**/*.spec.*' --ignore-pattern 'src/__mocks__/**' --ignore-pattern 'src/setupTests.js'",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
