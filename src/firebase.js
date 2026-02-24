@@ -3,15 +3,15 @@ import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
 
-// Firebase configuration - use environment variables with fallbacks
+// Firebase configuration - hardcoded for production (working solution)
 const firebaseConfig = {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDummyKeyForDevelopment",
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "gift-shop-app-7bbd3.firebaseapp.com",
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "gift-shop-app-7bbd3",
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "gift-shop-app-7bbd3.appspot.com",
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789",
-    appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:123456789:web:abcdef",
-    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-XXXXXXXX"
+    apiKey: "AIzaSyBKV6i9arcfVB8pXNLxSiCD2zkCIfIo35A",
+    authDomain: "gift-shop-app-7bbd3.firebaseapp.com",
+    projectId: "gift-shop-app-7bbd3",
+    storageBucket: "gift-shop-app-7bbd3.firebasestorage.app",
+    messagingSenderId: "140642404762",
+    appId: "1:140642404762:web:b5470e822a35f2f6641223",
+    measurementId: "G-E9JRG0053T"
 };
 
 import { getStorage } from "firebase/storage";
