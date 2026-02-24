@@ -3,34 +3,15 @@ import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
 
-// Helper function to safely get environment variables
-const getEnvVar = (importMetaKey, processKey, fallback) => {
-  // Try Vite environment first
-  if (import.meta.env && import.meta.env[importMetaKey]) {
-    return import.meta.env[importMetaKey];
-  }
-  
-  // Try build-time injected config
-  if (typeof __FIREBASE_CONFIG__ !== 'undefined' && __FIREBASE_CONFIG__) {
-    try {
-      const firebaseConfig = JSON.parse(__FIREBASE_CONFIG__);
-      return firebaseConfig[processKey] || fallback;
-    } catch (e) {
-      console.warn('Failed to parse __FIREBASE_CONFIG__:', e);
-    }
-  }
-  
-  return fallback;
-};
-
+// Firebase configuration - use environment variables with fallbacks
 const firebaseConfig = {
-    apiKey: getEnvVar('VITE_FIREBASE_API_KEY', 'apiKey', "AIzaSyDummyKeyForDevelopment"),
-    authDomain: getEnvVar('VITE_FIREBASE_AUTH_DOMAIN', 'authDomain', "gift-shop-app-7bbd3.firebaseapp.com"),
-    projectId: getEnvVar('VITE_FIREBASE_PROJECT_ID', 'projectId', "gift-shop-app-7bbd3"),
-    storageBucket: getEnvVar('VITE_FIREBASE_STORAGE_BUCKET', 'storageBucket', "gift-shop-app-7bbd3.appspot.com"),
-    messagingSenderId: getEnvVar('VITE_FIREBASE_MESSAGING_SENDER_ID', 'messagingSenderId', "123456789"),
-    appId: getEnvVar('VITE_FIREBASE_APP_ID', 'appId', "1:123456789:web:abcdef"),
-    measurementId: getEnvVar('VITE_FIREBASE_MEASUREMENT_ID', 'measurementId', "G-XXXXXXXX")
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDummyKeyForDevelopment",
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "gift-shop-app-7bbd3.firebaseapp.com",
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "gift-shop-app-7bbd3",
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "gift-shop-app-7bbd3.appspot.com",
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789",
+    appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:123456789:web:abcdef",
+    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-XXXXXXXX"
 };
 
 import { getStorage } from "firebase/storage";

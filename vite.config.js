@@ -3,28 +3,7 @@ import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [
-    react(),
-    {
-      name: 'firebase-config',
-      generateBundle(options, bundle) {
-        this.emitFile({
-          type: 'asset',
-          fileName: 'firebase-config.js',
-          source: `
-// This file is generated during build
-// DO NOT EDIT MANUALLY
-
-(function() {
-  if (typeof window !== 'undefined') {
-    window.FIREBASE_CONFIG = '${process.env.FIREBASE_CONFIG || ''}';
-  }
-})();
-          `
-        });
-      }
-    }
-  ],
+  plugins: [react()],
   resolve: {
     alias: {
       '@': '/src',
@@ -81,8 +60,5 @@ export default defineConfig({
       }
     },
     chunkSizeWarningLimit: 1000 // Increase warning limit to reduce noise
-  },
-  define: {
-    __FIREBASE_CONFIG__: JSON.stringify(process.env.FIREBASE_CONFIG || '{}')
   }
 })
