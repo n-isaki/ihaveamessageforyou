@@ -56,8 +56,6 @@ jobs:
           echo "FIREBASE_CONFIG=${{ secrets.FIREBASE_CONFIG }}" >> $GITHUB_ENV
       
       - name: Build and Deploy to Staging
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
         run: |
           npm run build:all
           firebase deploy --only firestore:rules,storage,hosting --project gift-shop-app-7bbd3 --non-interactive
@@ -88,8 +86,6 @@ jobs:
           echo "FIREBASE_CONFIG=${{ secrets.FIREBASE_CONFIG }}" >> $GITHUB_ENV
       
       - name: Build and Deploy to Production
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
         run: |
           npm run build:all
           firebase deploy --only firestore:rules,storage,hosting --project gift-shop-app-7bbd3 --non-interactive
