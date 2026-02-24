@@ -29,7 +29,7 @@ class CartNote extends Component {
         body: JSON.stringify({ note }),
       });
 
-      await fetch(Theme.routes.cart_update_url, {
+      await fetch(window.Theme.routes.cart_update_url, {
         ...config,
         signal: abortController.signal,
       });

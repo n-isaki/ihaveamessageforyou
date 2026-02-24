@@ -67,7 +67,7 @@ class CartDiscount extends Component {
         }),
       });
 
-      const response = await fetch(Theme.routes.cart_update_url, {
+      const response = await fetch(window.Theme.routes.cart_update_url, {
         ...config,
         signal: abortController.signal,
       });
@@ -110,7 +110,8 @@ class CartDiscount extends Component {
 
       document.dispatchEvent(new DiscountUpdateEvent(data, this.id));
       morphSection(this.dataset.sectionId, newHtml);
-    } catch (error) {
+    } catch {
+      // Handle error silently
     } finally {
       this.#activeFetch = null;
       cartPerformance.measureFromEvent('discount-update:user-action', event);
@@ -153,7 +154,7 @@ class CartDiscount extends Component {
         body: JSON.stringify({ discount: existingDiscounts.join(','), sections: [this.dataset.sectionId] }),
       });
 
-      const response = await fetch(Theme.routes.cart_update_url, {
+      const response = await fetch(window.Theme.routes.cart_update_url, {
         ...config,
         signal: abortController.signal,
       });
@@ -162,7 +163,8 @@ class CartDiscount extends Component {
 
       document.dispatchEvent(new DiscountUpdateEvent(data, this.id));
       morphSection(this.dataset.sectionId, data.sections[this.dataset.sectionId]);
-    } catch (error) {
+    } catch {
+      // Handle error silently
     } finally {
       this.#activeFetch = null;
     }

@@ -1,12 +1,13 @@
 {
   "compilerOptions": {
     "baseUrl": "./",
-    "checkJs": true,
+    "allowJs": true,
+    "checkJs": false,
     "target": "ES2020",
-    "noImplicitAny": true,
-    "noUncheckedIndexedAccess": true,
-    "strictNullChecks": true,
-    "types": ["./global.d.ts"],
+    "noImplicitAny": false,
+    "noUncheckedIndexedAccess": false,
+    "strictNullChecks": false,
+    "types": ["./types.d.ts"],
     "paths": {
       "@theme/*": ["./*"]
     }

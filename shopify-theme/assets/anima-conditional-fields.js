@@ -404,7 +404,7 @@
     // Auch nach AJAX-Updates (falls Shopify das Theme dynamisch lädt)
     // Aber nur wenn noch nicht initialisiert
     let isInitialized = false;
-    const observer = new MutationObserver(function(mutations) {
+    const observer = new MutationObserver(function() {
         // Prüfe nur alle 500ms, nicht bei jeder Mutation
         if (isInitialized) return;
         

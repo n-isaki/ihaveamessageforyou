@@ -123,7 +123,7 @@ class CartIcon extends Component {
           this.renderCartBubble(count, false, false);
         }
       }
-    } catch (_) {
+    } catch {
       // no-op
     }
   };
