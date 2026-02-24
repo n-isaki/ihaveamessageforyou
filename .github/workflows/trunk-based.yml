@@ -56,6 +56,8 @@ jobs:
           echo "FIREBASE_CONFIG=${{ secrets.FIREBASE_CONFIG }}" >> $GITHUB_ENV
       
       - name: Build and Deploy to Staging
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: $HOME/firebase-key.json
         run: |
           npm run build:all
           firebase deploy --only firestore:rules,storage,hosting --project gift-shop-app-7bbd3 --non-interactive
@@ -86,6 +88,8 @@ jobs:
           echo "FIREBASE_CONFIG=${{ secrets.FIREBASE_CONFIG }}" >> $GITHUB_ENV
       
       - name: Build and Deploy to Production
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: $HOME/firebase-key.json
         run: |
           npm run build:all
           firebase deploy --only firestore:rules,storage,hosting --project gift-shop-app-7bbd3 --non-interactive
