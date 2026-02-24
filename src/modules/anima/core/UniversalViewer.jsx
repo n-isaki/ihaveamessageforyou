@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useEffect, Suspense, lazy, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { getGiftById, markGiftAsViewed } from '@/services/gifts';
 import { Loader } from 'lucide-react';
@@ -17,9 +17,9 @@ export default function UniversalViewer() {
 
     useEffect(() => {
         loadGift();
-    }, [id]);
+    }, [id, loadGift]);
 
-    const loadGift = async () => {
+    const loadGift = useCallback(async () => {
         try {
             const data = await getGiftById(id);
             if (!data) {
@@ -36,7 +36,7 @@ export default function UniversalViewer() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id]);
 
     if (loading) return (
         <div className="min-h-screen bg-stone-950 flex items-center justify-center">

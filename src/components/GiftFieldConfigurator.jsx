@@ -37,7 +37,7 @@ export default function GiftFieldConfigurator({ giftId, onClose }) {
     
     // Load all saved configs
     setSavedConfigs(getAllGiftConfigs());
-  }, [giftId]);
+  }, [giftId, projectType]);
 
   const toggleField = (category, field) => {
     const newConfig = { ...fieldConfig };

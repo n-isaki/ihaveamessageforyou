@@ -124,8 +124,10 @@ export default function NoorViewer({ gift: giftProp }) {
 
     // Cleanup
     return () => {
-      if (recitationRef.current) recitationRef.current.pause();
-      if (meaningRef.current) meaningRef.current.pause();
+      const currentRecitation = recitationRef.current;
+      const currentMeaning = meaningRef.current;
+      if (currentRecitation) currentRecitation.pause();
+      if (currentMeaning) currentMeaning.pause();
     };
   }, [id, giftProp]);
 
