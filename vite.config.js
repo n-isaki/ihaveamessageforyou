@@ -37,7 +37,7 @@ export default defineConfig({
           'wizard-core': [
             './src/modules/anima/experiences/multimedia-gift/pages/Wizard.jsx',
             './src/modules/anima/experiences/multimedia-gift/hooks/useGiftLogic.js',
-            './src/modules/anima/experiences/multimedia-gift/pages/WizardMessageEditor.jsx'
+            './src/modules/anima/experiences/multimedia-gift/components/WizardMessageEditor.jsx'
           ],
           
           'customer-setup': [

@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Settings, Save, Download, Upload, Trash2, Eye, EyeOff } from 'lucide-react';
 import { FIELD_CONFIG, isFieldEnabled, isFieldRequired } from '../config/customerSetupFields';
-import { 
-  saveGiftFieldConfig, 
-  getGiftFieldConfig, 
-  deleteGiftFieldConfig, 
-  getAllGiftConfigs 
-} from '../config/giftFieldConfigurations';
+
+// Temporarily implement these functions until the config file is created
+const saveGiftFieldConfig = () => {};
+const getGiftFieldConfig = () => null;
+const deleteGiftFieldConfig = () => {};
+const getAllGiftConfigs = () => ({});
 
 export default function GiftFieldConfigurator({ giftId, onClose }) {
   const [projectType, setProjectType] = useState('mug');
