@@ -3,15 +3,17 @@ import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
 
-// Firebase configuration - hardcoded for production (working solution)
+// Firebase config from env (no key in repo). Set in .env.local and in GitHub Secrets for CI.
+// In Google Cloud Console: restrict this API key (HTTP referrers + API restrictions) to limit abuse.
+const env = typeof import.meta !== "undefined" && import.meta.env ? import.meta.env : {};
 const firebaseConfig = {
-    apiKey: "AIzaSyBKV6i9arcfVB8pXNLxSiCD2zkCIfIo35A",
-    authDomain: "gift-shop-app-7bbd3.firebaseapp.com",
-    projectId: "gift-shop-app-7bbd3",
-    storageBucket: "gift-shop-app-7bbd3.firebasestorage.app",
-    messagingSenderId: "140642404762",
-    appId: "1:140642404762:web:b5470e822a35f2f6641223",
-    measurementId: "G-E9JRG0053T"
+    apiKey: env.VITE_FIREBASE_API_KEY,
+    authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || "gift-shop-app-7bbd3.firebaseapp.com",
+    projectId: env.VITE_FIREBASE_PROJECT_ID || "gift-shop-app-7bbd3",
+    storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || "gift-shop-app-7bbd3.firebasestorage.app",
+    messagingSenderId: env.VITE_FIREBASE_MESSAGING_SENDER_ID || "140642404762",
+    appId: env.VITE_FIREBASE_APP_ID || "1:140642404762:web:b5470e822a35f2f6641223",
+    measurementId: env.VITE_FIREBASE_MEASUREMENT_ID || "G-E9JRG0053T"
 };
 
 import { getStorage } from "firebase/storage";

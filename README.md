@@ -7,7 +7,10 @@ Staging (Branch `dev`) und Production (Branch `main`) werden per GitHub Actions 
 1. Lokal: `npx firebase login:ci` ausführen, im Browser anmelden.
 2. Den ausgegebenen Token in GitHub eintragen: **Repo → Settings → Secrets and variables → Actions → New repository secret** → Name: `FIREBASE_TOKEN`, Value: (Token einfügen).
 
-Danach bei Push auf `dev` bzw. `main` Deploy auslösen. Die App nutzt die hardcodierte Firebase-Config in `src/firebase.js` (kein Dummy-Key in Production).
+Danach bei Push auf `dev` bzw. `main` Deploy auslösen.
+
+**Firebase-Config:** Kommt aus Umgebungsvariablen (`VITE_FIREBASE_*`). Lokal: `.env` oder `.env.local` (siehe `.env.example`). In CI werden die Werte aus GitHub Actions Secrets gelesen – dort `VITE_FIREBASE_API_KEY` usw. mit den echten Werten aus der Firebase Console setzen (keine Dummy-Keys).  
+**API-Key absichern:** In der [Google Cloud Console](https://console.cloud.google.com/apis/credentials?project=gift-shop-app-7bbd3) den Web-API-Key einschränken: „Anwendungseinschränkungen“ → „HTTP-Verweise“ (nur eure Domains, z. B. `*.web.app`, `*.firebaseapp.com`, Custom Domain) und „API-Einschränkungen“ auf die benötigten Firebase-APIs setzen. Dann ist der Key auch bei Nutzung im Frontend besser geschützt.
 
 ---
 
