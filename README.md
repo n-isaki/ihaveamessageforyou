@@ -2,12 +2,12 @@
 
 ## Deploy (GitHub Actions)
 
-Staging (Branch `dev`) und Production (Branch `main`) werden per GitHub Actions gebaut und nach Firebase Hosting deployed. Dafür muss einmalig ein **Firebase CI Token** gesetzt werden:
+Staging (Branch `dev`) und Production (Branch `main`) werden per GitHub Actions gebaut und nach Firebase Hosting deployed. Dafür wird ein **Service-Account-Key** als Secret gesetzt:
 
-1. Lokal: `npx firebase login:ci` ausführen, im Browser anmelden.
-2. Den ausgegebenen Token in GitHub eintragen: **Repo → Settings → Secrets and variables → Actions → New repository secret** → Name: `FIREBASE_TOKEN`, Value: (Token einfügen).
+1. Firebase Console → Projekteinstellungen → **Dienstkonten** → „Neuen privaten Schlüssel generieren“ → JSON herunterladen.
+2. In GitHub: **Repo → Settings → Secrets and variables → Actions → New repository secret** → Name: `FIREBASE_SERVICE_ACCOUNT`, Value: **kompletter Inhalt** der JSON-Datei (einzeilig oder mit Zeilenumbrüchen, egal).
 
-Danach bei Push auf `dev` bzw. `main` Deploy auslösen.
+Danach bei Push auf `dev` bzw. `main` Deploy auslösen (Firebase CLI nutzt `GOOGLE_APPLICATION_CREDENTIALS`).
 
 **Firebase-Config:** Kommt aus Umgebungsvariablen (`VITE_FIREBASE_*`). Lokal: `.env` oder `.env.local` (siehe `.env.example`). In CI werden die Werte aus GitHub Actions Secrets gelesen – dort `VITE_FIREBASE_API_KEY` usw. mit den echten Werten aus der Firebase Console setzen (keine Dummy-Keys).  
 **API-Key absichern:** In der [Google Cloud Console](https://console.cloud.google.com/apis/credentials?project=gift-shop-app-7bbd3) den Web-API-Key einschränken: „Anwendungseinschränkungen“ → „HTTP-Verweise“ (nur eure Domains, z. B. `*.web.app`, `*.firebaseapp.com`, Custom Domain) und „API-Einschränkungen“ auf die benötigten Firebase-APIs setzen. Dann ist der Key auch bei Nutzung im Frontend besser geschützt.

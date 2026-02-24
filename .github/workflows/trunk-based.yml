@@ -49,7 +49,7 @@ jobs:
       - name: Setup Firebase CLI
         run: npm install -g firebase-tools
       
-      - name: Set build env (VITE_* from secrets for optional use; app uses hardcoded firebase config)
+      - name: Set build env (VITE_* from secrets)
         run: |
           echo "VITE_FIREBASE_API_KEY=${{ secrets.VITE_FIREBASE_API_KEY }}" >> $GITHUB_ENV
           echo "VITE_FIREBASE_AUTH_DOMAIN=${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}" >> $GITHUB_ENV
@@ -59,9 +59,12 @@ jobs:
           echo "VITE_FIREBASE_APP_ID=${{ secrets.VITE_FIREBASE_APP_ID }}" >> $GITHUB_ENV
           echo "VITE_FIREBASE_MEASUREMENT_ID=${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}" >> $GITHUB_ENV
       
+      - name: Authenticate with Firebase (service account)
+        run: |
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "$RUNNER_TEMP/firebase-key.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-key.json" >> $GITHUB_ENV
+      
       - name: Build and Deploy to Staging
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
         run: |
           npm run build:all
           firebase deploy --only firestore:rules,storage,hosting --project gift-shop-app-7bbd3 --non-interactive
@@ -85,7 +88,7 @@ jobs:
       - name: Setup Firebase CLI
         run: npm install -g firebase-tools
       
-      - name: Set build env (VITE_* from secrets for optional use; app uses hardcoded firebase config)
+      - name: Set build env (VITE_* from secrets)
         run: |
           echo "VITE_FIREBASE_API_KEY=${{ secrets.VITE_FIREBASE_API_KEY }}" >> $GITHUB_ENV
           echo "VITE_FIREBASE_AUTH_DOMAIN=${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}" >> $GITHUB_ENV
@@ -95,9 +98,12 @@ jobs:
           echo "VITE_FIREBASE_APP_ID=${{ secrets.VITE_FIREBASE_APP_ID }}" >> $GITHUB_ENV
           echo "VITE_FIREBASE_MEASUREMENT_ID=${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}" >> $GITHUB_ENV
       
+      - name: Authenticate with Firebase (service account)
+        run: |
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "$RUNNER_TEMP/firebase-key.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-key.json" >> $GITHUB_ENV
+      
       - name: Build and Deploy to Production
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
         run: |
           npm run build:all
           firebase deploy --only firestore:rules,storage,hosting --project gift-shop-app-7bbd3 --non-interactive
