@@ -1,16 +1,23 @@
 import {
   collection,
-  addDoc,
-  getDocs,
   doc,
   getDoc,
+  getDocs,
+  setDoc,
   updateDoc,
   deleteDoc,
-  serverTimestamp,
+  addDoc,
   query,
   orderBy,
+  limit,
+  where,
+  serverTimestamp,
+  arrayUnion,
+  arrayRemove,
+  onSnapshot,
 } from "firebase/firestore";
 import { ref, deleteObject } from "firebase/storage";
+import { httpsCallable, getFunctions } from "firebase/functions";
 import { db, storage, auth } from "../firebase";
 import { getExperience } from "../modules/registry";
 import { hashPin } from "./pinSecurity";
@@ -352,7 +359,6 @@ export const getGiftById = async (id, retries = 3) => {
  * Nutzen wenn Kunde Link mit Token öffnet (/setup/:id?token=xxx oder /setup/:id/:token).
  */
 export const getGiftBySetupToken = async (giftId, token) => {
-  const { httpsCallable, getFunctions } = await import("firebase/functions");
   const functions = getFunctions();
   const fn = httpsCallable(functions, "getGiftBySetupToken");
   const result = await fn({ giftId, token });
@@ -365,7 +371,6 @@ export const getGiftBySetupToken = async (giftId, token) => {
 
 export const getGiftByContributionToken = async (token) => {
   // Use Cloud Function for secure lookup (Project: ihmfy)
-  const { httpsCallable, getFunctions } = await import("firebase/functions");
   const functions = getFunctions();
   const getGift = httpsCallable(functions, "getGiftByContributionToken");
 

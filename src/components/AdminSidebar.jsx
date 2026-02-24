@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { LayoutGrid, Kanban, Plus, ChevronDown, ChevronRight, Package, Watch, Heart, Zap, Coffee, ChevronsLeft, ChevronsRight, LogOut, X, Store } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { signOut } from 'firebase/auth';
+import { auth } from '../firebase';
 
 export default function AdminSidebar({ activeView, onViewChange, onRefresh, isOpen, onClose }) {
     const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -194,8 +196,6 @@ export default function AdminSidebar({ activeView, onViewChange, onRefresh, isOp
                     <button
                         onClick={async () => {
                             try {
-                                const { signOut } = await import('firebase/auth');
-                                const { auth } = await import('../firebase');
                                 await signOut(auth);
                                 window.location.reload();
                             } catch (e) {
