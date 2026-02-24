@@ -3,14 +3,34 @@ import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
 
+// Helper function to safely get environment variables
+const getEnvVar = (importMetaKey, processKey, fallback) => {
+  // Try Vite environment first
+  if (import.meta.env && import.meta.env[importMetaKey]) {
+    return import.meta.env[importMetaKey];
+  }
+  
+  // Try Node.js environment (for CI/CD)
+  if (typeof globalThis !== 'undefined' && globalThis.process && globalThis.process.env && globalThis.process.env.FIREBASE_CONFIG) {
+    try {
+      const firebaseConfig = JSON.parse(globalThis.process.env.FIREBASE_CONFIG);
+      return firebaseConfig[processKey] || fallback;
+    } catch (e) {
+      console.warn('Failed to parse FIREBASE_CONFIG:', e);
+    }
+  }
+  
+  return fallback;
+};
+
 const firebaseConfig = {
-    apiKey: import.meta.env.VITE_FIREBASE_API_KEY || JSON.parse(process.env.FIREBASE_CONFIG || '{}').apiKey || "AIzaSyDummyKeyForDevelopment",
-    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || JSON.parse(process.env.FIREBASE_CONFIG || '{}').authDomain || "gift-shop-app-7bbd3.firebaseapp.com",
-    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || JSON.parse(process.env.FIREBASE_CONFIG || '{}').projectId || "gift-shop-app-7bbd3",
-    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || JSON.parse(process.env.FIREBASE_CONFIG || '{}').storageBucket || "gift-shop-app-7bbd3.appspot.com",
-    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || JSON.parse(process.env.FIREBASE_CONFIG || '{}').messagingSenderId || "123456789",
-    appId: import.meta.env.VITE_FIREBASE_APP_ID || JSON.parse(process.env.FIREBASE_CONFIG || '{}').appId || "1:123456789:web:abcdef",
-    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || JSON.parse(process.env.FIREBASE_CONFIG || '{}').measurementId || "G-XXXXXXXX"
+    apiKey: getEnvVar('VITE_FIREBASE_API_KEY', 'apiKey', "AIzaSyDummyKeyForDevelopment"),
+    authDomain: getEnvVar('VITE_FIREBASE_AUTH_DOMAIN', 'authDomain', "gift-shop-app-7bbd3.firebaseapp.com"),
+    projectId: getEnvVar('VITE_FIREBASE_PROJECT_ID', 'projectId', "gift-shop-app-7bbd3"),
+    storageBucket: getEnvVar('VITE_FIREBASE_STORAGE_BUCKET', 'storageBucket', "gift-shop-app-7bbd3.appspot.com"),
+    messagingSenderId: getEnvVar('VITE_FIREBASE_MESSAGING_SENDER_ID', 'messagingSenderId', "123456789"),
+    appId: getEnvVar('VITE_FIREBASE_APP_ID', 'appId', "1:123456789:web:abcdef"),
+    measurementId: getEnvVar('VITE_FIREBASE_MEASUREMENT_ID', 'measurementId', "G-XXXXXXXX")
 };
 
 import { getStorage } from "firebase/storage";

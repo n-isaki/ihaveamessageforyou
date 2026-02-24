@@ -4,6 +4,7 @@ module.exports = {
     es2021: true,
     node: true,
     jest: true,
+    worker: true,
   },
   extends: [
     'eslint:recommended',
@@ -47,6 +48,12 @@ module.exports = {
     'vite.config.js',
     'vite.widget.config.js'
   ],
+  globals: {
+    process: 'readonly',
+    Buffer: 'readonly',
+    __dirname: 'readonly',
+    global: 'readonly',
+  },
   settings: {
     react: {
       version: 'detect',
