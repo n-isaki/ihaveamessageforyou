@@ -1,5 +1,16 @@
 # React + Vite
 
+## Deploy (GitHub Actions)
+
+Staging (Branch `dev`) und Production (Branch `main`) werden per GitHub Actions gebaut und nach Firebase Hosting deployed. Dafür muss einmalig ein **Firebase CI Token** gesetzt werden:
+
+1. Lokal: `npx firebase login:ci` ausführen, im Browser anmelden.
+2. Den ausgegebenen Token in GitHub eintragen: **Repo → Settings → Secrets and variables → Actions → New repository secret** → Name: `FIREBASE_TOKEN`, Value: (Token einfügen).
+
+Danach bei Push auf `dev` bzw. `main` Deploy auslösen. Die App nutzt die hardcodierte Firebase-Config in `src/firebase.js` (kein Dummy-Key in Production).
+
+---
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
