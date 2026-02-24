@@ -10,13 +10,13 @@ const getEnvVar = (importMetaKey, processKey, fallback) => {
     return import.meta.env[importMetaKey];
   }
   
-  // Try window.FIREBASE_CONFIG (injected during build)
-  if (typeof window !== 'undefined' && window.FIREBASE_CONFIG) {
+  // Try build-time injected config
+  if (typeof __FIREBASE_CONFIG__ !== 'undefined' && __FIREBASE_CONFIG__) {
     try {
-      const firebaseConfig = JSON.parse(window.FIREBASE_CONFIG);
+      const firebaseConfig = JSON.parse(__FIREBASE_CONFIG__);
       return firebaseConfig[processKey] || fallback;
     } catch (e) {
-      console.warn('Failed to parse window.FIREBASE_CONFIG:', e);
+      console.warn('Failed to parse __FIREBASE_CONFIG__:', e);
     }
   }
   

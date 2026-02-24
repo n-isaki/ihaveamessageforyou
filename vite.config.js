@@ -81,5 +81,8 @@ export default defineConfig({
       }
     },
     chunkSizeWarningLimit: 1000 // Increase warning limit to reduce noise
+  },
+  define: {
+    __FIREBASE_CONFIG__: JSON.stringify(process.env.FIREBASE_CONFIG || '{}')
   }
 })
