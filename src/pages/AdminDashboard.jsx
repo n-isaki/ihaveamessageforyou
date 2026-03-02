@@ -39,8 +39,8 @@ export default function AdminDashboard() {
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
-  const activeTab = searchParams.get("tab") || "kamlimos";
   const useUnifiedCreation = FEATURE_FLAGS.UNIFIED_GIFT_CREATION;
+  const activeTab = searchParams.get("tab") || (useUnifiedCreation ? "all" : "kamlimos");
 
   // Bulk Select State
   const [selectedGifts, setSelectedGifts] = useState(new Set());
@@ -67,8 +67,8 @@ export default function AdminDashboard() {
   }, []);
 
   const filteredGifts = gifts.filter((g) => {
-    // Tab-Filter (only when legacy mode)
-    if (!useUnifiedCreation) {
+    // Type-Filter: both modes (unified: filter chips, legacy: tabs)
+    if (activeTab !== "all") {
       let matchesTab = false;
       if (activeTab === "noor" || activeTab === "dua")
         matchesTab = g.project === "noor" || g.project === "dua";
@@ -77,7 +77,7 @@ export default function AdminDashboard() {
         matchesTab =
           g.project === "ritual" ||
           (g.productType === "bracelet" && (!g.project || g.project === "kamlimos"));
-      else
+      else if (activeTab === "kamlimos")
         matchesTab =
           (!g.project || g.project === "kamlimos") && g.productType !== "bracelet";
       if (!matchesTab) return false;
@@ -297,32 +297,46 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* Tabs (legacy mode only) */}
-                {!useUnifiedCreation && (
-                  <div className="flex gap-1 border-b border-brand-border overflow-x-auto">
-                    {["kamlimos", "noor", "memoria", "ritual"].map((tab) => (
-                      <button
-                        key={tab}
-                        onClick={() => {
-                          const newParams = new URLSearchParams(searchParams);
-                          newParams.set("tab", tab);
-                          setSearchParams(newParams);
-                        }}
-                        className={`px-4 py-2 text-sm font-medium transition-all whitespace-nowrap capitalize border-b-2 ${
-                          activeTab === tab
-                            ? "text-brand-anthracite border-brand-anthracite"
-                            : "text-brand-text border-transparent hover:text-brand-anthracite hover:border-brand-border"
-                        }`}
-                      >
-                        {tab === "kamlimos"
-                          ? "Tasse"
-                          : tab === "ritual"
-                            ? "Armband"
-                            : tab}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                {/* Filter: unified = chips, legacy = tabs */}
+                <div className="flex gap-1 border-b border-brand-border overflow-x-auto">
+                  {useUnifiedCreation && (
+                    <button
+                      onClick={() => {
+                        const newParams = new URLSearchParams(searchParams);
+                        newParams.set("tab", "all");
+                        setSearchParams(newParams);
+                      }}
+                      className={`px-4 py-2 text-sm font-medium transition-all whitespace-nowrap border-b-2 ${
+                        activeTab === "all"
+                          ? "text-brand-anthracite border-brand-anthracite"
+                          : "text-brand-text border-transparent hover:text-brand-anthracite hover:border-brand-border"
+                      }`}
+                    >
+                      Alle
+                    </button>
+                  )}
+                  {["kamlimos", "noor", "memoria", "ritual"].map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => {
+                        const newParams = new URLSearchParams(searchParams);
+                        newParams.set("tab", tab);
+                        setSearchParams(newParams);
+                      }}
+                      className={`px-4 py-2 text-sm font-medium transition-all whitespace-nowrap capitalize border-b-2 ${
+                        activeTab === tab
+                          ? "text-brand-anthracite border-brand-anthracite"
+                          : "text-brand-text border-transparent hover:text-brand-anthracite hover:border-brand-border"
+                      }`}
+                    >
+                      {tab === "kamlimos"
+                        ? "Tasse"
+                        : tab === "ritual"
+                          ? "Armband"
+                          : tab}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Search Input */}
