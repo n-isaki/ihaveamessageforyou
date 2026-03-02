@@ -4,7 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 
-export default function AdminSidebar({ activeView, onViewChange, onRefresh, isOpen, onClose }) {
+export default function AdminSidebar({ activeView, onViewChange, onRefresh, isOpen, onClose, useUnifiedCreation = false }) {
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [collapsed, setCollapsed] = useState(false);
     const location = useLocation();
@@ -80,8 +80,8 @@ export default function AdminSidebar({ activeView, onViewChange, onRefresh, isOp
                             to="/admin/dashboard?view=list"
                             onClick={() => { onViewChange?.('list'); onClose?.(); }}
                             className={`flex items-center space-x-3 w-full px-4 py-2.5 rounded-lg transition-all font-medium text-sm ${activeView === 'list' && location.pathname === '/admin/dashboard'
-                                    ? 'bg-[#3A3A3A] text-white border-l-2 border-white'
-                                    : 'text-[#B0B0B0] hover:text-white hover:bg-[#353535]'
+                                ? 'bg-[#3A3A3A] text-white border-l-2 border-white'
+                                : 'text-[#B0B0B0] hover:text-white hover:bg-[#353535]'
                                 } ${collapsed ? 'justify-center px-2' : ''}`}
                             title="Alle Aufträge"
                         >
@@ -92,8 +92,8 @@ export default function AdminSidebar({ activeView, onViewChange, onRefresh, isOp
                             to="/admin/dashboard?view=kanban"
                             onClick={() => { onViewChange?.('kanban'); onClose?.(); }}
                             className={`flex items-center space-x-3 w-full px-4 py-2.5 rounded-lg transition-all font-medium text-sm ${activeView === 'kanban' && location.pathname === '/admin/dashboard'
-                                    ? 'bg-[#3A3A3A] text-white border-l-2 border-white'
-                                    : 'text-[#B0B0B0] hover:text-white hover:bg-[#353535]'
+                                ? 'bg-[#3A3A3A] text-white border-l-2 border-white'
+                                : 'text-[#B0B0B0] hover:text-white hover:bg-[#353535]'
                                 } ${collapsed ? 'justify-center px-2' : ''}`}
                             title="Kanban Board"
                         >
@@ -116,8 +116,8 @@ export default function AdminSidebar({ activeView, onViewChange, onRefresh, isOp
                             to="/admin/dashboard"
                             onClick={onClose}
                             className={`flex items-center space-x-3 w-full px-4 py-2.5 rounded-lg transition-all font-medium text-sm ${location.pathname === '/admin/dashboard'
-                                    ? 'bg-[#3A3A3A] text-white border-l-2 border-white'
-                                    : 'text-[#B0B0B0] hover:text-white hover:bg-[#353535]'
+                                ? 'bg-[#3A3A3A] text-white border-l-2 border-white'
+                                : 'text-[#B0B0B0] hover:text-white hover:bg-[#353535]'
                                 } ${collapsed ? 'justify-center px-2' : ''}`}
                             title="Dashboard"
                         >
@@ -128,8 +128,8 @@ export default function AdminSidebar({ activeView, onViewChange, onRefresh, isOp
                             to="/admin/shopify"
                             onClick={onClose}
                             className={`flex items-center space-x-3 w-full px-4 py-2.5 rounded-lg transition-all font-medium text-sm ${location.pathname === '/admin/shopify'
-                                    ? 'bg-[#3A3A3A] text-white border-l-2 border-white'
-                                    : 'text-[#B0B0B0] hover:text-white hover:bg-[#353535]'
+                                ? 'bg-[#3A3A3A] text-white border-l-2 border-white'
+                                : 'text-[#B0B0B0] hover:text-white hover:bg-[#353535]'
                                 } ${collapsed ? 'justify-center px-2' : ''}`}
                             title="Shopify Theme Explorer"
                         >
@@ -146,48 +146,59 @@ export default function AdminSidebar({ activeView, onViewChange, onRefresh, isOp
                             </div>
                         )}
 
-                        {/* Collapsible Create Menu */}
-                        <div>
-                            <button
-                                onClick={() => {
-                                    if (collapsed) {
-                                        setCollapsed(false);
-                                        setIsCreateOpen(true);
-                                    } else {
-                                        setIsCreateOpen(!isCreateOpen);
-                                    }
-                                }}
-                                className={`flex items-center justify-between w-full px-4 py-2.5 rounded-lg text-[#B0B0B0] hover:text-white hover:bg-[#353535] transition-all font-medium text-sm ${collapsed ? 'justify-center px-2' : ''}`}
+                        {/* Neuer Auftrag: unified = simple link, legacy = collapsible menu */}
+                        {useUnifiedCreation ? (
+                            <Link
+                                to="/admin/create"
+                                onClick={onClose}
+                                className={`flex items-center space-x-3 w-full px-4 py-2.5 rounded-lg text-[#B0B0B0] hover:text-white hover:bg-[#353535] transition-all font-medium text-sm ${collapsed ? 'justify-center px-2' : ''}`}
                                 title="Neuer Auftrag"
                             >
-                                <div className="flex items-center space-x-3">
-                                    <Plus className="h-5 w-5" />
-                                    {!collapsed && <span>Neuer Auftrag</span>}
-                                </div>
-                                {!collapsed && (isCreateOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />)}
-                            </button>
-
-                            {!collapsed && isCreateOpen && (
-                                <div className="pl-4 mt-1 space-y-0.5">
-                                    <Link to="/admin/create?project=tasse" onClick={onClose} className="flex items-center space-x-3 px-4 py-2 rounded-lg text-[#B0B0B0] hover:text-white hover:bg-[#353535] text-xs font-medium block">
-                                        <Coffee className="h-3 w-3" />
-                                        <span>Tasse</span>
-                                    </Link>
-                                    <Link to="/admin/create?project=ritual" onClick={onClose} className="flex items-center space-x-3 px-4 py-2 rounded-lg text-[#B0B0B0] hover:text-white hover:bg-[#353535] text-xs font-medium block">
-                                        <Watch className="h-3 w-3" />
-                                        <span>Armband</span>
-                                    </Link>
-                                    <Link to="/admin/create?project=memoria" onClick={onClose} className="flex items-center space-x-3 px-4 py-2 rounded-lg text-[#B0B0B0] hover:text-white hover:bg-[#353535] text-xs font-medium block">
-                                        <Heart className="h-3 w-3" />
-                                        <span>Memoria</span>
-                                    </Link>
-                                    <Link to="/admin/create?project=noor" onClick={onClose} className="flex items-center space-x-3 px-4 py-2 rounded-lg text-[#B0B0B0] hover:text-white hover:bg-[#353535] text-xs font-medium block">
-                                        <Zap className="h-3 w-3" />
-                                        <span>Noor</span>
-                                    </Link>
-                                </div>
-                            )}
-                        </div>
+                                <Plus className="h-5 w-5" />
+                                {!collapsed && <span>Neuer Auftrag</span>}
+                            </Link>
+                        ) : (
+                            <div>
+                                <button
+                                    onClick={() => {
+                                        if (collapsed) {
+                                            setCollapsed(false);
+                                            setIsCreateOpen(true);
+                                        } else {
+                                            setIsCreateOpen(!isCreateOpen);
+                                        }
+                                    }}
+                                    className={`flex items-center justify-between w-full px-4 py-2.5 rounded-lg text-[#B0B0B0] hover:text-white hover:bg-[#353535] transition-all font-medium text-sm ${collapsed ? 'justify-center px-2' : ''}`}
+                                    title="Neuer Auftrag"
+                                >
+                                    <div className="flex items-center space-x-3">
+                                        <Plus className="h-5 w-5" />
+                                        {!collapsed && <span>Neuer Auftrag</span>}
+                                    </div>
+                                    {!collapsed && (isCreateOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />)}
+                                </button>
+                                {!collapsed && isCreateOpen && (
+                                    <div className="pl-4 mt-1 space-y-0.5">
+                                        <Link to="/admin/create?project=tasse" onClick={onClose} className="flex items-center space-x-3 px-4 py-2 rounded-lg text-[#B0B0B0] hover:text-white hover:bg-[#353535] text-xs font-medium block">
+                                            <Coffee className="h-3 w-3" />
+                                            <span>Tasse</span>
+                                        </Link>
+                                        <Link to="/admin/create?project=ritual" onClick={onClose} className="flex items-center space-x-3 px-4 py-2 rounded-lg text-[#B0B0B0] hover:text-white hover:bg-[#353535] text-xs font-medium block">
+                                            <Watch className="h-3 w-3" />
+                                            <span>Armband</span>
+                                        </Link>
+                                        <Link to="/admin/create?project=memoria" onClick={onClose} className="flex items-center space-x-3 px-4 py-2 rounded-lg text-[#B0B0B0] hover:text-white hover:bg-[#353535] text-xs font-medium block">
+                                            <Heart className="h-3 w-3" />
+                                            <span>Memoria</span>
+                                        </Link>
+                                        <Link to="/admin/create?project=noor" onClick={onClose} className="flex items-center space-x-3 px-4 py-2 rounded-lg text-[#B0B0B0] hover:text-white hover:bg-[#353535] text-xs font-medium block">
+                                            <Zap className="h-3 w-3" />
+                                            <span>Noor</span>
+                                        </Link>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 </nav>
 

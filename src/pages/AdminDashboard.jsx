@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { getGifts, deleteGift, updateGift } from "../services/gifts";
+import { FEATURE_FLAGS } from "../utils/featureFlags";
 import {
   Plus,
   Loader,
@@ -38,9 +39,8 @@ export default function AdminDashboard() {
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
-
-  // Active Tab direkt aus URL lesen (nicht als State)
   const activeTab = searchParams.get("tab") || "kamlimos";
+  const useUnifiedCreation = FEATURE_FLAGS.UNIFIED_GIFT_CREATION;
 
   // Bulk Select State
   const [selectedGifts, setSelectedGifts] = useState(new Set());
@@ -67,22 +67,21 @@ export default function AdminDashboard() {
   }, []);
 
   const filteredGifts = gifts.filter((g) => {
-    // Tab-Filter
-    let matchesTab = false;
-    if (activeTab === "noor" || activeTab === "dua")
-      matchesTab = g.project === "noor" || g.project === "dua";
-    else if (activeTab === "memoria") matchesTab = g.project === "memoria";
-    else if (activeTab === "ritual")
-      matchesTab =
-        g.project === "ritual" ||
-        (g.productType === "bracelet" &&
-          (!g.project || g.project === "kamlimos"));
-    else
-      matchesTab =
-        (!g.project || g.project === "kamlimos") &&
-        g.productType !== "bracelet";
-
-    if (!matchesTab) return false;
+    // Tab-Filter (only when legacy mode)
+    if (!useUnifiedCreation) {
+      let matchesTab = false;
+      if (activeTab === "noor" || activeTab === "dua")
+        matchesTab = g.project === "noor" || g.project === "dua";
+      else if (activeTab === "memoria") matchesTab = g.project === "memoria";
+      else if (activeTab === "ritual")
+        matchesTab =
+          g.project === "ritual" ||
+          (g.productType === "bracelet" && (!g.project || g.project === "kamlimos"));
+      else
+        matchesTab =
+          (!g.project || g.project === "kamlimos") && g.productType !== "bracelet";
+      if (!matchesTab) return false;
+    }
 
     // Search-Filter
     if (!searchQuery.trim()) return true;
@@ -215,6 +214,7 @@ export default function AdminDashboard() {
         onRefresh={() => window.location.reload()}
         isOpen={isSidebarOpen}
         onClose={() => setSidebarOpen(false)}
+        useUnifiedCreation={useUnifiedCreation}
       />
 
       <main className="flex-1 overflow-y-auto h-screen p-8 relative">
@@ -243,23 +243,22 @@ export default function AdminDashboard() {
                       </p>
                     </div>
                   </div>
-                  
+
                   {/* Action Buttons */}
                   <div className="flex items-center gap-3">
                     {/* Bulk Select Toggle */}
                     <button
                       onClick={toggleSelectMode}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        isSelectMode
-                          ? "btn-primary"
-                          : "btn-secondary"
-                      }`}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${isSelectMode
+                        ? "btn-primary"
+                        : "btn-secondary"
+                        }`}
                     >
                       {isSelectMode ? "Auswahl beenden" : "Auswählen"}
                     </button>
-                    
+
                     {/* Action Buttons */}
-                    {activeTab === "kamlimos" && (
+                    {(!useUnifiedCreation ? activeTab === "kamlimos" : true) && (
                       <button
                         onClick={() => setShowEtsyModal(true)}
                         className="btn-secondary inline-flex items-center px-4 py-2 rounded-lg text-sm shrink-0"
@@ -268,7 +267,7 @@ export default function AdminDashboard() {
                         Etsy Simulieren
                       </button>
                     )}
-                    {activeTab === "memoria" && (
+                    {(!useUnifiedCreation ? activeTab === "memoria" : true) && (
                       <button
                         onClick={() => setShowMemoriaModal(true)}
                         className="btn-secondary inline-flex items-center px-4 py-2 rounded-lg text-sm shrink-0"
@@ -277,17 +276,18 @@ export default function AdminDashboard() {
                         Memoria Auftrag
                       </button>
                     )}
+
                     <Link
                       to={
-                        activeTab === "noor"
-                          ? "/admin/create?project=noor"
-                          : activeTab === "dua"
-                          ? "/admin/create?project=noor"
-                          : activeTab === "memoria"
-                          ? "/admin/create?project=memoria"
-                          : activeTab === "ritual"
-                          ? "/admin/create?project=ritual"
-                          : "/admin/create?project=tasse"
+                        useUnifiedCreation
+                          ? "/admin/create"
+                          : activeTab === "noor" || activeTab === "dua"
+                            ? "/admin/create?project=noor"
+                            : activeTab === "memoria"
+                              ? "/admin/create?project=memoria"
+                              : activeTab === "ritual"
+                                ? "/admin/create?project=ritual"
+                                : "/admin/create?project=tasse"
                       }
                       className="btn-primary inline-flex items-center px-4 py-2 rounded-lg text-sm shrink-0"
                     >
@@ -296,31 +296,33 @@ export default function AdminDashboard() {
                     </Link>
                   </div>
                 </div>
-                
-                {/* TABS */}
-                <div className="flex gap-1 border-b border-brand-border overflow-x-auto">
-                  {["kamlimos", "noor", "memoria", "ritual"].map((tab) => (
-                    <button
-                      key={tab}
-                      onClick={() => {
-                        const newParams = new URLSearchParams(searchParams);
-                        newParams.set("tab", tab);
-                        setSearchParams(newParams);
-                      }}
-                      className={`px-4 py-2 text-sm font-medium transition-all whitespace-nowrap capitalize border-b-2 ${
-                        activeTab === tab
-                          ? "text-brand-anthracite border-brand-anthracite"
-                          : "text-brand-text border-transparent hover:text-brand-anthracite hover:border-brand-border"
-                      }`}
-                    >
-                      {tab === "kamlimos"
-                        ? "Tasse"
-                        : tab === "ritual"
-                        ? "Armband"
-                        : tab}
-                    </button>
-                  ))}
-                </div>
+
+                {/* Tabs (legacy mode only) */}
+                {!useUnifiedCreation && (
+                  <div className="flex gap-1 border-b border-brand-border overflow-x-auto">
+                    {["kamlimos", "noor", "memoria", "ritual"].map((tab) => (
+                      <button
+                        key={tab}
+                        onClick={() => {
+                          const newParams = new URLSearchParams(searchParams);
+                          newParams.set("tab", tab);
+                          setSearchParams(newParams);
+                        }}
+                        className={`px-4 py-2 text-sm font-medium transition-all whitespace-nowrap capitalize border-b-2 ${
+                          activeTab === tab
+                            ? "text-brand-anthracite border-brand-anthracite"
+                            : "text-brand-text border-transparent hover:text-brand-anthracite hover:border-brand-border"
+                        }`}
+                      >
+                        {tab === "kamlimos"
+                          ? "Tasse"
+                          : tab === "ritual"
+                            ? "Armband"
+                            : tab}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Search Input */}
@@ -428,7 +430,7 @@ export default function AdminDashboard() {
                 deleteId === "bulk"
                   ? `${bulkDeleteIds.length} Geschenke`
                   : gifts.find((g) => g.id === deleteId)?.customerName ||
-                    "Geschenk"
+                  "Geschenk"
               }
             />
           </>

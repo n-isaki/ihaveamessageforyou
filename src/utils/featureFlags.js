@@ -17,6 +17,9 @@ export const FEATURE_FLAGS = {
   
   // Redesigned Admin Dashboard
   REDESIGNED_ADMIN_DASHBOARD: env.VITE_REDESIGNED_ADMIN_DASHBOARD === "true",
+
+  // Unified Gift Creation: ProductTypeSelection, no tabs, single create link (rollback via flag)
+  UNIFIED_GIFT_CREATION: env.VITE_UNIFIED_GIFT_CREATION === "true",
   
   // Multi-Sprachunterstützung
   MULTI_LANGUAGE_SUPPORT: env.VITE_MULTI_LANGUAGE_SUPPORT === "true",
