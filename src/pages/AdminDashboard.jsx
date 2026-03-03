@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { getGifts, deleteGift, updateGift } from "../services/gifts";
-import { FEATURE_FLAGS } from "../utils/featureFlags";
 import {
   Plus,
   Loader,
@@ -39,8 +38,7 @@ export default function AdminDashboard() {
 
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
-  const useUnifiedCreation = FEATURE_FLAGS.UNIFIED_GIFT_CREATION;
-  const activeTab = searchParams.get("tab") || (useUnifiedCreation ? "all" : "kamlimos");
+  const activeTab = searchParams.get("tab") || "all";
 
   // Bulk Select State
   const [selectedGifts, setSelectedGifts] = useState(new Set());
@@ -198,6 +196,28 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleToggleDelivered = async (gift) => {
+    const isCurrentlyDelivered = gift.shippingStatus === "delivered";
+    const newStatus = isCurrentlyDelivered ? "pending" : "delivered";
+
+    try {
+      // Optimistic update
+      setGifts(
+        gifts.map((g) => (g.id === gift.id ? { ...g, shippingStatus: newStatus } : g))
+      );
+      await updateGift(gift.id, {
+        shippingStatus: newStatus,
+        deliveredAt: newStatus === "delivered" ? new Date() : null,
+      });
+    } catch (e) {
+      console.error("Failed to update delivered status", e);
+      // Revert on error
+      setGifts(
+        gifts.map((g) => (g.id === gift.id ? { ...g, shippingStatus: gift.shippingStatus } : g))
+      );
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-brand-cream">
@@ -214,7 +234,6 @@ export default function AdminDashboard() {
         onRefresh={() => window.location.reload()}
         isOpen={isSidebarOpen}
         onClose={() => setSidebarOpen(false)}
-        useUnifiedCreation={useUnifiedCreation}
       />
 
       <main className="flex-1 overflow-y-auto h-screen p-8 relative">
@@ -258,7 +277,7 @@ export default function AdminDashboard() {
                     </button>
 
                     {/* Action Buttons */}
-                    {(!useUnifiedCreation ? activeTab === "kamlimos" : true) && (
+                    {(
                       <button
                         onClick={() => setShowEtsyModal(true)}
                         className="btn-secondary inline-flex items-center px-4 py-2 rounded-lg text-sm shrink-0"
@@ -267,7 +286,7 @@ export default function AdminDashboard() {
                         Etsy Simulieren
                       </button>
                     )}
-                    {(!useUnifiedCreation ? activeTab === "memoria" : true) && (
+                    {(
                       <button
                         onClick={() => setShowMemoriaModal(true)}
                         className="btn-secondary inline-flex items-center px-4 py-2 rounded-lg text-sm shrink-0"
@@ -278,17 +297,7 @@ export default function AdminDashboard() {
                     )}
 
                     <Link
-                      to={
-                        useUnifiedCreation
-                          ? "/admin/create"
-                          : activeTab === "noor" || activeTab === "dua"
-                            ? "/admin/create?project=noor"
-                            : activeTab === "memoria"
-                              ? "/admin/create?project=memoria"
-                              : activeTab === "ritual"
-                                ? "/admin/create?project=ritual"
-                                : "/admin/create?project=tasse"
-                      }
+                      to="/admin/create"
                       className="btn-primary inline-flex items-center px-4 py-2 rounded-lg text-sm shrink-0"
                     >
                       <Plus className="h-5 w-5 mr-2" />
@@ -297,24 +306,21 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* Filter: unified = chips, legacy = tabs */}
+                {/* Filter: chips */}
                 <div className="flex gap-1 border-b border-brand-border overflow-x-auto">
-                  {useUnifiedCreation && (
-                    <button
+                  <button
                       onClick={() => {
                         const newParams = new URLSearchParams(searchParams);
                         newParams.set("tab", "all");
                         setSearchParams(newParams);
                       }}
-                      className={`px-4 py-2 text-sm font-medium transition-all whitespace-nowrap border-b-2 ${
-                        activeTab === "all"
-                          ? "text-brand-anthracite border-brand-anthracite"
-                          : "text-brand-text border-transparent hover:text-brand-anthracite hover:border-brand-border"
-                      }`}
+                      className={`px-4 py-2 text-sm font-medium transition-all whitespace-nowrap border-b-2 ${activeTab === "all"
+                        ? "text-brand-anthracite border-brand-anthracite"
+                        : "text-brand-text border-transparent hover:text-brand-anthracite hover:border-brand-border"
+                        }`}
                     >
                       Alle
                     </button>
-                  )}
                   {["kamlimos", "noor", "memoria", "ritual"].map((tab) => (
                     <button
                       key={tab}
@@ -323,11 +329,10 @@ export default function AdminDashboard() {
                         newParams.set("tab", tab);
                         setSearchParams(newParams);
                       }}
-                      className={`px-4 py-2 text-sm font-medium transition-all whitespace-nowrap capitalize border-b-2 ${
-                        activeTab === tab
-                          ? "text-brand-anthracite border-brand-anthracite"
-                          : "text-brand-text border-transparent hover:text-brand-anthracite hover:border-brand-border"
-                      }`}
+                      className={`px-4 py-2 text-sm font-medium transition-all whitespace-nowrap capitalize border-b-2 ${activeTab === tab
+                        ? "text-brand-anthracite border-brand-anthracite"
+                        : "text-brand-text border-transparent hover:text-brand-anthracite hover:border-brand-border"
+                        }`}
                     >
                       {tab === "kamlimos"
                         ? "Tasse"
@@ -410,6 +415,7 @@ export default function AdminDashboard() {
                   onToggleExpand={toggleExpand}
                   onDeleteClick={handleDeleteClick}
                   onToggleViewed={handleToggleViewed}
+                  onToggleDelivered={handleToggleDelivered}
                   isSelectMode={isSelectMode}
                   selectedGifts={selectedGifts}
                   onToggleSelect={toggleSelectGift}

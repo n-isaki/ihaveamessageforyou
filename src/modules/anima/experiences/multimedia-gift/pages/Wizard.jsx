@@ -20,21 +20,18 @@ import NoorForm from "../components/forms/NoorForm";
 import MemoriaForm from "../components/forms/MemoriaForm";
 import KamlimosForm from "../components/forms/KamlimosForm";
 import ProductTypeSelection from "../components/ProductTypeSelection";
-import { FEATURE_FLAGS } from "@/utils/featureFlags";
-
 export default function GiftWizard() {
   const navigate = useNavigate();
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const isEditMode = !!id;
-  const useUnifiedCreation = FEATURE_FLAGS.UNIFIED_GIFT_CREATION;
 
   // Determine project mode from URL or default to standard behavior
   // If editing, we will set this based on fetched data
   const urlProjectMode = searchParams.get("project");
 
-  // Step 0 (ProductTypeSelection) only when unified creation + new gift + no URL project
-  const showProductSelection = useUnifiedCreation && !isEditMode && !urlProjectMode;
+  // Step 0 (ProductTypeSelection) when new gift + no URL project
+  const showProductSelection = !isEditMode && !urlProjectMode;
   const [step, setStep] = useState(showProductSelection ? 0 : 1);
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -350,7 +347,6 @@ export default function GiftWizard() {
         onRefresh={() => window.location.reload()}
         isOpen={isSidebarOpen}
         onClose={() => setSidebarOpen(false)}
-        useUnifiedCreation={useUnifiedCreation}
       />
       <main className="flex-1 h-screen overflow-y-auto relative py-12 px-4 sm:px-6 lg:px-8">
         <button

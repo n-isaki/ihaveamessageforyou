@@ -19,6 +19,7 @@ import {
   Eye,
   CheckSquare,
   Square,
+  PackageCheck,
 } from "lucide-react";
 import { getExperience } from "../../modules/registry";
 import { toast } from "../../services/toast";
@@ -32,6 +33,7 @@ export default function AdminGiftTable({
   isSelectMode = false,
   selectedGifts = new Set(),
   onToggleSelect,
+  onToggleDelivered,
 }) {
   const handleCopyLink = (e, gift) => {
     e.stopPropagation();
@@ -311,6 +313,24 @@ ${setupUrl}`;
                           >
                             <ExternalLink className="h-4 w-4" />
                           </a>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onToggleDelivered?.(gift);
+                            }}
+                            className={`p-1.5 rounded-lg transition-colors ${gift.shippingStatus === "delivered"
+                              ? "text-blue-600 hover:bg-blue-50"
+                              : "text-stone-400 hover:bg-stone-100"
+                              }`}
+                            title={
+                              gift.shippingStatus === "delivered"
+                                ? "Nicht mehr angekommen"
+                                : "Als angekommen markieren"
+                            }
+                          >
+                            <PackageCheck className="h-4 w-4" />
+                          </button>
 
                           {/* Copy Viewer Link */}
                           <button
@@ -634,22 +654,41 @@ ${setupUrl}`;
                       </div>
                     </div>
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onToggleViewed(gift);
-                    }}
-                    className={`p-1.5 rounded-full ${gift.viewed
-                      ? "bg-green-100 text-green-700"
-                      : "bg-stone-100 text-stone-400"
-                      }`}
-                  >
-                    {gift.viewed ? (
-                      <Check className="h-4 w-4" />
-                    ) : (
-                      <EyeOff className="h-4 w-4" />
-                    )}
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleDelivered?.(gift);
+                      }}
+                      className={`p-1.5 rounded-full ${gift.shippingStatus === "delivered"
+                        ? "bg-blue-100 text-blue-700"
+                        : "bg-stone-100 text-stone-400"
+                        }`}
+                      title={
+                        gift.shippingStatus === "delivered"
+                          ? "Nicht mehr angekommen"
+                          : "Als angekommen markieren"
+                      }
+                    >
+                      <PackageCheck className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleViewed(gift);
+                      }}
+                      className={`p-1.5 rounded-full ${gift.viewed
+                        ? "bg-green-100 text-green-700"
+                        : "bg-stone-100 text-stone-400"
+                        }`}
+                    >
+                      {gift.viewed ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <EyeOff className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 {!isSelectMode && (

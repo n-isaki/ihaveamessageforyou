@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { LayoutGrid, Kanban, Plus, ChevronDown, ChevronRight, Package, Watch, Heart, Zap, Coffee, ChevronsLeft, ChevronsRight, LogOut, X, Store } from 'lucide-react';
+import { LayoutGrid, Kanban, Plus, ChevronsLeft, ChevronsRight, LogOut, X, Calculator } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebase';
 
-export default function AdminSidebar({ activeView, onViewChange, onRefresh, isOpen, onClose, useUnifiedCreation = false }) {
-    const [isCreateOpen, setIsCreateOpen] = useState(false);
+export default function AdminSidebar({ activeView, onViewChange, onRefresh, isOpen, onClose }) {
     const [collapsed, setCollapsed] = useState(false);
     const location = useLocation();
 
@@ -33,7 +32,7 @@ export default function AdminSidebar({ activeView, onViewChange, onRefresh, isOp
                 <div className={`p-6 pb-4 flex items-center border-b border-[#3A3A3A] ${collapsed ? 'justify-center' : 'justify-between'}`}>
                     {!collapsed && (
                         <div>
-                            <h1 className="font-sans text-lg font-medium text-white tracking-wide cursor-pointer" onClick={onRefresh}>
+                            <h1 className="font-sans text-lg font-medium text-white tracking-wide cursor-pointer" onClick={() => onRefresh?.()}>
                                 KAMLIMOS
                             </h1>
                             <p className="text-[#8A8A8A] text-[10px] mt-1 uppercase tracking-wider font-medium">Admin System</p>
@@ -124,6 +123,7 @@ export default function AdminSidebar({ activeView, onViewChange, onRefresh, isOp
                             <LayoutGrid className="h-4 w-4" />
                             {!collapsed && <span>Dashboard</span>}
                         </Link>
+                        {/* Shopify Link temporarily removed 
                         <Link
                             to="/admin/shopify"
                             onClick={onClose}
@@ -134,7 +134,21 @@ export default function AdminSidebar({ activeView, onViewChange, onRefresh, isOp
                             title="Shopify Theme Explorer"
                         >
                             <Store className="h-4 w-4" />
-                            {!collapsed && <span>Shopify</span>}
+                        </Link>
+                        */}
+
+                        {/* Taxes (Tools) */}
+                        <Link
+                            to="/admin/taxes"
+                            onClick={onClose}
+                            className={`flex items-center space-x-3 w-full px-4 py-2.5 rounded-lg transition-all font-medium text-sm ${location.pathname === '/admin/taxes'
+                                ? 'bg-[#3A3A3A] text-white border-l-2 border-white'
+                                : 'text-[#B0B0B0] hover:text-white hover:bg-[#353535]'
+                                } ${collapsed ? 'justify-center px-2' : ''}`}
+                            title="Steuerberatung"
+                        >
+                            <Calculator className="h-4 w-4" />
+                            {!collapsed && <span>Steuerberatung</span>}
                         </Link>
                     </div>
 
@@ -146,59 +160,16 @@ export default function AdminSidebar({ activeView, onViewChange, onRefresh, isOp
                             </div>
                         )}
 
-                        {/* Neuer Auftrag: unified = simple link, legacy = collapsible menu */}
-                        {useUnifiedCreation ? (
-                            <Link
-                                to="/admin/create"
-                                onClick={onClose}
-                                className={`flex items-center space-x-3 w-full px-4 py-2.5 rounded-lg text-[#B0B0B0] hover:text-white hover:bg-[#353535] transition-all font-medium text-sm ${collapsed ? 'justify-center px-2' : ''}`}
-                                title="Neuer Auftrag"
-                            >
-                                <Plus className="h-5 w-5" />
-                                {!collapsed && <span>Neuer Auftrag</span>}
-                            </Link>
-                        ) : (
-                            <div>
-                                <button
-                                    onClick={() => {
-                                        if (collapsed) {
-                                            setCollapsed(false);
-                                            setIsCreateOpen(true);
-                                        } else {
-                                            setIsCreateOpen(!isCreateOpen);
-                                        }
-                                    }}
-                                    className={`flex items-center justify-between w-full px-4 py-2.5 rounded-lg text-[#B0B0B0] hover:text-white hover:bg-[#353535] transition-all font-medium text-sm ${collapsed ? 'justify-center px-2' : ''}`}
-                                    title="Neuer Auftrag"
-                                >
-                                    <div className="flex items-center space-x-3">
-                                        <Plus className="h-5 w-5" />
-                                        {!collapsed && <span>Neuer Auftrag</span>}
-                                    </div>
-                                    {!collapsed && (isCreateOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />)}
-                                </button>
-                                {!collapsed && isCreateOpen && (
-                                    <div className="pl-4 mt-1 space-y-0.5">
-                                        <Link to="/admin/create?project=tasse" onClick={onClose} className="flex items-center space-x-3 px-4 py-2 rounded-lg text-[#B0B0B0] hover:text-white hover:bg-[#353535] text-xs font-medium block">
-                                            <Coffee className="h-3 w-3" />
-                                            <span>Tasse</span>
-                                        </Link>
-                                        <Link to="/admin/create?project=ritual" onClick={onClose} className="flex items-center space-x-3 px-4 py-2 rounded-lg text-[#B0B0B0] hover:text-white hover:bg-[#353535] text-xs font-medium block">
-                                            <Watch className="h-3 w-3" />
-                                            <span>Armband</span>
-                                        </Link>
-                                        <Link to="/admin/create?project=memoria" onClick={onClose} className="flex items-center space-x-3 px-4 py-2 rounded-lg text-[#B0B0B0] hover:text-white hover:bg-[#353535] text-xs font-medium block">
-                                            <Heart className="h-3 w-3" />
-                                            <span>Memoria</span>
-                                        </Link>
-                                        <Link to="/admin/create?project=noor" onClick={onClose} className="flex items-center space-x-3 px-4 py-2 rounded-lg text-[#B0B0B0] hover:text-white hover:bg-[#353535] text-xs font-medium block">
-                                            <Zap className="h-3 w-3" />
-                                            <span>Noor</span>
-                                        </Link>
-                                    </div>
-                                )}
-                            </div>
-                        )}
+                        {/* Neuer Auftrag */}
+                        <Link
+                            to="/admin/create"
+                            onClick={onClose}
+                            className={`flex items-center space-x-3 w-full px-4 py-2.5 rounded-lg text-[#B0B0B0] hover:text-white hover:bg-[#353535] transition-all font-medium text-sm ${collapsed ? 'justify-center px-2' : ''}`}
+                            title="Neuer Auftrag"
+                        >
+                            <Plus className="h-5 w-5" />
+                            {!collapsed && <span>Neuer Auftrag</span>}
+                        </Link>
                     </div>
                 </nav>
 
