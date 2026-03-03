@@ -9,6 +9,7 @@ import { Loader } from "lucide-react";
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const AdminTaxes = lazy(() => import("./pages/AdminTaxes"));
 const CustomerSetup = lazy(() => import("./pages/CustomerSetup.redesign"));
 const PrintGift = lazy(() => import("./pages/PrintGift"));
 const ShopifyThemeExplorer = lazy(() => import("./pages/ShopifyThemeExplorer"));
@@ -47,12 +48,12 @@ const AdminDomainGuard = ({ children }) => {
 // Domain Routing Logic
 const DomainAwareHome = () => {
   const host = window.location.hostname;
-  
+
   // If user visits admin.kamlimos.com (root path), go to dashboard
   if (host.startsWith("admin.")) {
     return <Navigate to="/admin/dashboard" replace />;
   }
-  
+
   // Allow Staging/Localhost to show Landing Page directly
   const isStagingOrDev =
     host.includes("staging") ||
@@ -61,15 +62,15 @@ const DomainAwareHome = () => {
   if (isStagingOrDev) {
     return <LandingPage />;
   }
-  
+
   // If it's a product subdomain (memoria, noor, ritual, scan) but NOT main domain
   // We redirect to the main marketing site (in effect to satisfy React Compiler).
   const isMain = host === "kamlimos.com" || host === "www.kamlimos.com";
-  
+
   if (!isMain) {
     return <Navigate to="/admin/login" />;
   }
-  
+
   return <LandingPage />;
 };
 
@@ -99,7 +100,7 @@ export default function App() {
             <Route path="/join/:token" element={<ContributionPage />} />
             <Route path="/contribute/:giftId/:token" element={<ContributionPage />} />
             <Route path="/admin/login" element={<AdminLogin />} />
-            
+
             {/* Admin Routes */}
             <Route
               path="/admin/dashboard"
@@ -107,6 +108,16 @@ export default function App() {
                 <AdminDomainGuard>
                   <ProtectedRoute user={user} loading={loading}>
                     <AdminDashboard />
+                  </ProtectedRoute>
+                </AdminDomainGuard>
+              }
+            />
+            <Route
+              path="/admin/taxes"
+              element={
+                <AdminDomainGuard>
+                  <ProtectedRoute user={user} loading={loading}>
+                    <AdminTaxes />
                   </ProtectedRoute>
                 </AdminDomainGuard>
               }
@@ -151,11 +162,11 @@ export default function App() {
                 </AdminDomainGuard>
               }
             />
-            
+
             {/* Customer Setup (Token-Link) – wie main: Param :id, UniversalViewer nutzt /v/:id */}
             <Route path="/setup/:id" element={<CustomerSetup />} />
             <Route path="/setup/:id/:token" element={<CustomerSetup />} />
-            
+
             {/* Fallback for admin routes */}
             <Route
               path="/admin/*"
