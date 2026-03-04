@@ -37,3 +37,15 @@ Staging ist dann unter **https://gift-shop-app-staging.web.app** erreichbar.
 
 - **dev** → Deploy auf `hosting:staging` → https://gift-shop-app-staging.web.app
 - **main** → Deploy auf `hosting:production` → https://gift-shop-app-7bbd3.web.app
+
+---
+
+## Functions manuell deployen
+
+Der CI-Deploy enthält keine Functions (Service Account braucht `iam.serviceaccounts.actAs`). Bei Änderungen an `functions/`:
+
+```bash
+cd functions && npm ci && firebase deploy --only functions --project gift-shop-app-7bbd3
+```
+
+**IAM-Fix** (falls Functions wieder in CI sollen): Dem Service Account `roles/iam.serviceAccountUser` auf der Compute-Service-Account geben – siehe [Firebase Docs](https://firebase.google.com/docs/functions/deploy#required_iam_permissions).

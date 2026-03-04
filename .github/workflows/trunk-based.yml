@@ -64,13 +64,12 @@ jobs:
           echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "$RUNNER_TEMP/firebase-key.json"
           echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-key.json" >> $GITHUB_ENV
       
-      # storage omitted until service account has Firebase Storage Admin; deploy manually: firebase deploy --only storage
-      - name: Install functions dependencies
-        run: cd functions && npm ci
+      # storage omitted: firebase deploy --only storage
+      # functions: Service Account braucht iam.serviceaccounts.actAs – manuell: cd functions && npm ci && firebase deploy --only functions
       - name: Build and Deploy to Staging
         run: |
           npm run build:all
-          firebase deploy --only firestore:rules,hosting:staging,functions --project gift-shop-app-7bbd3 --non-interactive
+          firebase deploy --only firestore:rules,hosting:staging --project gift-shop-app-7bbd3 --non-interactive
 
   deploy-production:
     needs: test
@@ -106,10 +105,9 @@ jobs:
           echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "$RUNNER_TEMP/firebase-key.json"
           echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-key.json" >> $GITHUB_ENV
       
-      # storage omitted until service account has Firebase Storage Admin; deploy manually: firebase deploy --only storage
-      - name: Install functions dependencies
-        run: cd functions && npm ci
+      # storage omitted: firebase deploy --only storage
+      # functions: Service Account braucht iam.serviceaccounts.actAs – manuell: cd functions && npm ci && firebase deploy --only functions
       - name: Build and Deploy to Production
         run: |
           npm run build:all
-          firebase deploy --only firestore:rules,hosting:production,functions --project gift-shop-app-7bbd3 --non-interactive
+          firebase deploy --only firestore:rules,hosting:production --project gift-shop-app-7bbd3 --non-interactive
