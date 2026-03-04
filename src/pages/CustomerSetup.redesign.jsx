@@ -137,7 +137,9 @@ export default function CustomerSetup() {
         setCustomerPin(data.accessCode || "");
 
         setExpirationSelection(data.expirationSelection || "1year");
-        setCustomExpirationDate(data.customExpirationDate || "");
+        const rawDate = data.customExpirationDate || "";
+        // Alte Formate (nur Datum) für datetime-local anpassen
+        setCustomExpirationDate(rawDate && !rawDate.includes("T") ? `${rawDate}T23:59` : rawDate);
 
         if (data.project === "memoria") {
           setMemoriaData({
@@ -264,7 +266,7 @@ export default function CustomerSetup() {
       const now = new Date();
       const maxDate = new Date(now.getTime() + 3 * 365 * 24 * 60 * 60 * 1000);
       if (!customExpirationDate || isNaN(selectedDate.getTime())) {
-        setMessageModal({ type: "error", text: "Bitte wähle ein gültiges Ablaufdatum aus." });
+        setMessageModal({ type: "error", text: "Bitte wähle ein gültiges Ablaufdatum und -zeit aus." });
         return;
       }
       if (selectedDate <= now) {
@@ -352,7 +354,7 @@ export default function CustomerSetup() {
       const now = new Date();
       const maxDate = new Date(now.getTime() + 3 * 365 * 24 * 60 * 60 * 1000);
       if (!customExpirationDate || isNaN(selectedDate.getTime())) {
-        setMessageModal({ type: "error", text: "Bitte wähle ein gültiges Ablaufdatum aus." });
+        setMessageModal({ type: "error", text: "Bitte wähle ein gültiges Ablaufdatum und -zeit aus." });
         return;
       }
       if (selectedDate <= now) {
@@ -693,18 +695,23 @@ export default function CustomerSetup() {
               </div>
 
               {expirationSelection === 'custom' && (
-                <div>
-                  <label className="block text-sm font-medium text-brand-anthracite mb-2">
-                    Ablaufdatum auswählen
-                  </label>
-                  <input
-                    type="date"
-                    value={customExpirationDate}
-                    onChange={(e) => setCustomExpirationDate(e.target.value)}
-                    min={new Date().toISOString().split("T")[0]}
-                    max={new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]}
-                    className="input-base w-full rounded-xl px-4 py-3"
-                  />
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-brand-anthracite mb-2">
+                      Ablaufdatum und Uhrzeit
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={customExpirationDate}
+                      onChange={(e) => setCustomExpirationDate(e.target.value)}
+                      min={new Date().toISOString().slice(0, 16)}
+                      max={new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16)}
+                      className="input-base w-full rounded-xl px-4 py-3"
+                    />
+                    <p className="text-xs text-brand-text mt-1">
+                      Datum und Uhrzeit, ab der das Geschenk nicht mehr abrufbar ist.
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
