@@ -23,9 +23,16 @@ export default function UniversalViewer() {
                 setError('Geschenk nicht gefunden.');
             } else {
                 let isExpired = false;
-                if (FEATURE_FLAGS.GIFT_EXPIRATION && data.expiresAt) {
-                    const expiresTime = typeof data.expiresAt.toDate === 'function' ? data.expiresAt.toDate().getTime() : new Date(data.expiresAt).getTime();
-                    if (Date.now() > expiresTime) {
+                if (FEATURE_FLAGS.GIFT_EXPIRATION) {
+                    let expiresTime = null;
+                    if (data.expiresAtMillis != null) {
+                        expiresTime = data.expiresAtMillis; // von getPublicGiftData (Cloud Function)
+                    } else if (data.expiresAt) {
+                        expiresTime = typeof data.expiresAt.toDate === 'function'
+                            ? data.expiresAt.toDate().getTime()
+                            : (data.expiresAt?.seconds ? data.expiresAt.seconds * 1000 : new Date(data.expiresAt).getTime());
+                    }
+                    if (expiresTime != null && Date.now() > expiresTime) {
                         isExpired = true;
                     }
                 }

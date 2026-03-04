@@ -69,7 +69,7 @@ jobs:
       - name: Build and Deploy to Staging
         run: |
           npm run build:all
-          firebase deploy --only firestore:rules,hosting:staging --project gift-shop-app-7bbd3 --non-interactive
+          firebase deploy --only firestore:rules,hosting:staging,functions --project gift-shop-app-7bbd3 --non-interactive
 
   deploy-production:
     needs: test
@@ -110,4 +110,4 @@ jobs:
       - name: Build and Deploy to Production
         run: |
           npm run build:all
-          firebase deploy --only firestore:rules,hosting:production --project gift-shop-app-7bbd3 --non-interactive
+          firebase deploy --only firestore:rules,hosting:production,functions --project gift-shop-app-7bbd3 --non-interactive

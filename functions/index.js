@@ -283,6 +283,7 @@ exports.getPublicGiftData = onCall({ cors: true }, async (request) => {
       "engravingText", // Needed for bracelet lock screen
       "designImage", // Maybe needed for preview?
       "locked",
+      // expiresAt wird unten manuell als expiresAtMillis gesetzt (Callable serialisiert Timestamp)
       // TIME CAPSULE FIELDS
       // 'unlockDate', // Handle manually below to convert to millis
       "timezone", // Just in case we need it for display
@@ -300,6 +301,13 @@ exports.getPublicGiftData = onCall({ cors: true }, async (request) => {
       publicData.unlockDate = data.unlockDate.toMillis
         ? data.unlockDate.toMillis()
         : new Date(data.unlockDate).getTime();
+    }
+
+    // Handle expiresAt – zu Millisekunden konvertieren (Callable serialisiert Timestamp sonst anders)
+    if (data.expiresAt) {
+      publicData.expiresAtMillis = data.expiresAt.toMillis
+        ? data.expiresAt.toMillis()
+        : new Date(data.expiresAt).getTime();
     }
 
     // Always include ID
