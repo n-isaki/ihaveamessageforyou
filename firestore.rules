@@ -77,7 +77,8 @@ service cloud.firestore {
                                             'setupCompletedAt', 'setupStarted', 'setupStartedAt',
                                             'recipientName', 'senderName',
                                             'deceasedName', 'lifeDates', 'meaningText',
-                                            'engravingText', 'meaningText', 'designImage', 'accessCode', 'accessCodeHash', 'securityToken', 'updatedAt', 'allowContributions', 'isPublic']))
+                                            'engravingText', 'meaningText', 'designImage', 'accessCode', 'accessCodeHash', 'securityToken', 'updatedAt', 'allowContributions', 'isPublic',
+                                            'expiresAt', 'expirationSelection', 'customExpirationDate']))
                   || (!isLocked() 
                       && onlyAllowedFields(['setupStarted', 'setupStartedAt', 'updatedAt'])) // ✅ removed isPublic (Security Risk)
                   || onlyAllowedFields(['viewed', 'viewedAt', 'updatedAt']); // ✅ Erlaube viewed/viewedAt Updates für alle (locked oder unlocked)

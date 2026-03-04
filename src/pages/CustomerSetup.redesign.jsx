@@ -34,6 +34,7 @@ import MugViewer from "../modules/anima/experiences/multimedia-gift/pages/Viewer
 import { v4 as uuidv4 } from "uuid";
 import { motion as Motion, AnimatePresence } from "framer-motion";
 import { sanitizeInput, isValidMessage } from "../utils/security";
+import { FEATURE_FLAGS } from "../utils/featureFlags";
 
 export default function CustomerSetup() {
   const { id, token: tokenFromPath } = useParams();
@@ -56,6 +57,8 @@ export default function CustomerSetup() {
   const [engravingText, setEngravingText] = useState("");
   const [accessChoice, setAccessChoice] = useState("public");
   const [customerPin, setCustomerPin] = useState("");
+  const [expirationSelection, setExpirationSelection] = useState("1year");
+  const [customExpirationDate, setCustomExpirationDate] = useState("");
 
   // Messages state
   const [messages, setMessages] = useState([]);
@@ -85,6 +88,19 @@ export default function CustomerSetup() {
   const isBasicComplete = headline || subheadline || recipientName || senderName;
   const isMessagesComplete = messages.filter((msg) => isValidMessage(msg)).length > 0;
   const isMediaComplete = albumImages.length > 0 || memoriaDesignImage || memoriaData.deceasedName;
+
+  const computeExpiresAt = (selection, customDate) => {
+    if (selection === 'never') return null;
+    const now = new Date();
+    switch (selection) {
+      case '1week': return new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      case '1month': return new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      case '1year': return new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+      case '3years': return new Date(now.getTime() + 3 * 365 * 24 * 60 * 60 * 1000);
+      case 'custom': return customDate ? new Date(customDate) : null;
+      default: return null;
+    }
+  };
 
   useEffect(() => {
     const loadGift = async () => {
@@ -119,6 +135,9 @@ export default function CustomerSetup() {
         setEngravingText(data.engravingText || "");
         setAccessChoice(data.isPublic ? "public" : "pin");
         setCustomerPin(data.accessCode || "");
+
+        setExpirationSelection(data.expirationSelection || "1year");
+        setCustomExpirationDate(data.customExpirationDate || "");
 
         if (data.project === "memoria") {
           setMemoriaData({
@@ -240,6 +259,24 @@ export default function CustomerSetup() {
   const handleSaveDraft = async () => {
     if (!gift) return;
 
+    if (FEATURE_FLAGS.GIFT_EXPIRATION && expirationSelection === 'custom') {
+      const selectedDate = new Date(customExpirationDate);
+      const now = new Date();
+      const maxDate = new Date(now.getTime() + 3 * 365 * 24 * 60 * 60 * 1000);
+      if (!customExpirationDate || isNaN(selectedDate.getTime())) {
+        setMessageModal({ type: "error", text: "Bitte wähle ein gültiges Ablaufdatum aus." });
+        return;
+      }
+      if (selectedDate <= now) {
+        setMessageModal({ type: "error", text: "Das Ablaufdatum muss in der Zukunft liegen." });
+        return;
+      }
+      if (selectedDate > maxDate) {
+        setMessageModal({ type: "error", text: "Das Ablaufdatum darf maximal 3 Jahre in der Zukunft liegen." });
+        return;
+      }
+    }
+
     try {
       setSaving(true);
       // Alle Nachrichten speichern (nur Inhalte sanitizen), keine Filterung – so gehen keine Texte/Medien verloren
@@ -249,6 +286,7 @@ export default function CustomerSetup() {
         content: sanitizeInput(typeof m.content === "string" ? m.content : "", 2000),
         author: typeof m.author === "string" ? m.author.slice(0, 100) : "",
       }));
+
       const updates = {
         headline: sanitizeInput(headline, 200),
         subheadline: sanitizeInput(subheadline, 200),
@@ -259,6 +297,12 @@ export default function CustomerSetup() {
         messages: messagesToSave,
         albumImages: albumImages,
       };
+      if (FEATURE_FLAGS.GIFT_EXPIRATION) {
+        const computedExpiresAt = computeExpiresAt(expirationSelection, customExpirationDate);
+        updates.expirationSelection = expirationSelection;
+        updates.customExpirationDate = expirationSelection === 'custom' ? customExpirationDate : "";
+        updates.expiresAt = computedExpiresAt;
+      }
       if (gift?.allowCustomerEngraving) updates.engravingText = sanitizeInput(engravingText, 30);
       if (gift.securityToken) updates.securityToken = gift.securityToken;
 
@@ -303,6 +347,24 @@ export default function CustomerSetup() {
   const confirmSaveAndLock = async () => {
     if (!gift) return;
 
+    if (FEATURE_FLAGS.GIFT_EXPIRATION && expirationSelection === 'custom') {
+      const selectedDate = new Date(customExpirationDate);
+      const now = new Date();
+      const maxDate = new Date(now.getTime() + 3 * 365 * 24 * 60 * 60 * 1000);
+      if (!customExpirationDate || isNaN(selectedDate.getTime())) {
+        setMessageModal({ type: "error", text: "Bitte wähle ein gültiges Ablaufdatum aus." });
+        return;
+      }
+      if (selectedDate <= now) {
+        setMessageModal({ type: "error", text: "Das Ablaufdatum muss in der Zukunft liegen." });
+        return;
+      }
+      if (selectedDate > maxDate) {
+        setMessageModal({ type: "error", text: "Das Ablaufdatum darf maximal 3 Jahre in der Zukunft liegen." });
+        return;
+      }
+    }
+
     try {
       setSaving(true);
       setShowConfirmModal(false);
@@ -313,6 +375,7 @@ export default function CustomerSetup() {
         content: sanitizeInput(typeof m.content === "string" ? m.content : "", 2000),
         author: typeof m.author === "string" ? m.author.slice(0, 100) : "",
       }));
+
       const updates = {
         headline: sanitizeInput(headline, 200),
         subheadline: sanitizeInput(subheadline, 200),
@@ -324,6 +387,12 @@ export default function CustomerSetup() {
         albumImages: albumImages,
         locked: true,
       };
+      if (FEATURE_FLAGS.GIFT_EXPIRATION) {
+        const computedExpiresAt = computeExpiresAt(expirationSelection, customExpirationDate);
+        updates.expirationSelection = expirationSelection;
+        updates.customExpirationDate = expirationSelection === 'custom' ? customExpirationDate : "";
+        updates.expiresAt = computedExpiresAt;
+      }
       if (gift?.allowCustomerEngraving) updates.engravingText = sanitizeInput(engravingText, 30);
       if (gift.securityToken) updates.securityToken = gift.securityToken;
 
@@ -470,7 +539,7 @@ export default function CustomerSetup() {
               <span className="text-xs bg-emerald-500 text-white px-2 py-1 rounded-full">✅</span>
             )}
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div>
@@ -485,7 +554,7 @@ export default function CustomerSetup() {
                   className="input-base w-full rounded-xl px-4 py-3"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-brand-anthracite mb-2">
                   Empfänger
@@ -499,7 +568,7 @@ export default function CustomerSetup() {
                 />
               </div>
             </div>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-brand-anthracite mb-2">
@@ -513,7 +582,7 @@ export default function CustomerSetup() {
                   className="input-base w-full rounded-xl px-4 py-3"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-brand-anthracite mb-2">
                   Untertitel
@@ -590,6 +659,56 @@ export default function CustomerSetup() {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* Online Expiration Options */}
+          {FEATURE_FLAGS.GIFT_EXPIRATION && (
+          <div className="mt-8">
+            <h3 className="text-lg font-semibold text-brand-anthracite mb-4">Online-Verfügbarkeit</h3>
+            <div className="bg-brand-cream-tint border border-brand-border rounded-xl p-4 mb-4">
+              <p className="text-sm text-brand-text leading-relaxed">
+                Du kannst festlegen, wie lange dein Geschenk online verfügbar bleibt. Nach Ablauf dieser Zeit kann der Empfänger das Geschenk nicht mehr abrufen – der Link zeigt dann eine Abschiedsseite.
+                <br /><br />
+                Wähle <strong>„Kein Ablauf“</strong>, wenn das Geschenk dauerhaft verfügbar bleiben soll (z. B. bei Erinnerungsgeschenken).
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-brand-anthracite mb-2">
+                  Verweildauer
+                </label>
+                <select
+                  value={expirationSelection}
+                  onChange={(e) => setExpirationSelection(e.target.value)}
+                  className="input-base w-full rounded-xl px-4 py-3 bg-white"
+                >
+                  <option value="never">Kein Ablauf (dauerhaft verfügbar)</option>
+                  <option value="1week">1 Woche</option>
+                  <option value="1month">1 Monat</option>
+                  <option value="1year">1 Jahr</option>
+                  <option value="3years">3 Jahre</option>
+                  <option value="custom">Benutzerdefiniertes Datum</option>
+                </select>
+              </div>
+
+              {expirationSelection === 'custom' && (
+                <div>
+                  <label className="block text-sm font-medium text-brand-anthracite mb-2">
+                    Ablaufdatum auswählen
+                  </label>
+                  <input
+                    type="date"
+                    value={customExpirationDate}
+                    onChange={(e) => setCustomExpirationDate(e.target.value)}
+                    min={new Date().toISOString().split("T")[0]}
+                    max={new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]}
+                    className="input-base w-full rounded-xl px-4 py-3"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
           )}
 
           {/* Engraving Text – genau wie Social Gifting: nur wenn Admin „Gravurtext vom Kunden erlauben“ aktiv hat */}
@@ -712,7 +831,7 @@ export default function CustomerSetup() {
               <span className="text-xs bg-emerald-500 text-white px-2 py-1 rounded-full">✅</span>
             )}
           </div>
-          
+
           <WizardMessageEditor
             messages={messages}
             onAdd={handleAddMessage}
@@ -730,7 +849,7 @@ export default function CustomerSetup() {
               <Users className="w-5 h-5 text-brand-patina" />
               <h2 className="text-xl font-semibold text-brand-anthracite">Gemeinschaftliches Geschenk</h2>
             </div>
-            
+
             <div className="space-y-4">
               <div className="bg-brand-cream-tint rounded-xl p-4 border border-brand-border">
                 <div className="flex items-center gap-3 mb-3">
@@ -803,7 +922,7 @@ export default function CustomerSetup() {
             <Save className="w-4 h-4" />
             {saving ? "Speichert..." : "Entwurf speichern"}
           </button>
-          
+
           <button
             onClick={handleSaveAndLock}
             disabled={saving || !canLock}
