@@ -65,6 +65,8 @@ jobs:
           echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-key.json" >> $GITHUB_ENV
       
       # storage omitted until service account has Firebase Storage Admin; deploy manually: firebase deploy --only storage
+      - name: Install functions dependencies
+        run: cd functions && npm ci
       - name: Build and Deploy to Staging
         run: |
           npm run build:all
@@ -105,6 +107,8 @@ jobs:
           echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-key.json" >> $GITHUB_ENV
       
       # storage omitted until service account has Firebase Storage Admin; deploy manually: firebase deploy --only storage
+      - name: Install functions dependencies
+        run: cd functions && npm ci
       - name: Build and Deploy to Production
         run: |
           npm run build:all
