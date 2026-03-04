@@ -3,7 +3,6 @@ import React, { useState, useEffect, Suspense, lazy, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { getGiftById, markGiftAsViewed } from '@/services/gifts';
 import { Loader } from 'lucide-react';
-import { FEATURE_FLAGS } from '@/utils/featureFlags';
 
 // Lazy Load Experience Viewers
 const MugViewer = lazy(() => import('../experiences/multimedia-gift/pages/Viewer'));
@@ -23,18 +22,16 @@ export default function UniversalViewer() {
                 setError('Geschenk nicht gefunden.');
             } else {
                 let isExpired = false;
-                if (FEATURE_FLAGS.GIFT_EXPIRATION) {
-                    let expiresTime = null;
-                    if (data.expiresAtMillis != null) {
-                        expiresTime = data.expiresAtMillis; // von getPublicGiftData (Cloud Function)
-                    } else if (data.expiresAt) {
-                        expiresTime = typeof data.expiresAt.toDate === 'function'
-                            ? data.expiresAt.toDate().getTime()
-                            : (data.expiresAt?.seconds ? data.expiresAt.seconds * 1000 : new Date(data.expiresAt).getTime());
-                    }
-                    if (expiresTime != null && Date.now() > expiresTime) {
-                        isExpired = true;
-                    }
+                let expiresTime = null;
+                if (data.expiresAtMillis != null) {
+                    expiresTime = data.expiresAtMillis; // von getPublicGiftData (Cloud Function)
+                } else if (data.expiresAt) {
+                    expiresTime = typeof data.expiresAt.toDate === 'function'
+                        ? data.expiresAt.toDate().getTime()
+                        : (data.expiresAt?.seconds ? data.expiresAt.seconds * 1000 : new Date(data.expiresAt).getTime());
+                }
+                if (expiresTime != null && Date.now() > expiresTime) {
+                    isExpired = true;
                 }
 
                 if (isExpired) {

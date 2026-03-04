@@ -17,9 +17,6 @@ export const FEATURE_FLAGS = {
   
   // Redesigned Admin Dashboard
   REDESIGNED_ADMIN_DASHBOARD: env.VITE_REDESIGNED_ADMIN_DASHBOARD === "true",
-
-  // Gift Expiration (Online-Verfügbarkeit): Kunde wählt Ablaufdatum, Viewer zeigt Abschiedsseite
-  GIFT_EXPIRATION: env.VITE_GIFT_EXPIRATION === "true",
   
   // Multi-Sprachunterstützung
   MULTI_LANGUAGE_SUPPORT: env.VITE_MULTI_LANGUAGE_SUPPORT === "true",

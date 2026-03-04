@@ -35,5 +35,5 @@ Staging ist dann unter **https://gift-shop-app-staging.web.app** erreichbar.
 
 ## Nach dem Setup
 
-- **dev** → Deploy auf `hosting:staging` → https://gift-shop-app-staging.web.app (mit GIFT_EXPIRATION)
-- **main** → Deploy auf `hosting:production` → https://gift-shop-app-7bbd3.web.app (ohne GIFT_EXPIRATION)
+- **dev** → Deploy auf `hosting:staging` → https://gift-shop-app-staging.web.app
+- **main** → Deploy auf `hosting:production` → https://gift-shop-app-7bbd3.web.app

@@ -34,7 +34,6 @@ import MugViewer from "../modules/anima/experiences/multimedia-gift/pages/Viewer
 import { v4 as uuidv4 } from "uuid";
 import { motion as Motion, AnimatePresence } from "framer-motion";
 import { sanitizeInput, isValidMessage } from "../utils/security";
-import { FEATURE_FLAGS } from "../utils/featureFlags";
 
 export default function CustomerSetup() {
   const { id, token: tokenFromPath } = useParams();
@@ -261,7 +260,7 @@ export default function CustomerSetup() {
   const handleSaveDraft = async () => {
     if (!gift) return;
 
-    if (FEATURE_FLAGS.GIFT_EXPIRATION && expirationSelection === 'custom') {
+    if (expirationSelection === 'custom') {
       const selectedDate = new Date(customExpirationDate);
       const now = new Date();
       const maxDate = new Date(now.getTime() + 3 * 365 * 24 * 60 * 60 * 1000);
@@ -299,12 +298,10 @@ export default function CustomerSetup() {
         messages: messagesToSave,
         albumImages: albumImages,
       };
-      if (FEATURE_FLAGS.GIFT_EXPIRATION) {
-        const computedExpiresAt = computeExpiresAt(expirationSelection, customExpirationDate);
-        updates.expirationSelection = expirationSelection;
-        updates.customExpirationDate = expirationSelection === 'custom' ? customExpirationDate : "";
-        updates.expiresAt = computedExpiresAt;
-      }
+      const computedExpiresAt = computeExpiresAt(expirationSelection, customExpirationDate);
+      updates.expirationSelection = expirationSelection;
+      updates.customExpirationDate = expirationSelection === 'custom' ? customExpirationDate : "";
+      updates.expiresAt = computedExpiresAt;
       if (gift?.allowCustomerEngraving) updates.engravingText = sanitizeInput(engravingText, 30);
       if (gift.securityToken) updates.securityToken = gift.securityToken;
 
@@ -349,7 +346,7 @@ export default function CustomerSetup() {
   const confirmSaveAndLock = async () => {
     if (!gift) return;
 
-    if (FEATURE_FLAGS.GIFT_EXPIRATION && expirationSelection === 'custom') {
+    if (expirationSelection === 'custom') {
       const selectedDate = new Date(customExpirationDate);
       const now = new Date();
       const maxDate = new Date(now.getTime() + 3 * 365 * 24 * 60 * 60 * 1000);
@@ -389,12 +386,10 @@ export default function CustomerSetup() {
         albumImages: albumImages,
         locked: true,
       };
-      if (FEATURE_FLAGS.GIFT_EXPIRATION) {
-        const computedExpiresAt = computeExpiresAt(expirationSelection, customExpirationDate);
-        updates.expirationSelection = expirationSelection;
-        updates.customExpirationDate = expirationSelection === 'custom' ? customExpirationDate : "";
-        updates.expiresAt = computedExpiresAt;
-      }
+      const computedExpiresAt = computeExpiresAt(expirationSelection, customExpirationDate);
+      updates.expirationSelection = expirationSelection;
+      updates.customExpirationDate = expirationSelection === 'custom' ? customExpirationDate : "";
+      updates.expiresAt = computedExpiresAt;
       if (gift?.allowCustomerEngraving) updates.engravingText = sanitizeInput(engravingText, 30);
       if (gift.securityToken) updates.securityToken = gift.securityToken;
 
@@ -664,7 +659,6 @@ export default function CustomerSetup() {
           )}
 
           {/* Online Expiration Options */}
-          {FEATURE_FLAGS.GIFT_EXPIRATION && (
           <div className="mt-8">
             <h3 className="text-lg font-semibold text-brand-anthracite mb-4">Online-Verfügbarkeit</h3>
             <div className="bg-brand-cream-tint border border-brand-border rounded-xl p-4 mb-4">
@@ -716,7 +710,6 @@ export default function CustomerSetup() {
               )}
             </div>
           </div>
-          )}
 
           {/* Engraving Text – genau wie Social Gifting: nur wenn Admin „Gravurtext vom Kunden erlauben“ aktiv hat */}
           {gift.productType !== "noor" && gift?.allowCustomerEngraving && (
