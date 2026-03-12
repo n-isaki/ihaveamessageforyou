@@ -16,7 +16,6 @@ import AdminStats from "../components/admin/AdminStats";
 import AdminGiftTable from "../components/admin/AdminGiftTable";
 import EtsyModal from "../components/modals/EtsyModal";
 import MemoriaModal from "../components/modals/MemoriaModal";
-import AudioModal from "../components/modals/AudioModal";
 import DeleteModal from "../components/modals/DeleteModal";
 
 export default function AdminDashboard() {
@@ -31,9 +30,6 @@ export default function AdminDashboard() {
 
   // Memoria Modal State
   const [showMemoriaModal, setShowMemoriaModal] = useState(false);
-
-  // Audio Modal State
-  const [showAudioModal, setShowAudioModal] = useState(false);
 
   // Delete Modal State
   const [deleteId, setDeleteId] = useState(null);
@@ -303,16 +299,6 @@ export default function AdminDashboard() {
                       </button>
                     )}
 
-                    {(
-                      <button
-                        onClick={() => setShowAudioModal(true)}
-                        className="bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 inline-flex items-center px-4 py-2 rounded-lg text-sm shrink-0 transition-colors"
-                      >
-                        <Menu className="h-5 w-5 mr-2" />
-                        Audio Upload
-                      </button>
-                    )}
-
                     <Link
                       to="/admin/create"
                       className="btn-primary inline-flex items-center px-4 py-2 rounded-lg text-sm shrink-0"
@@ -450,12 +436,6 @@ export default function AdminDashboard() {
             <MemoriaModal
               isOpen={showMemoriaModal}
               onClose={() => setShowMemoriaModal(false)}
-              onSuccess={() => fetchGifts()}
-            />
-
-            <AudioModal
-              isOpen={showAudioModal}
-              onClose={() => setShowAudioModal(false)}
               onSuccess={() => fetchGifts()}
             />
 

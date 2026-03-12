@@ -19,6 +19,7 @@ import AlbumUpload from "../components/AlbumUpload";
 import NoorForm from "../components/forms/NoorForm";
 import MemoriaForm from "../components/forms/MemoriaForm";
 import KamlimosForm from "../components/forms/KamlimosForm";
+import AudioForm from "../components/forms/AudioForm";
 import ProductTypeSelection from "../components/ProductTypeSelection";
 export default function GiftWizard() {
   const navigate = useNavigate();
@@ -298,6 +299,19 @@ export default function GiftWizard() {
       } else {
         dataToSave.unlockDate = null; // Explicitly clear if empty
       }
+      // Für Audio: map meaningText to messages array and set locked:true so no setup is needed
+      if (dataToSave.project === 'audio') {
+          if (dataToSave.meaningText) {
+              dataToSave.messages = [{
+                  id: Date.now(),
+                  type: "text",
+                  author: dataToSave.senderName || dataToSave.customerName || "System",
+                  content: dataToSave.meaningText
+              }];
+          }
+          dataToSave.locked = true;
+          dataToSave.isPublic = true;
+      }
 
       if (isEditMode) {
         await updateGift(id, dataToSave);
@@ -335,6 +349,7 @@ export default function GiftWizard() {
 
   const isNoor = formData.project === "noor" || formData.project === "dua";
   const isMemoria = formData.project === "memoria";
+  const isAudio = formData.project === "audio";
   const isRitual =
     formData.project === "ritual" || formData.productType === "bracelet";
   const isBracelet = isRitual; // Alias for readability in render logic if needed
@@ -364,9 +379,11 @@ export default function GiftWizard() {
                   ? "Neues Noor"
                   : isMemoria
                     ? "Neues Memoria"
-                    : isBracelet
-                      ? "Neues Armband"
-                      : "Neue Tasse"}
+                    : isAudio
+                      ? "Neues Audio"
+                      : isBracelet
+                        ? "Neues Armband"
+                        : "Neue Tasse"}
             </h1>
             <button
               onClick={() =>
@@ -389,7 +406,7 @@ export default function GiftWizard() {
           {step > 0 && (
             <WizardStepIndicator
               step={step}
-              projectType={isNoor ? 'noor' : isMemoria ? 'memoria' : isRitual ? 'ritual' : 'kamlimos'}
+              projectType={isNoor ? 'noor' : isAudio ? 'audio' : isMemoria ? 'memoria' : isRitual ? 'ritual' : 'kamlimos'}
             />
           )}
 
@@ -422,6 +439,13 @@ export default function GiftWizard() {
                   />
                 ) : isMemoria ? (
                   <MemoriaForm
+                    formData={formData}
+                    onInputChange={handleInputChange}
+                    uploadingRecitation={uploadingRecitation}
+                    onAudioUpload={handleAudioUpload}
+                  />
+                ) : isAudio ? (
+                  <AudioForm
                     formData={formData}
                     onInputChange={handleInputChange}
                     uploadingRecitation={uploadingRecitation}
@@ -460,7 +484,7 @@ export default function GiftWizard() {
             {/* ---------- STEP 2: SUMMARY (Formerly Step 3/Messages) ---------- */}
             {step === 2 && (
               <div className="space-y-6">
-                {!isNoor && !isBracelet ? (
+                {!isNoor && !isBracelet && !isAudio ? (
                   <>
                     {/* Album: bis zu 7 Bilder */}
                     <AlbumUpload
@@ -516,6 +540,21 @@ export default function GiftWizard() {
                         </p>
                       </>
                     )}
+                  </div>
+                )}
+
+                {isAudio && (
+                  <div className="bg-stone-50 p-6 rounded-xl space-y-4">
+                        <p>
+                          <strong>Titel:</strong> {formData.headline}
+                        </p>
+                        <p>
+                          <strong>Nachricht:</strong> {formData.meaningText ? "Vorhanden ✅" : "Fehlt ❌"}
+                        </p>
+                        <p>
+                          <strong>Audio File:</strong>{" "}
+                          {formData.audioUrl ? "Vorhanden ✅" : "Fehlt ❌"}
+                        </p>
                   </div>
                 )}
 

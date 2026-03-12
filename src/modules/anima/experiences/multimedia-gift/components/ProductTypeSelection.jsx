@@ -1,5 +1,5 @@
 import React from "react";
-import { Coffee, Watch, Heart, Zap } from "lucide-react";
+import { Coffee, Watch, Heart, Zap, Mic } from "lucide-react";
 
 export default function ProductTypeSelection({ onSelect }) {
     const products = [
@@ -46,6 +46,17 @@ export default function ProductTypeSelection({ onSelect }) {
             borderHover: "hover:border-emerald-200",
             project: "noor",
             productType: "noor-audio",
+        },
+        {
+            id: "audio",
+            title: "Audio",
+            description: "Ein generisches Audio-Geschenk mit Player.",
+            icon: Mic,
+            color: "text-indigo-600",
+            bgHover: "hover:bg-indigo-50",
+            borderHover: "hover:border-indigo-200",
+            project: "audio",
+            productType: "audio",
         },
     ];
 
