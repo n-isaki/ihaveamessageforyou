@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Play, Pause, Mic, Download } from 'lucide-react';
+import { Play, Pause, Mic, Download, Loader } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function AudioViewer({ gift }) {
@@ -10,6 +10,7 @@ export default function AudioViewer({ gift }) {
 
     const [isPlaying, setIsPlaying] = useState(false);
     const [progress, setProgress] = useState(0);
+    const [isDownloading, setIsDownloading] = useState(false);
     const audioRef = useRef(null);
 
     useEffect(() => {
@@ -47,6 +48,33 @@ export default function AudioViewer({ gift }) {
         const x = e.clientX - bounds.left;
         const percent = x / bounds.width;
         audioRef.current.currentTime = percent * audioRef.current.duration;
+    };
+
+    const handleDownload = async () => {
+        if (!audioUrl || isDownloading) return;
+        try {
+            setIsDownloading(true);
+            const response = await fetch(audioUrl);
+            if (!response.ok) throw new Error("Network response was not ok");
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            
+            const safeHeadline = (headline || 'audio').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            a.download = `${safeHeadline}.mp3`;
+            
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (err) {
+            console.error("Download failed:", err);
+            alert("Sicherheits-Blockade (CORS): Firebase blockiert den direkten Download. Bitte wende die `cors.json` Einstellungen in deiner Google Cloud Console an, wie vom System beschrieben.");
+        } finally {
+            setIsDownloading(false);
+        }
     };
 
     return (
@@ -94,16 +122,18 @@ export default function AudioViewer({ gift }) {
                                     )}
                                 </button>
                                 
-                                <a
-                                    href={audioUrl}
-                                    download="audio-message.mp3"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="w-12 h-12 rounded-full bg-stone-800 hover:bg-stone-700 flex items-center justify-center transition-colors"
+                                <button
+                                    onClick={handleDownload}
+                                    disabled={isDownloading}
+                                    className="w-12 h-12 rounded-full bg-stone-800 hover:bg-stone-700 disabled:opacity-50 flex items-center justify-center transition-colors"
                                     title="Audio herunterladen"
                                 >
-                                    <Download className="w-5 h-5 text-stone-300" />
-                                </a>
+                                    {isDownloading ? (
+                                        <Loader className="w-5 h-5 text-stone-300 animate-spin" />
+                                    ) : (
+                                        <Download className="w-5 h-5 text-stone-300" />
+                                    )}
+                                </button>
                             </div>
 
                             {/* Progress Bar */}
