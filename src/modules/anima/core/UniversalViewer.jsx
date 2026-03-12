@@ -8,6 +8,7 @@ import { Loader } from 'lucide-react';
 const MugViewer = lazy(() => import('../experiences/multimedia-gift/pages/Viewer'));
 const NoorViewer = lazy(() => import('../experiences/noor/pages/NoorViewer'));
 const MemoryViewer = lazy(() => import('../experiences/memoria/pages/MemoryViewer'));
+const AudioViewer = lazy(() => import('../experiences/audio/AudioViewer'));
 
 export default function UniversalViewer() {
     const { id } = useParams();
@@ -100,6 +101,7 @@ export default function UniversalViewer() {
             </div>
         }>
             {(() => {
+                if (gift.project === 'audio') return <AudioViewer gift={gift} />;
                 if (gift.project === 'memoria') return <MemoryViewer gift={gift} />;
                 if (gift.project === 'noor' || gift.project === 'dua' || gift.productType === 'dua-audio' || gift.productType === 'noor-audio') return <NoorViewer gift={gift} />;
                 return <MugViewer gift={gift} />;

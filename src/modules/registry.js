@@ -3,6 +3,7 @@ import { TasseExperience } from './experiences/tasse';
 import { NoorExperience } from './experiences/noor';
 import { MemoriaExperience } from './experiences/memoria';
 import { BraceletExperience } from './experiences/bracelet';
+import { AudioExperience } from './experiences/audio';
 
 const experiences = {
     kamlimos: TasseExperience,
@@ -11,7 +12,8 @@ const experiences = {
     dua: NoorExperience, // Alias
     memoria: MemoriaExperience,
     ritual: BraceletExperience,
-    bracelet: BraceletExperience
+    bracelet: BraceletExperience,
+    audio: AudioExperience
 };
 
 export const getExperience = (gift) => {

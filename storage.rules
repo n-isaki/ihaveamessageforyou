@@ -21,6 +21,12 @@ service firebase.storage {
                     && request.resource.contentType.matches('image/(jpeg|png|webp)');
       allow update, delete: if isAdmin();
     }
+
+    // Audio uploads for generic audio gifts
+    match /audio-uploads/{giftId}/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
     
     match /{allPaths=**} {
       // READ: Admin or with valid token
