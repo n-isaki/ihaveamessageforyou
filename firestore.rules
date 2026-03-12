@@ -53,10 +53,13 @@ service cloud.firestore {
       // 3. Unlocked gifts are readable (PUBLIC METADATA ONLY via Cloud Function for locked gifts!)
       // ⚠️ SECURITY FIXED: Locked gifts are NO LONGER publicly readable via Firestore.
       // Use getPublicGiftData cloud function for lock screen metadata.
-      allow read: if isAdmin() 
+      allow get: if isAdmin() 
                   || isValidToken()
                   || (resource.data.locked == false) // ✅ ONLY unlocked gifts are public
                   || (resource.data.isPublic == true); // ✅ Allow reading if public (Open Access)
+                  
+      // LIST: Prevent public listing to stop scraping/enumeration attacks
+      allow list: if isAdmin();
       
       // CREATE: Only Admin or Shopify Webhook (with shopifyOrderId)
       allow create: if isAdmin() 
@@ -94,10 +97,13 @@ service cloud.firestore {
          // 1. Admin (always)
          // 2. Owner of parent gift via securityToken (Viewer/Setup)
          // Note: Contributors CANNOT read other messages (Write-Only Privacy)
-          allow read: if isAdmin() 
+          allow get: if isAdmin() 
                       || (get(/databases/$(database)/documents/gift_orders/$(documentId)).data.securityToken == request.query.token)
                       || (get(/databases/$(database)/documents/gift_orders/$(documentId)).data.locked == false)
                       || (get(/databases/$(database)/documents/gift_orders/$(documentId)).data.isPublic == true);
+                      
+          // LIST: Only Admin can list contributions
+          allow list: if isAdmin();
 
          // CREATE: Public write access IF they have the valid contributionToken
          // Token validation: Payload token === Parent Gift token
