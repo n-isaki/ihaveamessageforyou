@@ -14,7 +14,7 @@ import { ref, deleteObject } from "firebase/storage";
 import { httpsCallable, getFunctions } from "firebase/functions";
 import { db, storage, auth } from "../firebase";
 import { getExperience } from "../modules/registry";
-import { hashPin } from "./pinSecurity";
+import { hashPin, getPublicGiftData } from "./pinSecurity";
 import { deleteAllAlbumImages } from "./albumUpload";
 
 const COLLECTION_NAME = "gift_orders";
@@ -312,9 +312,7 @@ export const getGiftById = async (id, retries = 3) => {
           "🔒 Gift is locked (PERMISSION_DENIED). Attempting to fetch public data..."
         );
         try {
-          // Import dynamically to avoid circular dependencies if any,
-          // or ensure pinSecurity.js is imported at top
-          const { getPublicGiftData } = await import("./pinSecurity");
+          // Static import is safe now
           const result = await getPublicGiftData(id);
 
           if (result && result.exists) {

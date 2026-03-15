@@ -30,7 +30,6 @@ import {
   deleteAlbumImageByUrl,
 } from "../services/albumUpload";
 import { ALBUM_MAX_FILES } from "../utils/security";
-import MugViewer from "../modules/anima/experiences/multimedia-gift/pages/Viewer";
 import { v4 as uuidv4 } from "uuid";
 import { motion as Motion, AnimatePresence } from "framer-motion";
 import { sanitizeInput, isValidMessage } from "../utils/security";
