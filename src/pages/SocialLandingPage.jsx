@@ -17,31 +17,31 @@ const FAQ_ITEMS = [
   {
     question: "Was ist NFC?",
     answer:
-      "Platzhalter – Hier kommt deine Erklärung zu NFC rein. Z. B.: NFC (Near Field Communication) ist eine drahtlose Technologie, mit der dein Geschenk per Smartphone-Berührung eine persönliche digitale Nachricht öffnet.",
+      "NFC (Near Field Communication) ist eine absolut sichere, drahtlose Technologie, die du vielleicht schon vom kontaktlosen Bezahlen mit deinem Smartphone kennst. In unseren Geschenken ist ein winziger, unsichtbarer Chip versteckt. Wenn dein Lieblingsmensch sein Smartphone (egal ob Apple oder Android) an das Geschenk hält, öffnet sich wie von Zauberhand deine ganz persönliche, digitale Nachricht auf dem Display. Das Geniale: Es muss dafür KEINE extra App heruntergeladen werden!",
     icon: <Smartphone className="w-5 h-5" />,
   },
   {
     question: "Wie funktioniert die Gravur?",
     answer:
-      "Platzhalter – Hier kommt dein Text zur Gravur. Z. B.: Jede Tasse und jedes Produkt wird individuell mit Laser graviert – präzise, dauerhaft und einzigartig.",
+      "Wir setzen auf modernste, hochpräzise Lasergravur, die ein Leben lang hält. Bei der Tassengravur arbeitet der Laser dein Wunschmotiv oder deinen Text tief in die Keramik ein – spürbar, unverwüstlich und zu 100 % spülmaschinenfest. Bei unseren schwarzen Metall-Schlüsselanhängern trägt der Laser mikrometergenau die oberste Schicht ab, sodass das helle Metall darunter zum Vorschein kommt. So verewigen wir Texte und sogar detailreiche, hochauflösende Fotos extrem langlebig und kratzfest.",
     icon: <Sparkles className="w-5 h-5" />,
   },
   {
     question: "Sind meine Daten sicher?",
     answer:
-      "Platzhalter – Hier kommt dein Sicherheitstext. Z. B.: Deine Daten werden verschlüsselt gespeichert, du bestimmst die Aufbewahrungsdauer, und du kannst jederzeit löschen.",
+      "Deine Privatsphäre hat für uns höchste Priorität. Deine Daten werden streng verschlüsselt gespeichert. Du bestimmst bei der Einrichtung ganz allein die Aufbewahrungsdauer deiner Botschaft (z. B. 1, 3 oder 5 Jahre). Und wenn du deine Daten doch schon früher löschen möchtest? Gar kein Problem! Schreib uns einfach eine kurze Nachricht mit deiner Bestellnummer, und wir löschen deine Daten sofort und unwiderruflich aus dem System.",
     icon: <Shield className="w-5 h-5" />,
   },
   {
     question: "Wie richte ich mein Geschenk ein?",
     answer:
-      "Platzhalter – Hier kommt deine Setup-Erklärung. Z. B.: Nach dem Kauf erhältst du einen persönlichen Link. Dort kannst du Nachrichten, Fotos und Videos für den Empfänger hinterlegen.",
+      "100 % Privatsphäre – du richtest alles ganz bequem von zu Hause aus ein! Du musst uns vorab keine privaten Dateien oder Bilder schicken. Sobald dein Paket bei dir ankommt, findest du darin eine kinderleichte Schritt-für-Schritt-Anleitung. Du hältst dein Smartphone an den Chip, öffnest deinen sicheren Einrichtungsbereich und lädst dort in wenigen Sekunden dein Lieblingsfoto, ein Video, einen Text oder einen Spotify-Link selbst hoch. Wenn du das Geschenk dann übergibst, ist die digitale Überraschung perfekt vorbereitet!",
     icon: <Heart className="w-5 h-5" />,
   },
   {
     question: "Wer kann mein Geschenk sehen?",
     answer:
-      "Platzhalter – Hier kommt dein Datenschutztext. Z. B.: Nur wer den Link hat, kann das Geschenk öffnen. Optional kannst du einen PIN setzen für noch mehr Schutz.",
+      "Deine persönliche Botschaft bleibt dein Geheimnis! Nur wer das physische Geschenk in den Händen hält und den Chip scannt (oder den exakten Direktlink besitzt), kann deine Nachricht öffnen. All unsere Links sind so konfiguriert, dass sie nicht von Google oder anderen Suchmaschinen indexiert werden – man kann sie im Internet also nicht über die Suche finden. Optional kannst du deine Botschaft bei der Einrichtung zusätzlich mit einem persönlichen PIN-Code sichern. So kann wirklich niemand außer deinem Lieblingsmenschen die Überraschung sehen!",
     icon: <Lock className="w-5 h-5" />,
   },
 ];
@@ -66,7 +66,7 @@ function FAQItem({ item }) {
         />
       </button>
       <div
-        className={`overflow-hidden transition-all duration-200 ${open ? "max-h-60 opacity-100" : "max-h-0 opacity-0"}`}
+        className={`overflow-hidden transition-all duration-200 ${open ? "max-h-[32rem] opacity-100" : "max-h-0 opacity-0"}`}
       >
         <p className="px-5 pb-5 pt-0 text-sm text-brand-text leading-relaxed pl-[4.25rem]">
           {item.answer}
@@ -124,7 +124,6 @@ export default function SocialLandingPage() {
           </div>
 
           <h1 className="text-3xl sm:text-4xl md:text-5xl leading-tight mb-4">
-            {/* PLATZHALTER – Dein Headline-Text */}
             Kamlimos
           </h1>
           <p className="text-lg sm:text-xl text-brand-patina font-display italic mb-6">
@@ -132,10 +131,10 @@ export default function SocialLandingPage() {
           </p>
 
           <p className="text-brand-text text-base sm:text-lg leading-relaxed max-w-lg mx-auto">
-            {/* PLATZHALTER – Wer bist du, was macht Kamlimos? */}
-            Platzhalter – Hier kommt dein Text: Wer du bist, was Kamlimos
-            macht, warum deine Produkte besonders sind. Ich tausche das ein,
-            sobald du mir den Text gibst.
+            Hallo, ich bin Sea, die Gründerin von Kamlimos! Ich bin das kreative
+            Herz unseres Shops, entwerfe mit viel Leidenschaft unsere Designs und
+            kümmere mich im Kundenservice ganz persönlich um all eure Fragen,
+            individuellen Wünsche und die perfekte Organisation eurer Geschenke.
           </p>
         </div>
       </header>
