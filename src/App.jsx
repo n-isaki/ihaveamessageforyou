@@ -14,6 +14,7 @@ const CustomerSetup = lazy(() => import("./pages/CustomerSetup.redesign"));
 const PrintGift = lazy(() => import("./pages/PrintGift"));
 const ShopifyThemeExplorer = lazy(() => import("./pages/ShopifyThemeExplorer"));
 const ContributionPage = lazy(() => import("./pages/ContributionPage"));
+const SocialLandingPage = lazy(() => import("./pages/SocialLandingPage"));
 
 // Anima Modules - Lazy Loaded
 const GiftWizard = lazy(() =>
@@ -49,9 +50,9 @@ const AdminDomainGuard = ({ children }) => {
 const DomainAwareHome = () => {
   const host = window.location.hostname;
 
-  // If user visits admin.kamlimos.com (root path), go to dashboard
+  // admin.kamlimos.com root → public landing page for social media traffic
   if (host.startsWith("admin.")) {
-    return <Navigate to="/admin/dashboard" replace />;
+    return <SocialLandingPage />;
   }
 
   // Allow Staging/Localhost to show Landing Page directly
