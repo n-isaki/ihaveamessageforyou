@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { logEvent } from "firebase/analytics";
+import { analytics } from "../firebase";
 import {
   ChevronDown,
   ExternalLink,
@@ -79,29 +81,35 @@ export default function SocialLandingPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const source = searchParams.get("utm_source");
-    const medium = searchParams.get("utm_medium");
-    const campaign = searchParams.get("utm_campaign");
+    const source = searchParams.get("utm_source") || "";
+    const medium = searchParams.get("utm_medium") || "";
+    const campaign = searchParams.get("utm_campaign") || "";
+    const referrer = document.referrer || "";
 
-    if (source || medium || campaign) {
-      console.log("📊 Traffic source:", { source, medium, campaign });
-
-      try {
-        const visits = JSON.parse(localStorage.getItem("kamlimos_visits") || "[]");
-        visits.push({
-          source: source || "direct",
-          medium: medium || "",
-          campaign: campaign || "",
-          timestamp: new Date().toISOString(),
-          referrer: document.referrer || "",
-        });
-        if (visits.length > 100) visits.splice(0, visits.length - 100);
-        localStorage.setItem("kamlimos_visits", JSON.stringify(visits));
-      } catch {
-        // localStorage may be unavailable
-      }
+    try {
+      logEvent(analytics, "landing_page_view", {
+        utm_source: source || "direct",
+        utm_medium: medium,
+        utm_campaign: campaign,
+        referrer,
+      });
+    } catch {
+      // Analytics may be blocked by adblocker
     }
   }, [searchParams]);
+
+  const trackClick = (buttonName) => {
+    try {
+      const source = searchParams.get("utm_source") || "direct";
+      logEvent(analytics, "landing_cta_click", {
+        button: buttonName,
+        utm_source: source,
+        referrer: document.referrer || "",
+      });
+    } catch {
+      // Analytics may be blocked
+    }
+  };
 
   const etsyUrl = "https://www.etsy.com/shop/Kamlimos";
 
@@ -139,6 +147,7 @@ export default function SocialLandingPage() {
             href={etsyUrl}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => trackClick("etsy_shop")}
             className="flex items-center justify-center gap-3 w-full py-4 px-6 bg-brand-patina text-white font-semibold rounded-2xl hover:bg-brand-patina-hover transition-colors shadow-brand text-[15px] sm:text-base no-underline"
           >
             <ExternalLink className="w-5 h-5" />
@@ -147,6 +156,7 @@ export default function SocialLandingPage() {
 
           <button
             disabled
+            onClick={() => trackClick("website_coming_soon")}
             className="flex items-center justify-center gap-3 w-full py-4 px-6 bg-brand-cream-tint text-brand-text/50 font-semibold rounded-2xl border border-brand-border cursor-not-allowed text-[15px] sm:text-base relative overflow-hidden"
           >
             Website
