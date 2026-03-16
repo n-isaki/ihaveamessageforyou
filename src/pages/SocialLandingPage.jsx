@@ -29,13 +29,13 @@ const FAQ_ITEMS = [
   {
     question: "Sind meine Daten sicher?",
     answer:
-      "Deine Privatsphäre hat für uns höchste Priorität. Deine Daten werden streng verschlüsselt gespeichert. Du bestimmst bei der Einrichtung ganz allein die Aufbewahrungsdauer deiner Botschaft (z. B. 1, 3 oder 5 Jahre). Und wenn du deine Daten doch schon früher löschen möchtest? Gar kein Problem! Schreib uns einfach eine kurze Nachricht mit deiner Bestellnummer, und wir löschen deine Daten sofort und unwiderruflich aus dem System.",
+      "Deine Privatsphäre hat für uns höchste Priorität. Deine Daten werden streng verschlüsselt gespeichert. Du bestimmst bei der Einrichtung ganz allein die Aufbewahrungsdauer deiner Botschaft – von einer Woche über einen Monat bis hin zu 1, 3 oder 5 Jahren. Und wenn du deine Daten doch schon früher löschen möchtest? Gar kein Problem! Schreib uns einfach eine kurze Nachricht mit deiner Bestellnummer, und wir löschen deine Daten sofort und unwiderruflich aus dem System.",
     icon: <Shield className="w-5 h-5" />,
   },
   {
     question: "Wie richte ich mein Geschenk ein?",
     answer:
-      "100 % Privatsphäre – du richtest alles ganz bequem von zu Hause aus ein! Du musst uns vorab keine privaten Dateien oder Bilder schicken. Sobald dein Paket bei dir ankommt, findest du darin eine kinderleichte Schritt-für-Schritt-Anleitung. Du hältst dein Smartphone an den Chip, öffnest deinen sicheren Einrichtungsbereich und lädst dort in wenigen Sekunden dein Lieblingsfoto, ein Video, einen Text oder einen Spotify-Link selbst hoch. Wenn du das Geschenk dann übergibst, ist die digitale Überraschung perfekt vorbereitet!",
+      "100 % Privatsphäre – du richtest alles ganz bequem von zu Hause aus ein! Du musst uns vorab keine privaten Dateien oder Bilder schicken. Sobald dein Paket bei dir ankommt, scannst du einfach den Code auf dem Geschenk mit deinem Smartphone – und schon kannst du direkt mit der Einrichtung loslegen. Schreib persönliche Nachrichten, lade eure schönsten gemeinsamen Fotos und Videos hoch, füge einen Spotify-Link hinzu – alles in wenigen Sekunden, direkt auf deinem Handy. Wenn du das Geschenk dann übergibst, ist die digitale Überraschung perfekt vorbereitet!",
     icon: <Heart className="w-5 h-5" />,
   },
   {
