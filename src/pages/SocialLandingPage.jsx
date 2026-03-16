@@ -23,7 +23,7 @@ const FAQ_ITEMS = [
   {
     question: "Wie funktioniert die Gravur?",
     answer:
-      "Wir setzen auf modernste, hochpräzise Lasergravur, die ein Leben lang hält. Bei der Tassengravur arbeitet der Laser dein Wunschmotiv oder deinen Text tief in die Keramik ein – spürbar, unverwüstlich und zu 100 % spülmaschinenfest. Bei unseren schwarzen Metall-Schlüsselanhängern trägt der Laser mikrometergenau die oberste Schicht ab, sodass das helle Metall darunter zum Vorschein kommt. So verewigen wir Texte und sogar detailreiche, hochauflösende Fotos extrem langlebig und kratzfest.",
+      "Wir setzen auf modernste, hochpräzise Lasergravur, die ein Leben lang hält. Bei der Tassengravur arbeitet der Laser dein Wunschmotiv oder deinen Text tief in die Keramik ein – spürbar, unverwüstlich und zu 100 % spülmaschinenfest. Bei unseren Edelstahl-Schlüsselanhängern trägt der Laser mikrometergenau die oberste Schicht ab, sodass der Kontrast entsteht. So verewigen wir Texte und sogar detailreiche, hochauflösende Fotos extrem langlebig und kratzfest.",
     icon: <Sparkles className="w-5 h-5" />,
   },
   {
