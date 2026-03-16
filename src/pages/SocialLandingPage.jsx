@@ -17,7 +17,7 @@ const FAQ_ITEMS = [
   {
     question: "Was ist NFC & der Magic Key?",
     answer:
-      "NFC (Near Field Communication) ist eine absolut sichere, drahtlose Technologie, die du vielleicht schon vom kontaktlosen Bezahlen mit deinem Smartphone kennst. In unseren Geschenken – den Magic Keys – ist ein winziger, unsichtbarer Chip versteckt. Wenn dein Lieblingsmensch sein Smartphone (egal ob Apple oder Android) an das Geschenk hält, öffnet sich wie von Zauberhand deine ganz persönliche, digitale Nachricht auf dem Display. Das Geniale: Es muss dafür KEINE extra App heruntergeladen werden!",
+      "In unseren Geschenken – den Magic Keys – ist ein winziger, unsichtbarer NFC-Chip versteckt. Wenn dein Lieblingsmensch sein Smartphone (egal ob Apple oder Android) einfach an das Geschenk hält, öffnet sich wie von Zauberhand deine ganz persönliche, digitale Nachricht auf dem Display. Kein Kabel, kein QR-Code scannen, keine App – einfach dranhalten und staunen!",
     icon: <Smartphone className="w-5 h-5" />,
   },
   {
