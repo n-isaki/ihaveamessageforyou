@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { logEvent } from "firebase/analytics";
 import { analytics } from "../firebase";
 import {
@@ -78,7 +78,6 @@ function FAQItem({ item }) {
 
 export default function SocialLandingPage() {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
 
   useEffect(() => {
     const source = searchParams.get("utm_source") || "";
@@ -119,16 +118,13 @@ export default function SocialLandingPage() {
       <header className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-brand-patina/5 to-transparent pointer-events-none" />
         <div className="relative max-w-2xl mx-auto px-5 pt-14 pb-10 sm:pt-20 sm:pb-14 text-center">
-          <div className="mx-auto w-16 h-16 sm:w-20 sm:h-20 bg-brand-patina/10 rounded-2xl flex items-center justify-center mb-6 shadow-brand">
-            <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 text-brand-patina" />
+          <div className="mx-auto w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden mb-6 shadow-brand-lg border-2 border-brand-border">
+            <img src="/sea.png" alt="Sea – Gründerin von Kamlimos" className="w-full h-full object-cover" />
           </div>
 
           <h1 className="text-3xl sm:text-4xl md:text-5xl leading-tight mb-4">
             Kamlimos
           </h1>
-          <p className="text-lg sm:text-xl text-brand-patina font-display italic mb-6">
-            Make it yours
-          </p>
 
           <p className="text-brand-text text-base sm:text-lg leading-relaxed max-w-lg mx-auto">
             Hallo, ich bin Sea, die Gründerin von Kamlimos! Ich bin das kreative
@@ -196,15 +192,7 @@ export default function SocialLandingPage() {
         </div>
       </section>
 
-      {/* Hidden admin link */}
-      <footer className="pb-8 text-center">
-        <button
-          onClick={() => navigate("/admin/login")}
-          className="text-xs text-brand-text/30 hover:text-brand-text/60 transition-colors"
-        >
-          Admin
-        </button>
-      </footer>
+      <footer className="pb-8" />
     </div>
   );
 }
