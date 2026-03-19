@@ -110,7 +110,7 @@ export default function SocialLandingPage() {
     }
   };
 
-  const etsyUrl = "https://www.etsy.com/shop/Kamlimos";
+  const etsyUrl = "https://kamlimos.etsy.com";
 
   return (
     <div className="min-h-screen bg-brand-cream">
