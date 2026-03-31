@@ -357,6 +357,13 @@ export const getGiftBySetupToken = async (giftId, token) => {
   return result.data;
 };
 
+export const syncEtsyOrdersNow = async () => {
+  const functions = getFunctions();
+  const fn = httpsCallable(functions, "etsySyncOrdersNow");
+  const result = await fn({});
+  return result.data;
+};
+
 // ============================================
 // SOCIAL GIFTING (CONTRIBUTIONS)
 // ============================================

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getGifts, updateGift } from "../services/gifts";
-import { Loader, Menu, Calculator, PackageCheck, Save, Copy } from "lucide-react";
+import { getGifts, updateGift, syncEtsyOrdersNow } from "../services/gifts";
+import { Loader, Menu, Calculator, PackageCheck, Save, Copy, RefreshCw } from "lucide-react";
 import AdminSidebar from "../components/AdminSidebar";
 import { toast } from "../services/toast";
 
@@ -11,6 +11,53 @@ export default function AdminTaxes() {
     const [loading, setLoading] = useState(true);
     const [isSidebarOpen, setSidebarOpen] = useState(false);
     const [savingId, setSavingId] = useState(null);
+    const [syncingEtsy, setSyncingEtsy] = useState(false);
+
+    const fetchTaxGifts = async (showLoader = false) => {
+        if (showLoader) setLoading(true);
+        try {
+            const data = await getGifts();
+            const etsyOnly = data.filter((g) => {
+                const isEtsy = g.platform === "etsy" || g.taxInfo?.platform === "etsy";
+                const hasRealOrderRef = !!g.etsyOrderId;
+                const hasCustomerData = !!(
+                    g.customerEmail ||
+                    g.personalizationText ||
+                    g.shippingAddress?.firstLine ||
+                    g.shippingAddress?.city
+                );
+                return isEtsy && hasRealOrderRef && hasCustomerData;
+            });
+            // Sort by delivered date or created date mapping backwards
+            etsyOnly.sort((a, b) => {
+                const getT = (t) => (t ? t.seconds || t._seconds || 0 : 0);
+                const timeA = getT(a.deliveredAt) || getT(a.updatedAt) || getT(a.createdAt);
+                const timeB = getT(b.deliveredAt) || getT(b.updatedAt) || getT(b.createdAt);
+                return timeB - timeA;
+            });
+
+            // Initialize local input state for tax info if not present
+            const initializedGifts = etsyOnly.map(g => ({
+                ...g,
+                taxInfo: {
+                    sellingPrice: g.taxInfo?.sellingPrice ?? "",
+                    costs: g.taxInfo?.costs ?? "",
+                    businessType: g.taxInfo?.businessType || "mini",
+                    platform: "etsy",
+                    platformFee: g.taxInfo?.platformFee ?? 0,
+                    finanzamt: g.taxInfo?.finanzamt ?? 0,
+                    profit: g.taxInfo?.profit ?? 0
+                },
+            }));
+
+            setGifts(initializedGifts);
+        } catch (error) {
+            console.error("Failed to fetch gifts", error);
+            toast.error("Etsy-Daten konnten nicht geladen werden.");
+        } finally {
+            if (showLoader) setLoading(false);
+        }
+    };
 
     const copyToClipboard = async (value, label) => {
         if (!value) {
@@ -39,51 +86,24 @@ export default function AdminTaxes() {
     };
 
     useEffect(() => {
-        const fetchGifts = async () => {
-            try {
-                const data = await getGifts();
-                const etsyOnly = data.filter((g) => {
-                    const isEtsy = g.platform === "etsy" || g.taxInfo?.platform === "etsy";
-                    const hasRealOrderRef = !!g.etsyOrderId;
-                    const hasCustomerData = !!(
-                        g.customerEmail ||
-                        g.personalizationText ||
-                        g.shippingAddress?.firstLine ||
-                        g.shippingAddress?.city
-                    );
-                    return isEtsy && hasRealOrderRef && hasCustomerData;
-                });
-                // Sort by delivered date or created date mapping backwards
-                etsyOnly.sort((a, b) => {
-                    const getT = (t) => (t ? t.seconds || t._seconds || 0 : 0);
-                    const timeA = getT(a.deliveredAt) || getT(a.updatedAt) || getT(a.createdAt);
-                    const timeB = getT(b.deliveredAt) || getT(b.updatedAt) || getT(b.createdAt);
-                    return timeB - timeA;
-                });
-
-                // Initialize local input state for tax info if not present
-                const initializedGifts = etsyOnly.map(g => ({
-                    ...g,
-                    taxInfo: {
-                        sellingPrice: g.taxInfo?.sellingPrice ?? "",
-                        costs: g.taxInfo?.costs ?? "",
-                        businessType: g.taxInfo?.businessType || "mini",
-                        platform: "etsy",
-                        platformFee: g.taxInfo?.platformFee ?? 0,
-                        finanzamt: g.taxInfo?.finanzamt ?? 0,
-                        profit: g.taxInfo?.profit ?? 0
-                    },
-                }));
-
-                setGifts(initializedGifts);
-            } catch (error) {
-                console.error("Failed to fetch gifts", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchGifts();
+        fetchTaxGifts(true);
     }, []);
+
+    const handleSyncEtsyNow = async () => {
+        setSyncingEtsy(true);
+        try {
+            const result = await syncEtsyOrdersNow();
+            await fetchTaxGifts(false);
+            toast.success(
+                `Etsy Sync fertig: ${result?.upserted ?? 0} aktualisiert, ${result?.fetched ?? 0} geladen`
+            );
+        } catch (error) {
+            console.error("Etsy sync failed", error);
+            toast.error("Etsy Sync fehlgeschlagen.");
+        } finally {
+            setSyncingEtsy(false);
+        }
+    };
 
     const handleUpdateTaxInfo = (id, field, value) => {
         setGifts(prevGifts => prevGifts.map(gift => {
@@ -212,6 +232,20 @@ export default function AdminTaxes() {
 
                     {/* Status Filter */}
                     <div className="mb-4 flex flex-wrap items-center gap-2">
+                        <button
+                            onClick={handleSyncEtsyNow}
+                            disabled={syncingEtsy}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors inline-flex items-center gap-1.5 ${
+                                syncingEtsy
+                                    ? "bg-stone-200 text-stone-500 border-stone-300 cursor-not-allowed"
+                                    : "bg-emerald-700 text-white border-emerald-700 hover:bg-emerald-800"
+                            }`}
+                            title="Etsy jetzt synchronisieren"
+                        >
+                            <RefreshCw className={`h-3.5 w-3.5 ${syncingEtsy ? "animate-spin" : ""}`} />
+                            Etsy Sync jetzt
+                        </button>
+
                         <button
                             onClick={() => setStatusFilter("all")}
                             className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
