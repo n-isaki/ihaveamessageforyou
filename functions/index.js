@@ -1,9 +1,14 @@
-const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
+const { defineSecret } = require("firebase-functions/params");
 const admin = require("firebase-admin");
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 
 admin.initializeApp();
 const db = admin.firestore();
+const ETSY_CLIENT_ID = defineSecret("ETSY_CLIENT_ID");
+const ETSY_CLIENT_SECRET = defineSecret("ETSY_CLIENT_SECRET");
 
 // ... existing code ...
 
@@ -323,3 +328,372 @@ exports.getPublicGiftData = onCall({ cors: true }, async (request) => {
     throw new Error("Internal server error");
   }
 });
+
+const OAUTH_STATE_TTL_MINUTES = 15;
+
+function base64Url(buffer) {
+  return buffer
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
+
+function createPkcePair() {
+  const verifier = base64Url(crypto.randomBytes(64));
+  const challenge = base64Url(crypto.createHash("sha256").update(verifier).digest());
+  return { verifier, challenge };
+}
+
+async function refreshEtsyAccessToken(refreshToken) {
+  const params = new URLSearchParams();
+  params.set("grant_type", "refresh_token");
+  params.set("client_id", ETSY_CLIENT_ID.value());
+  params.set("refresh_token", refreshToken);
+
+  const tokenRes = await fetch("https://api.etsy.com/v3/public/oauth/token", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: params.toString(),
+  });
+
+  if (!tokenRes.ok) {
+    const txt = await tokenRes.text();
+    throw new Error(`Etsy token refresh failed: ${tokenRes.status} ${txt}`);
+  }
+
+  return tokenRes.json();
+}
+
+async function getOrCreateEtsyShopId(accessToken, userId) {
+  const integrationRef = db.collection("integrations").doc("etsy");
+  const snap = await integrationRef.get();
+  const existingShopId = snap.exists ? snap.data()?.shopId : null;
+  if (existingShopId) return existingShopId;
+
+  const res = await fetch(`https://api.etsy.com/v3/application/users/${userId}/shops`, {
+    headers: {
+      "x-api-key": `${ETSY_CLIENT_ID.value()}:${ETSY_CLIENT_SECRET.value()}`,
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error(`Could not resolve Etsy shopId: ${res.status} ${txt}`);
+  }
+
+  const data = await res.json();
+  const first = data?.results?.[0];
+  const shopId = first?.shop_id;
+  if (!shopId) {
+    throw new Error("No Etsy shop found for authenticated user.");
+  }
+
+  await integrationRef.set(
+    {
+      shopId,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+
+  return shopId;
+}
+
+function readReceiptMoney(receipt) {
+  const candidate =
+    receipt?.grandtotal ||
+    receipt?.total_price ||
+    receipt?.total ||
+    receipt?.grand_total ||
+    null;
+
+  if (candidate == null) return 0;
+  if (typeof candidate === "number") return candidate;
+  if (typeof candidate === "string") return parseFloat(candidate) || 0;
+
+  if (typeof candidate === "object") {
+    if (typeof candidate.amount === "number" && typeof candidate.divisor === "number" && candidate.divisor > 0) {
+      return candidate.amount / candidate.divisor;
+    }
+    if (typeof candidate.amount === "string") {
+      return parseFloat(candidate.amount) || 0;
+    }
+  }
+  return 0;
+}
+
+async function syncEtsyOrdersInternal() {
+  const integrationRef = db.collection("integrations").doc("etsy");
+  const integrationSnap = await integrationRef.get();
+  if (!integrationSnap.exists) {
+    throw new Error("Etsy integration not connected yet. Run OAuth first.");
+  }
+
+  const integration = integrationSnap.data();
+  if (!integration?.refreshToken) {
+    throw new Error("Missing Etsy refresh token. Reconnect Etsy OAuth.");
+  }
+
+  const refreshed = await refreshEtsyAccessToken(integration.refreshToken);
+  const accessToken = refreshed.access_token;
+  const refreshToken = refreshed.refresh_token || integration.refreshToken;
+  const tokenPrefix = String(accessToken || "").split(".")[0];
+  const userId = tokenPrefix && /^\d+$/.test(tokenPrefix) ? Number(tokenPrefix) : integration.userId;
+
+  const shopId = await getOrCreateEtsyShopId(accessToken, userId);
+
+  const receiptsUrl = `https://api.etsy.com/v3/application/shops/${shopId}/receipts?limit=100&sort_on=created&sort_order=desc`;
+  const receiptsRes = await fetch(receiptsUrl, {
+    headers: {
+      "x-api-key": `${ETSY_CLIENT_ID.value()}:${ETSY_CLIENT_SECRET.value()}`,
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (!receiptsRes.ok) {
+    const txt = await receiptsRes.text();
+    throw new Error(`Etsy receipts fetch failed: ${receiptsRes.status} ${txt}`);
+  }
+
+  const receiptsData = await receiptsRes.json();
+  const receipts = Array.isArray(receiptsData?.results) ? receiptsData.results : [];
+  let upserted = 0;
+
+  for (const r of receipts) {
+    const etsyOrderId = String(r?.receipt_id || r?.receiptId || "");
+    if (!etsyOrderId) continue;
+
+    const sellingPrice = readReceiptMoney(r);
+    const buyerName = r?.name || r?.buyer_name || "";
+    const isDelivered = r?.is_delivered === true;
+    const isShipped = r?.was_shipped === true || !!r?.shipped_date;
+    const shippingStatus = isDelivered ? "delivered" : isShipped ? "shipped" : "processing";
+
+    const q = await db
+      .collection("gift_orders")
+      .where("etsyOrderId", "==", etsyOrderId)
+      .limit(1)
+      .get();
+
+    const basePayload = {
+      platform: "etsy",
+      etsyOrderId,
+      customerName: buyerName,
+      shippingStatus,
+      taxInfo: {
+        sellingPrice: Number(sellingPrice.toFixed(2)),
+        costs: 0,
+        businessType: "mini",
+        platform: "etsy",
+        platformFee: 0,
+        finanzamt: 0,
+        profit: 0,
+      },
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+
+    if (!q.empty) {
+      await q.docs[0].ref.set(basePayload, { merge: true });
+      upserted += 1;
+      continue;
+    }
+
+    await db.collection("gift_orders").add({
+      ...basePayload,
+      status: "open",
+      locked: true,
+      viewed: false,
+      setupStarted: false,
+      project: "etsy",
+      productType: "etsy-order",
+      securityToken: crypto.randomUUID(),
+      contributionToken: crypto.randomUUID(),
+      allowContributions: false,
+      isPublic: false,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    upserted += 1;
+  }
+
+  await integrationRef.set(
+    {
+      refreshToken,
+      userId,
+      shopId,
+      lastSyncAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+
+  return { fetched: receipts.length, upserted };
+}
+
+/**
+ * OAuth start endpoint - redirects to Etsy consent screen.
+ * Register this as Redirect URI base companion:
+ * https://europe-west1-gift-shop-app-7bbd3.cloudfunctions.net/etsyOAuthCallback
+ */
+exports.etsyOAuthStart = onRequest(
+  { region: "europe-west1", secrets: [ETSY_CLIENT_ID, ETSY_CLIENT_SECRET] },
+  async (req, res) => {
+    try {
+      const redirectUri =
+        "https://europe-west1-gift-shop-app-7bbd3.cloudfunctions.net/etsyOAuthCallback";
+      const state = base64Url(crypto.randomBytes(32));
+      const { verifier, challenge } = createPkcePair();
+
+      await db.collection("integrations").doc("etsy_oauth_states").collection("pending").doc(state).set({
+        verifier,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      const scope = encodeURIComponent("shops_r transactions_r");
+      const oauthUrl =
+        `https://www.etsy.com/oauth/connect?response_type=code` +
+        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+        `&scope=${scope}` +
+        `&client_id=${encodeURIComponent(ETSY_CLIENT_ID.value())}` +
+        `&state=${encodeURIComponent(state)}` +
+        `&code_challenge=${encodeURIComponent(challenge)}` +
+        `&code_challenge_method=S256`;
+
+      res.redirect(oauthUrl);
+    } catch (error) {
+      console.error("etsyOAuthStart failed", error);
+      res.status(500).send("Could not start Etsy OAuth.");
+    }
+  }
+);
+
+/**
+ * OAuth callback endpoint - exchanges code for tokens and stores refresh token.
+ */
+exports.etsyOAuthCallback = onRequest(
+  { region: "europe-west1", secrets: [ETSY_CLIENT_ID, ETSY_CLIENT_SECRET] },
+  async (req, res) => {
+    try {
+      const code = req.query.code;
+      const state = req.query.state;
+      if (!code || !state) {
+        res.status(400).send("Missing code/state.");
+        return;
+      }
+
+      const pendingRef = db
+        .collection("integrations")
+        .doc("etsy_oauth_states")
+        .collection("pending")
+        .doc(String(state));
+      const pendingSnap = await pendingRef.get();
+      if (!pendingSnap.exists) {
+        res.status(400).send("Invalid or expired OAuth state.");
+        return;
+      }
+
+      const createdAt = pendingSnap.data()?.createdAt;
+      if (createdAt?.toMillis) {
+        const ageMin = (Date.now() - createdAt.toMillis()) / (1000 * 60);
+        if (ageMin > OAUTH_STATE_TTL_MINUTES) {
+          await pendingRef.delete();
+          res.status(400).send("OAuth state expired. Please restart.");
+          return;
+        }
+      }
+
+      const verifier = pendingSnap.data()?.verifier;
+      const redirectUri =
+        "https://europe-west1-gift-shop-app-7bbd3.cloudfunctions.net/etsyOAuthCallback";
+
+      const params = new URLSearchParams();
+      params.set("grant_type", "authorization_code");
+      params.set("client_id", ETSY_CLIENT_ID.value());
+      params.set("redirect_uri", redirectUri);
+      params.set("code", String(code));
+      params.set("code_verifier", verifier);
+
+      const tokenRes = await fetch("https://api.etsy.com/v3/public/oauth/token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: params.toString(),
+      });
+
+      const tokenJson = await tokenRes.json();
+      if (!tokenRes.ok) {
+        console.error("Etsy token exchange failed:", tokenJson);
+        res.status(400).send("Token exchange failed.");
+        return;
+      }
+
+      const accessToken = tokenJson.access_token;
+      const refreshToken = tokenJson.refresh_token;
+      const tokenPrefix = String(accessToken || "").split(".")[0];
+      const userId = tokenPrefix && /^\d+$/.test(tokenPrefix) ? Number(tokenPrefix) : null;
+
+      await db.collection("integrations").doc("etsy").set(
+        {
+          provider: "etsy",
+          connected: true,
+          userId,
+          refreshToken,
+          tokenType: tokenJson.token_type || "Bearer",
+          accessTokenLast4: accessToken ? accessToken.slice(-4) : null,
+          scopes: ["shops_r", "transactions_r"],
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          connectedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+      await pendingRef.delete();
+      res.redirect("https://admin.kamlimos.com/admin/taxes?etsy=connected");
+    } catch (error) {
+      console.error("etsyOAuthCallback failed", error);
+      res.status(500).send("OAuth callback error.");
+    }
+  }
+);
+
+/**
+ * Manual sync callable for admins.
+ */
+exports.etsySyncOrdersNow = onCall(
+  { region: "europe-west1", secrets: [ETSY_CLIENT_ID, ETSY_CLIENT_SECRET] },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Admin login required.");
+    }
+    try {
+      return await syncEtsyOrdersInternal();
+    } catch (error) {
+      console.error("etsySyncOrdersNow failed", error);
+      throw new HttpsError("internal", error.message || "Etsy sync failed");
+    }
+  }
+);
+
+/**
+ * Scheduled sync every 30 minutes.
+ */
+exports.etsySyncOrdersScheduled = onSchedule(
+  {
+    region: "europe-west1",
+    schedule: "every 30 minutes",
+    timeZone: "Europe/Berlin",
+    secrets: [ETSY_CLIENT_ID, ETSY_CLIENT_SECRET],
+  },
+  async () => {
+    try {
+      const result = await syncEtsyOrdersInternal();
+      console.log("etsySyncOrdersScheduled success", result);
+    } catch (error) {
+      console.error("etsySyncOrdersScheduled failed", error);
+    }
+  }
+);
