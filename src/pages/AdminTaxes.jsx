@@ -42,7 +42,17 @@ export default function AdminTaxes() {
         const fetchGifts = async () => {
             try {
                 const data = await getGifts();
-                const etsyOnly = data.filter((g) => g.platform === "etsy" || g.taxInfo?.platform === "etsy");
+                const etsyOnly = data.filter((g) => {
+                    const isEtsy = g.platform === "etsy" || g.taxInfo?.platform === "etsy";
+                    const hasRealOrderRef = !!g.etsyOrderId;
+                    const hasCustomerData = !!(
+                        g.customerEmail ||
+                        g.personalizationText ||
+                        g.shippingAddress?.firstLine ||
+                        g.shippingAddress?.city
+                    );
+                    return isEtsy && hasRealOrderRef && hasCustomerData;
+                });
                 // Sort by delivered date or created date mapping backwards
                 etsyOnly.sort((a, b) => {
                     const getT = (t) => (t ? t.seconds || t._seconds || 0 : 0);
