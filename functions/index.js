@@ -461,6 +461,7 @@ async function syncEtsyOrdersInternal() {
 
   const receiptsData = await receiptsRes.json();
   const receipts = Array.isArray(receiptsData?.results) ? receiptsData.results : [];
+  console.log("Etsy sync: fetched receipts", { count: receipts.length, shopId });
   let upserted = 0;
 
   for (const r of receipts) {
@@ -475,15 +476,16 @@ async function syncEtsyOrdersInternal() {
       r?.gift_message ||
       r?.message_from_seller ||
       r?.note_to_seller ||
+      r?.buyer_note ||
       "";
     const shippingAddress = {
       name: r?.name || "",
-      firstLine: r?.first_line || "",
-      secondLine: r?.second_line || "",
-      zip: r?.zip || "",
-      city: r?.city || "",
+      firstLine: r?.first_line || r?.address1 || "",
+      secondLine: r?.second_line || r?.address2 || "",
+      zip: r?.zip || r?.postal_code || "",
+      city: r?.city || r?.town || "",
       state: r?.state || "",
-      countryIso: r?.country_iso || "",
+      countryIso: r?.country_iso || r?.country_code || "",
     };
     const isDelivered = r?.is_delivered === true;
     const isShipped = r?.was_shipped === true || !!r?.shipped_date;
@@ -549,6 +551,7 @@ async function syncEtsyOrdersInternal() {
     { merge: true }
   );
 
+  console.log("Etsy sync complete", { fetched: receipts.length, upserted, shopId, userId });
   return { fetched: receipts.length, upserted };
 }
 
@@ -671,7 +674,18 @@ exports.etsyOAuthCallback = onRequest(
       );
 
       await pendingRef.delete();
-      res.redirect("https://admin.kamlimos.com/admin/taxes?etsy=connected");
+      let firstSync = { fetched: 0, upserted: 0 };
+      try {
+        firstSync = await syncEtsyOrdersInternal();
+      } catch (syncErr) {
+        console.error("Initial Etsy sync after OAuth failed:", syncErr);
+      }
+      console.log("Etsy OAuth connected", { userId, firstSync });
+      res.redirect(
+        `https://admin.kamlimos.com/admin/taxes?etsy=connected&fetched=${encodeURIComponent(
+          String(firstSync.fetched || 0)
+        )}&upserted=${encodeURIComponent(String(firstSync.upserted || 0))}`
+      );
     } catch (error) {
       console.error("etsyOAuthCallback failed", error);
       res.status(500).send("OAuth callback error.");
