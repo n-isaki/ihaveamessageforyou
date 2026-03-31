@@ -7,6 +7,7 @@ import { toast } from "../services/toast";
 
 export default function AdminTaxes() {
     const [gifts, setGifts] = useState([]);
+    const [statusFilter, setStatusFilter] = useState("all");
     const [loading, setLoading] = useState(true);
     const [isSidebarOpen, setSidebarOpen] = useState(false);
     const [savingId, setSavingId] = useState(null);
@@ -41,11 +42,8 @@ export default function AdminTaxes() {
         const fetchGifts = async () => {
             try {
                 const data = await getGifts();
-                // Filter only delivered gifts
-                const delivered = data.filter(g => g.shippingStatus === "delivered");
-
                 // Sort by delivered date or created date mapping backwards
-                delivered.sort((a, b) => {
+                data.sort((a, b) => {
                     const getT = (t) => (t ? t.seconds || t._seconds || 0 : 0);
                     const timeA = getT(a.deliveredAt) || getT(a.updatedAt) || getT(a.createdAt);
                     const timeB = getT(b.deliveredAt) || getT(b.updatedAt) || getT(b.createdAt);
@@ -53,7 +51,7 @@ export default function AdminTaxes() {
                 });
 
                 // Initialize local input state for tax info if not present
-                const initializedGifts = delivered.map(g => ({
+                const initializedGifts = data.map(g => ({
                     ...g,
                     taxInfo: g.taxInfo || {
                         sellingPrice: "",
@@ -141,6 +139,26 @@ export default function AdminTaxes() {
     const totalPlatformFees = gifts.reduce((acc, g) => acc + (g.taxInfo?.platformFee || 0), 0);
     const totalFinanzamt = gifts.reduce((acc, g) => acc + (g.taxInfo?.finanzamt || 0), 0);
     const totalProfit = gifts.reduce((acc, g) => acc + (g.taxInfo?.profit || 0), 0);
+    const normalizedStatus = (gift) => {
+        if (gift.shippingStatus === "delivered") return "delivered";
+        if (gift.shippingStatus === "shipped") return "shipped";
+        return "ordered";
+    };
+
+    const visibleGifts = gifts.filter((gift) => {
+        if (statusFilter === "all") return true;
+        return normalizedStatus(gift) === statusFilter;
+    });
+
+    const statusCounts = gifts.reduce(
+        (acc, gift) => {
+            const s = normalizedStatus(gift);
+            acc[s] += 1;
+            acc.all += 1;
+            return acc;
+        },
+        { all: 0, ordered: 0, shipped: 0, delivered: 0 }
+    );
 
     if (loading) {
         return (
@@ -181,6 +199,50 @@ export default function AdminTaxes() {
                         </div>
                     </div>
 
+                    {/* Status Filter */}
+                    <div className="mb-4 flex flex-wrap items-center gap-2">
+                        <button
+                            onClick={() => setStatusFilter("all")}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                                statusFilter === "all"
+                                    ? "bg-stone-900 text-white border-stone-900"
+                                    : "bg-white text-stone-600 border-stone-300 hover:bg-stone-100"
+                            }`}
+                        >
+                            Alle ({statusCounts.all})
+                        </button>
+                        <button
+                            onClick={() => setStatusFilter("ordered")}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                                statusFilter === "ordered"
+                                    ? "bg-sky-700 text-white border-sky-700"
+                                    : "bg-white text-stone-600 border-stone-300 hover:bg-stone-100"
+                            }`}
+                        >
+                            Bestellt ({statusCounts.ordered})
+                        </button>
+                        <button
+                            onClick={() => setStatusFilter("shipped")}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                                statusFilter === "shipped"
+                                    ? "bg-amber-600 text-white border-amber-600"
+                                    : "bg-white text-stone-600 border-stone-300 hover:bg-stone-100"
+                            }`}
+                        >
+                            Versandt ({statusCounts.shipped})
+                        </button>
+                        <button
+                            onClick={() => setStatusFilter("delivered")}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                                statusFilter === "delivered"
+                                    ? "bg-emerald-700 text-white border-emerald-700"
+                                    : "bg-white text-stone-600 border-stone-300 hover:bg-stone-100"
+                            }`}
+                        >
+                            Angekommen ({statusCounts.delivered})
+                        </button>
+                    </div>
+
                     {/* Spreadsheet Table */}
                     <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
                         <div className="overflow-x-auto">
@@ -202,14 +264,14 @@ export default function AdminTaxes() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-stone-200 custom-scrollbar">
-                                    {gifts.length === 0 ? (
+                                    {visibleGifts.length === 0 ? (
                                         <tr>
                                             <td colSpan="12" className="p-8 text-center text-stone-500">
-                                                Keine gelieferten Bestellungen gefunden. Markiere im Dashboard Bestellungen als "Angekommen".
+                                                Keine Bestellungen für diesen Status gefunden.
                                             </td>
                                         </tr>
                                     ) : (
-                                        gifts.map((gift) => (
+                                        visibleGifts.map((gift) => (
                                             <tr key={gift.id} className="hover:bg-amber-50/30 transition-colors group">
                                                 {/* Status Icon */}
                                                 <td className="p-3 pl-4 text-center align-middle">
@@ -387,7 +449,7 @@ export default function AdminTaxes() {
                         {/* Breakdown Widget */}
                         <div className="bg-stone-50 border-t border-stone-200 p-4 flex flex-wrap gap-6 items-center uppercase tracking-wider text-[10px] font-bold text-stone-500">
                             <div>
-                                Angekommen: <span className="text-stone-900 text-xs">{gifts.length}</span>
+                                Sichtbar: <span className="text-stone-900 text-xs">{visibleGifts.length}</span>
                             </div>
                             <div>
                                 Etsy Gebühren: <span className="text-stone-900 text-xs">{totalEtsy.toFixed(2)} €</span>
