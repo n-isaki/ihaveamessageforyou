@@ -706,7 +706,15 @@ exports.etsySyncOrdersNow = onCall(
       return await syncEtsyOrdersInternal();
     } catch (error) {
       console.error("etsySyncOrdersNow failed", error);
-      throw new HttpsError("internal", error.message || "Etsy sync failed");
+      const message = error?.message || "Etsy sync failed";
+      if (
+        message.includes("Missing Etsy refresh token") ||
+        message.includes("No Etsy shop found") ||
+        message.includes("Etsy receipts fetch failed")
+      ) {
+        throw new HttpsError("failed-precondition", message);
+      }
+      throw new HttpsError("internal", message);
     }
   }
 );

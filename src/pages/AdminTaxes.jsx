@@ -99,7 +99,8 @@ export default function AdminTaxes() {
             );
         } catch (error) {
             console.error("Etsy sync failed", error);
-            toast.error("Etsy Sync fehlgeschlagen.");
+            const detail = error?.message?.replace(/^.*?:\s*/, "") || "Unbekannter Fehler";
+            toast.error(`Etsy Sync fehlgeschlagen: ${detail}`);
         } finally {
             setSyncingEtsy(false);
         }

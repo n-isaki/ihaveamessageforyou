@@ -358,7 +358,7 @@ export const getGiftBySetupToken = async (giftId, token) => {
 };
 
 export const syncEtsyOrdersNow = async () => {
-  const functions = getFunctions();
+  const functions = getFunctions(undefined, "europe-west1");
   const fn = httpsCallable(functions, "etsySyncOrdersNow");
   const result = await fn({});
   return result.data;
