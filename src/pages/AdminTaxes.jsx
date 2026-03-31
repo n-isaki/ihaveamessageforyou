@@ -42,8 +42,9 @@ export default function AdminTaxes() {
         const fetchGifts = async () => {
             try {
                 const data = await getGifts();
+                const etsyOnly = data.filter((g) => g.platform === "etsy" || g.taxInfo?.platform === "etsy");
                 // Sort by delivered date or created date mapping backwards
-                data.sort((a, b) => {
+                etsyOnly.sort((a, b) => {
                     const getT = (t) => (t ? t.seconds || t._seconds || 0 : 0);
                     const timeA = getT(a.deliveredAt) || getT(a.updatedAt) || getT(a.createdAt);
                     const timeB = getT(b.deliveredAt) || getT(b.updatedAt) || getT(b.createdAt);
@@ -51,17 +52,17 @@ export default function AdminTaxes() {
                 });
 
                 // Initialize local input state for tax info if not present
-                const initializedGifts = data.map(g => ({
+                const initializedGifts = etsyOnly.map(g => ({
                     ...g,
-                    taxInfo: g.taxInfo || {
-                        sellingPrice: "",
-                        costs: "",
-                        businessType: "mini", // 'mini' or 'standard'
-                        platform: "manual", // 'etsy', 'shopify', 'manual'
-                        platformFee: 0,
-                        finanzamt: 0,
-                        profit: 0
-                    }
+                    taxInfo: {
+                        sellingPrice: g.taxInfo?.sellingPrice ?? "",
+                        costs: g.taxInfo?.costs ?? "",
+                        businessType: g.taxInfo?.businessType || "mini",
+                        platform: "etsy",
+                        platformFee: g.taxInfo?.platformFee ?? 0,
+                        finanzamt: g.taxInfo?.finanzamt ?? 0,
+                        profit: g.taxInfo?.profit ?? 0
+                    },
                 }));
 
                 setGifts(initializedGifts);
@@ -190,10 +191,10 @@ export default function AdminTaxes() {
                             <div className="flex-1">
                                 <h1 className="text-3xl font-bold text-stone-900 flex items-center gap-3">
                                     <Calculator className="h-8 w-8 text-emerald-600" />
-                                    Steuerberatung
+                                    Steuerberatung Etsy
                                 </h1>
                                 <p className="text-stone-500 mt-1">
-                                    Verwalte Finanzen für alle <strong className="text-stone-700">angekommenen</strong> Pakete.
+                                    Nur Etsy-Bestellungen mit Kundendaten (E-Mail, Adresse, Personalisierung).
                                 </p>
                             </div>
                         </div>
@@ -267,7 +268,7 @@ export default function AdminTaxes() {
                                     {visibleGifts.length === 0 ? (
                                         <tr>
                                             <td colSpan="12" className="p-8 text-center text-stone-500">
-                                                Keine Bestellungen für diesen Status gefunden.
+                                                Keine Etsy-Bestellungen für diesen Status gefunden.
                                             </td>
                                         </tr>
                                     ) : (
@@ -346,18 +347,11 @@ export default function AdminTaxes() {
                                                     </select>
                                                 </td>
 
-                                                {/* Platform */}
-                                                <td className="p-0 border-r border-stone-200 align-middle">
-                                                    <select
-                                                        value={gift.taxInfo.platform || "manual"}
-                                                        onChange={(e) => handleUpdateTaxInfo(gift.id, "platform", e.target.value)}
-                                                        onBlur={() => handleSaveTaxInfo(gift)}
-                                                        className="w-full h-full p-3 bg-transparent border-none outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-500 text-sm cursor-pointer"
-                                                    >
-                                                        <option value="manual">Manuell (0%)</option>
-                                                        <option value="etsy">Etsy (~10.5% + 0.50€)</option>
-                                                        <option value="shopify">Shopify (~2.1% + 0.30€)</option>
-                                                    </select>
+                                                {/* Platform (Etsy only) */}
+                                                <td className="p-3 border-r border-stone-200 align-middle">
+                                                    <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold bg-orange-50 text-orange-700 border border-orange-200">
+                                                        Etsy
+                                                    </span>
                                                 </td>
 
                                                 {/* Selling Price */}
