@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { getGifts, updateGift } from "../services/gifts";
-import { Loader, Menu, Calculator, PackageCheck, Save } from "lucide-react";
+import { Loader, Menu, Calculator, PackageCheck, Save, Copy } from "lucide-react";
 import AdminSidebar from "../components/AdminSidebar";
 import { toast } from "../services/toast";
 
@@ -10,6 +10,32 @@ export default function AdminTaxes() {
     const [loading, setLoading] = useState(true);
     const [isSidebarOpen, setSidebarOpen] = useState(false);
     const [savingId, setSavingId] = useState(null);
+
+    const copyToClipboard = async (value, label) => {
+        if (!value) {
+            toast.error(`${label} nicht vorhanden`);
+            return;
+        }
+        try {
+            await navigator.clipboard.writeText(value);
+            toast.success(`${label} kopiert`);
+        } catch (error) {
+            console.error("Clipboard write failed", error);
+            toast.error("Kopieren fehlgeschlagen");
+        }
+    };
+
+    const formatAddress = (gift) => {
+        const addr = gift.shippingAddress || {};
+        const lines = [
+            addr.name || gift.customerName || "",
+            [addr.firstLine, addr.secondLine].filter(Boolean).join(" "),
+            [addr.zip, addr.city].filter(Boolean).join(" "),
+            addr.state || "",
+            addr.countryIso || "",
+        ].filter(Boolean);
+        return lines.join("\n");
+    };
 
     useEffect(() => {
         const fetchGifts = async () => {
@@ -164,6 +190,7 @@ export default function AdminTaxes() {
                                         <th className="p-3 pl-4 w-12 text-center" title="Angekommen"><PackageCheck className="h-4 w-4 mx-auto text-blue-600" /></th>
                                         <th className="p-3 border-r border-stone-200">Bestell-ID</th>
                                         <th className="p-3 border-r border-stone-200">Kunde / Headline</th>
+                                        <th className="p-3 border-r border-stone-200 min-w-[280px]">Kundendaten</th>
                                         <th className="p-3 border-r border-stone-200 w-32">Gewerbeart</th>
                                         <th className="p-3 border-r border-stone-200 w-32">Plattform</th>
                                         <th className="p-3 border-r border-stone-200 w-24">Preis (€)</th>
@@ -177,7 +204,7 @@ export default function AdminTaxes() {
                                 <tbody className="divide-y divide-stone-200 custom-scrollbar">
                                     {gifts.length === 0 ? (
                                         <tr>
-                                            <td colSpan="11" className="p-8 text-center text-stone-500">
+                                            <td colSpan="12" className="p-8 text-center text-stone-500">
                                                 Keine gelieferten Bestellungen gefunden. Markiere im Dashboard Bestellungen als "Angekommen".
                                             </td>
                                         </tr>
@@ -203,6 +230,44 @@ export default function AdminTaxes() {
                                                     </div>
                                                     <div className="text-xs text-stone-500 truncate">
                                                         {gift.headline || gift.productType || gift.project}
+                                                    </div>
+                                                </td>
+
+                                                {/* Customer Data */}
+                                                <td className="p-3 border-r border-stone-200 align-top min-w-[280px]">
+                                                    <div className="space-y-2">
+                                                        <div className="flex items-start justify-between gap-2">
+                                                            <div className="text-xs text-stone-700 break-all">
+                                                                <div className="font-semibold text-stone-900">E-Mail</div>
+                                                                <div>{gift.customerEmail || "—"}</div>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => copyToClipboard(gift.customerEmail, "E-Mail")}
+                                                                className="p-1.5 rounded-md text-stone-500 hover:bg-stone-100 hover:text-stone-800"
+                                                                title="E-Mail kopieren"
+                                                            >
+                                                                <Copy className="h-3.5 w-3.5" />
+                                                            </button>
+                                                        </div>
+
+                                                        <div className="flex items-start justify-between gap-2">
+                                                            <div className="text-xs text-stone-700 whitespace-pre-line">
+                                                                <div className="font-semibold text-stone-900">Adresse</div>
+                                                                <div>{formatAddress(gift) || "—"}</div>
+                                                            </div>
+                                                            <button
+                                                                onClick={() => copyToClipboard(formatAddress(gift), "Adresse")}
+                                                                className="p-1.5 rounded-md text-stone-500 hover:bg-stone-100 hover:text-stone-800"
+                                                                title="Adresse kopieren"
+                                                            >
+                                                                <Copy className="h-3.5 w-3.5" />
+                                                            </button>
+                                                        </div>
+
+                                                        <div className="text-xs text-stone-700">
+                                                            <div className="font-semibold text-stone-900">Personalisierung</div>
+                                                            <div className="line-clamp-3">{gift.personalizationText || gift.engravingText || "—"}</div>
+                                                        </div>
                                                     </div>
                                                 </td>
 
@@ -295,7 +360,7 @@ export default function AdminTaxes() {
                                 </tbody>
                                 <tfoot className="bg-stone-800 text-white font-mono text-sm tracking-wide">
                                     <tr>
-                                        <td colSpan="5" className="p-4 text-right font-bold uppercase text-stone-300 font-sans text-xs">
+                                        <td colSpan="6" className="p-4 text-right font-bold uppercase text-stone-300 font-sans text-xs">
                                             Total (Summen)
                                         </td>
                                         <td className="p-4 border-r border-stone-700 text-right text-emerald-400">

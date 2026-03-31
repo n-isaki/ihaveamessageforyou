@@ -469,6 +469,22 @@ async function syncEtsyOrdersInternal() {
 
     const sellingPrice = readReceiptMoney(r);
     const buyerName = r?.name || r?.buyer_name || "";
+    const buyerEmail = r?.buyer_email || r?.email || "";
+    const personalizationText =
+      r?.message_from_buyer ||
+      r?.gift_message ||
+      r?.message_from_seller ||
+      r?.note_to_seller ||
+      "";
+    const shippingAddress = {
+      name: r?.name || "",
+      firstLine: r?.first_line || "",
+      secondLine: r?.second_line || "",
+      zip: r?.zip || "",
+      city: r?.city || "",
+      state: r?.state || "",
+      countryIso: r?.country_iso || "",
+    };
     const isDelivered = r?.is_delivered === true;
     const isShipped = r?.was_shipped === true || !!r?.shipped_date;
     const shippingStatus = isDelivered ? "delivered" : isShipped ? "shipped" : "processing";
@@ -483,6 +499,9 @@ async function syncEtsyOrdersInternal() {
       platform: "etsy",
       etsyOrderId,
       customerName: buyerName,
+      customerEmail: buyerEmail,
+      personalizationText,
+      shippingAddress,
       shippingStatus,
       taxInfo: {
         sellingPrice: Number(sellingPrice.toFixed(2)),
