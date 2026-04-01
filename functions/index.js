@@ -499,7 +499,6 @@ async function syncEtsyOrdersInternal() {
     const personalizationText =
       r?.message_from_buyer ||
       r?.gift_message ||
-      r?.message_from_seller ||
       r?.note_to_seller ||
       r?.buyer_note ||
       "";

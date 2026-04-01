@@ -21,13 +21,7 @@ export default function AdminTaxes() {
             const etsyOnly = data.filter((g) => {
                 const isEtsy = g.platform === "etsy" || g.taxInfo?.platform === "etsy";
                 const hasRealOrderRef = !!g.etsyOrderId;
-                const hasCustomerData = !!(
-                    g.customerEmail ||
-                    g.personalizationText ||
-                    g.shippingAddress?.firstLine ||
-                    g.shippingAddress?.city
-                );
-                return isEtsy && hasRealOrderRef && hasCustomerData;
+                return isEtsy && hasRealOrderRef;
             });
             // Sort by delivered date or created date mapping backwards
             etsyOnly.sort((a, b) => {
@@ -337,12 +331,90 @@ export default function AdminTaxes() {
                                         </span>
                                     </div>
 
-                                    {mobileTab === "customer" ? (
+                                    <div className="block md:hidden">
+                                        {mobileTab === "customer" ? (
+                                            <div className="space-y-3">
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div className="text-xs text-stone-700 break-all">
+                                                        <div className="font-semibold text-stone-900">E-Mail</div>
+                                                        <div>{gift.customerEmail || "Nicht von Etsy geliefert"}</div>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => copyToClipboard(gift.customerEmail, "E-Mail")}
+                                                        className="p-1.5 rounded-md text-stone-500 hover:bg-stone-100 hover:text-stone-800"
+                                                        title="E-Mail kopieren"
+                                                    >
+                                                        <Copy className="h-3.5 w-3.5" />
+                                                    </button>
+                                                </div>
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div className="text-xs text-stone-700 whitespace-pre-line">
+                                                        <div className="font-semibold text-stone-900">Adresse</div>
+                                                        <div>{formatAddress(gift) || "Nicht von Etsy geliefert"}</div>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => copyToClipboard(formatAddress(gift), "Adresse")}
+                                                        className="p-1.5 rounded-md text-stone-500 hover:bg-stone-100 hover:text-stone-800"
+                                                        title="Adresse kopieren"
+                                                    >
+                                                        <Copy className="h-3.5 w-3.5" />
+                                                    </button>
+                                                </div>
+                                                <div className="text-xs text-stone-700">
+                                                    <div className="font-semibold text-stone-900">Personalisierung (Käufer)</div>
+                                                    <div>{gift.personalizationText || "Keine Käufer-Personalisierung von Etsy"}</div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-3">
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <label className="text-xs text-stone-600">
+                                                        Preis (€)
+                                                        <input
+                                                            type="number"
+                                                            step="0.01"
+                                                            value={gift.taxInfo.sellingPrice ?? ""}
+                                                            onChange={(e) => handleUpdateTaxInfo(gift.id, "sellingPrice", e.target.value)}
+                                                            onBlur={() => handleSaveTaxInfo(gift)}
+                                                            className="mt-1 w-full p-2 rounded-md border border-stone-300 text-right"
+                                                        />
+                                                    </label>
+                                                    <label className="text-xs text-stone-600">
+                                                        Kosten (€)
+                                                        <input
+                                                            type="number"
+                                                            step="0.01"
+                                                            value={gift.taxInfo.costs ?? ""}
+                                                            onChange={(e) => handleUpdateTaxInfo(gift.id, "costs", e.target.value)}
+                                                            onBlur={() => handleSaveTaxInfo(gift)}
+                                                            className="mt-1 w-full p-2 rounded-md border border-stone-300 text-right"
+                                                        />
+                                                    </label>
+                                                </div>
+                                                <div className="text-xs text-stone-700 grid grid-cols-3 gap-2">
+                                                    <div>
+                                                        <div className="font-semibold text-stone-900">Gebühr</div>
+                                                        <div>-{(gift.taxInfo.platformFee || 0).toFixed(2)}</div>
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-semibold text-stone-900">Finanzamt</div>
+                                                        <div>-{(gift.taxInfo.finanzamt || 0).toFixed(2)}</div>
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-semibold text-stone-900">Profit</div>
+                                                        <div>{(gift.taxInfo.profit || 0).toFixed(2)}</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="hidden md:grid md:grid-cols-2 gap-4">
                                         <div className="space-y-3">
                                             <div className="flex items-start justify-between gap-2">
                                                 <div className="text-xs text-stone-700 break-all">
                                                     <div className="font-semibold text-stone-900">E-Mail</div>
-                                                    <div>{gift.customerEmail || "—"}</div>
+                                                    <div>{gift.customerEmail || "Nicht von Etsy geliefert"}</div>
                                                 </div>
                                                 <button
                                                     onClick={() => copyToClipboard(gift.customerEmail, "E-Mail")}
@@ -355,7 +427,7 @@ export default function AdminTaxes() {
                                             <div className="flex items-start justify-between gap-2">
                                                 <div className="text-xs text-stone-700 whitespace-pre-line">
                                                     <div className="font-semibold text-stone-900">Adresse</div>
-                                                    <div>{formatAddress(gift) || "—"}</div>
+                                                    <div>{formatAddress(gift) || "Nicht von Etsy geliefert"}</div>
                                                 </div>
                                                 <button
                                                     onClick={() => copyToClipboard(formatAddress(gift), "Adresse")}
@@ -366,11 +438,10 @@ export default function AdminTaxes() {
                                                 </button>
                                             </div>
                                             <div className="text-xs text-stone-700">
-                                                <div className="font-semibold text-stone-900">Personalisierung</div>
-                                                <div>{gift.personalizationText || gift.engravingText || "—"}</div>
+                                                <div className="font-semibold text-stone-900">Personalisierung (Käufer)</div>
+                                                <div>{gift.personalizationText || "Keine Käufer-Personalisierung von Etsy"}</div>
                                             </div>
                                         </div>
-                                    ) : (
                                         <div className="space-y-3">
                                             <div className="grid grid-cols-2 gap-2">
                                                 <label className="text-xs text-stone-600">
@@ -411,14 +482,14 @@ export default function AdminTaxes() {
                                                 </div>
                                             </div>
                                         </div>
-                                    )}
+                                    </div>
                                 </div>
                             ))
                         )}
                     </div>
 
                     {/* Spreadsheet Table */}
-                    <div className="hidden md:block bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+                    <div className="hidden bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse text-sm whitespace-nowrap">
                                 <thead className="bg-stone-100 border-b border-stone-200 text-xs font-bold uppercase text-stone-600 tracking-wider">
