@@ -9,6 +9,7 @@ admin.initializeApp();
 const db = admin.firestore();
 const ETSY_CLIENT_ID = defineSecret("ETSY_CLIENT_ID");
 const ETSY_CLIENT_SECRET = defineSecret("ETSY_CLIENT_SECRET");
+const DEFAULT_ETSY_SHOP_NAME = "kamlimos";
 
 // ... existing code ...
 
@@ -372,7 +373,10 @@ async function getOrCreateEtsyShopId(accessToken, userId) {
   const snap = await integrationRef.get();
   const existingShopId = snap.exists ? snap.data()?.shopId : null;
   if (existingShopId) return existingShopId;
+  const shopName =
+    (snap.exists ? snap.data()?.shopName : null) || DEFAULT_ETSY_SHOP_NAME;
 
+  // Primary: resolve via authenticated user -> shops
   const res = await fetch(`https://api.etsy.com/v3/application/users/${userId}/shops`, {
     headers: {
       "x-api-key": `${ETSY_CLIENT_ID.value()}:${ETSY_CLIENT_SECRET.value()}`,
@@ -387,14 +391,35 @@ async function getOrCreateEtsyShopId(accessToken, userId) {
 
   const data = await res.json();
   const first = data?.results?.[0];
-  const shopId = first?.shop_id;
+  let shopId = first?.shop_id;
+
+  // Fallback: resolve by known shop name
+  if (!shopId && shopName) {
+    const byNameRes = await fetch(
+      `https://api.etsy.com/v3/application/shops/${encodeURIComponent(shopName)}`,
+      {
+        headers: {
+          "x-api-key": `${ETSY_CLIENT_ID.value()}:${ETSY_CLIENT_SECRET.value()}`,
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+    if (byNameRes.ok) {
+      const byName = await byNameRes.json();
+      shopId = byName?.shop_id || byName?.shopId || null;
+    }
+  }
+
   if (!shopId) {
-    throw new Error("No Etsy shop found for authenticated user.");
+    throw new Error(
+      "No Etsy shop found for authenticated user. Please confirm shop owner account or set shopName/shopId in integrations/etsy."
+    );
   }
 
   await integrationRef.set(
     {
       shopId,
+      shopName,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     },
     { merge: true }
