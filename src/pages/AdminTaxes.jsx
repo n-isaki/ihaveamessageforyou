@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getGifts, updateGift, syncEtsyOrdersNow } from "../services/gifts";
+import { getGifts, updateGift, syncEtsyOrdersNow, debugEtsyReceipts } from "../services/gifts";
 import { Loader, Menu, Calculator, PackageCheck, Save, Copy, RefreshCw } from "lucide-react";
 import AdminSidebar from "../components/AdminSidebar";
 import { toast } from "../services/toast";
@@ -13,6 +13,7 @@ export default function AdminTaxes() {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
     const [savingId, setSavingId] = useState(null);
     const [syncingEtsy, setSyncingEtsy] = useState(false);
+    const [debugData, setDebugData] = useState(null);
 
     const fetchTaxGifts = async (showLoader = false) => {
         if (showLoader) setLoading(true);
@@ -98,6 +99,17 @@ export default function AdminTaxes() {
             toast.error(`Etsy Sync fehlgeschlagen: ${detail}`);
         } finally {
             setSyncingEtsy(false);
+        }
+    };
+
+    const handleDebugEtsy = async () => {
+        try {
+            const data = await debugEtsyReceipts(3);
+            setDebugData(data);
+            toast.success(`Debug geladen: ${data?.fetched ?? 0} Receipts`);
+        } catch (error) {
+            console.error("Etsy debug failed", error);
+            toast.error(`Etsy Debug fehlgeschlagen: ${error?.message || "Unbekannter Fehler"}`);
         }
     };
 
@@ -240,6 +252,13 @@ export default function AdminTaxes() {
                         >
                             <RefreshCw className={`h-3.5 w-3.5 ${syncingEtsy ? "animate-spin" : ""}`} />
                             Etsy Sync jetzt
+                        </button>
+                        <button
+                            onClick={handleDebugEtsy}
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold border bg-white text-stone-600 border-stone-300 hover:bg-stone-100 transition-colors"
+                            title="Zeigt rohe Etsy-Felder der letzten 3 Bestellungen"
+                        >
+                            Etsy Debug Felder
                         </button>
 
                         <button
@@ -700,6 +719,25 @@ export default function AdminTaxes() {
                             </div>
                         </div>
                     </div>
+
+                    {debugData && (
+                        <div className="mt-5 bg-white rounded-xl shadow-sm border border-stone-200 p-4">
+                            <div className="flex items-center justify-between mb-2">
+                                <h3 className="text-sm font-semibold text-stone-900">
+                                    Etsy Debug (shopId: {debugData.shopId})
+                                </h3>
+                                <button
+                                    onClick={() => setDebugData(null)}
+                                    className="text-xs text-stone-500 hover:text-stone-800"
+                                >
+                                    schließen
+                                </button>
+                            </div>
+                            <pre className="text-[11px] leading-5 bg-stone-50 border border-stone-200 rounded-lg p-3 overflow-auto max-h-[320px]">
+                                {JSON.stringify(debugData, null, 2)}
+                            </pre>
+                        </div>
+                    )}
 
                 </div>
             </main>

@@ -744,6 +744,72 @@ exports.etsySyncOrdersNow = onCall(
 );
 
 /**
+ * Debug helper: returns raw Etsy receipt field diagnostics.
+ * Admin-only callable to inspect what Etsy actually sends.
+ */
+exports.etsyDebugReceipts = onCall(
+  { region: "europe-west1", secrets: [ETSY_CLIENT_ID, ETSY_CLIENT_SECRET] },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Admin login required.");
+    }
+
+    const limit = Math.min(Math.max(Number(request.data?.limit || 3), 1), 10);
+    const integrationSnap = await db.collection("integrations").doc("etsy").get();
+    if (!integrationSnap.exists || !integrationSnap.data()?.refreshToken) {
+      throw new HttpsError("failed-precondition", "Etsy not connected (missing refresh token).");
+    }
+    const integration = integrationSnap.data();
+    const refreshed = await refreshEtsyAccessToken(integration.refreshToken);
+    const accessToken = refreshed.access_token;
+    const tokenPrefix = String(accessToken || "").split(".")[0];
+    const userId = tokenPrefix && /^\d+$/.test(tokenPrefix) ? Number(tokenPrefix) : integration.userId;
+    const shopId = await getOrCreateEtsyShopId(accessToken, userId);
+
+    const receiptsUrl = `https://api.etsy.com/v3/application/shops/${shopId}/receipts?limit=${limit}&sort_on=created&sort_order=desc`;
+    const receiptsRes = await fetch(receiptsUrl, {
+      headers: {
+        "x-api-key": `${ETSY_CLIENT_ID.value()}:${ETSY_CLIENT_SECRET.value()}`,
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    if (!receiptsRes.ok) {
+      const txt = await receiptsRes.text();
+      throw new HttpsError("internal", `Etsy receipts fetch failed: ${receiptsRes.status} ${txt}`);
+    }
+
+    const receiptsData = await receiptsRes.json();
+    const receipts = Array.isArray(receiptsData?.results) ? receiptsData.results : [];
+
+    const diagnostics = receipts.map((r) => ({
+      receipt_id: r?.receipt_id || null,
+      keys: Object.keys(r || {}),
+      has_email: !!(r?.buyer_email || r?.email),
+      has_personalization: !!(r?.message_from_buyer || r?.gift_message || r?.note_to_seller || r?.buyer_note),
+      has_address: !!(r?.first_line || r?.address1 || r?.city || r?.zip || r?.postal_code),
+      sample_values: {
+        buyer_email: r?.buyer_email ?? null,
+        email: r?.email ?? null,
+        message_from_buyer: r?.message_from_buyer ?? null,
+        gift_message: r?.gift_message ?? null,
+        note_to_seller: r?.note_to_seller ?? null,
+        buyer_note: r?.buyer_note ?? null,
+        first_line: r?.first_line ?? r?.address1 ?? null,
+        second_line: r?.second_line ?? r?.address2 ?? null,
+        city: r?.city ?? r?.town ?? null,
+        zip: r?.zip ?? r?.postal_code ?? null,
+      },
+    }));
+
+    return {
+      shopId,
+      fetched: receipts.length,
+      diagnostics,
+    };
+  }
+);
+
+/**
  * Scheduled sync every 30 minutes.
  */
 exports.etsySyncOrdersScheduled = onSchedule(

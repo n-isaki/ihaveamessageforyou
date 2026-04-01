@@ -364,6 +364,13 @@ export const syncEtsyOrdersNow = async () => {
   return result.data;
 };
 
+export const debugEtsyReceipts = async (limit = 3) => {
+  const functions = getFunctions(undefined, "europe-west1");
+  const fn = httpsCallable(functions, "etsyDebugReceipts");
+  const result = await fn({ limit });
+  return result.data;
+};
+
 // ============================================
 // SOCIAL GIFTING (CONTRIBUTIONS)
 // ============================================
