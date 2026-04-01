@@ -489,7 +489,7 @@ export default function AdminTaxes() {
                     </div>
 
                     {/* Spreadsheet Table */}
-                    <div className="hidden bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+                    <div className="hidden md:block bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse text-sm whitespace-nowrap">
                                 <thead className="bg-stone-100 border-b border-stone-200 text-xs font-bold uppercase text-stone-600 tracking-wider">
