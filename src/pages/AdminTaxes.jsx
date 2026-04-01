@@ -8,6 +8,7 @@ import { toast } from "../services/toast";
 export default function AdminTaxes() {
     const [gifts, setGifts] = useState([]);
     const [statusFilter, setStatusFilter] = useState("all");
+    const [mobileTab, setMobileTab] = useState("customer");
     const [loading, setLoading] = useState(true);
     const [isSidebarOpen, setSidebarOpen] = useState(false);
     const [savingId, setSavingId] = useState(null);
@@ -289,8 +290,135 @@ export default function AdminTaxes() {
                         </button>
                     </div>
 
+                    {/* Mobile content tabs */}
+                    <div className="md:hidden mb-4 flex items-center gap-2">
+                        <button
+                            onClick={() => setMobileTab("customer")}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                                mobileTab === "customer"
+                                    ? "bg-stone-900 text-white border-stone-900"
+                                    : "bg-white text-stone-600 border-stone-300"
+                            }`}
+                        >
+                            Kundendaten
+                        </button>
+                        <button
+                            onClick={() => setMobileTab("finance")}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                                mobileTab === "finance"
+                                    ? "bg-stone-900 text-white border-stone-900"
+                                    : "bg-white text-stone-600 border-stone-300"
+                            }`}
+                        >
+                            Finanzen
+                        </button>
+                    </div>
+
+                    {/* Mobile cards */}
+                    <div className="md:hidden space-y-3 mb-5">
+                        {visibleGifts.length === 0 ? (
+                            <div className="p-4 rounded-xl border border-stone-200 bg-white text-sm text-stone-500">
+                                Keine Etsy-Bestellungen für diesen Status gefunden.
+                            </div>
+                        ) : (
+                            visibleGifts.map((gift) => (
+                                <div key={gift.id} className="bg-white rounded-xl border border-stone-200 p-4 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <Link to={`/admin/edit/${gift.id}`} className="font-mono text-xs text-blue-700 hover:underline">
+                                                {gift.orderId || gift.etsyOrderId || gift.id.substring(0, 8)}
+                                            </Link>
+                                            <div className="text-sm font-semibold text-stone-900 mt-1">
+                                                {gift.customerName || "Unbekannt"}
+                                            </div>
+                                        </div>
+                                        <span className="inline-flex items-center px-2 py-1 rounded-md text-[11px] font-semibold bg-orange-50 text-orange-700 border border-orange-200">
+                                            Etsy
+                                        </span>
+                                    </div>
+
+                                    {mobileTab === "customer" ? (
+                                        <div className="space-y-3">
+                                            <div className="flex items-start justify-between gap-2">
+                                                <div className="text-xs text-stone-700 break-all">
+                                                    <div className="font-semibold text-stone-900">E-Mail</div>
+                                                    <div>{gift.customerEmail || "—"}</div>
+                                                </div>
+                                                <button
+                                                    onClick={() => copyToClipboard(gift.customerEmail, "E-Mail")}
+                                                    className="p-1.5 rounded-md text-stone-500 hover:bg-stone-100 hover:text-stone-800"
+                                                    title="E-Mail kopieren"
+                                                >
+                                                    <Copy className="h-3.5 w-3.5" />
+                                                </button>
+                                            </div>
+                                            <div className="flex items-start justify-between gap-2">
+                                                <div className="text-xs text-stone-700 whitespace-pre-line">
+                                                    <div className="font-semibold text-stone-900">Adresse</div>
+                                                    <div>{formatAddress(gift) || "—"}</div>
+                                                </div>
+                                                <button
+                                                    onClick={() => copyToClipboard(formatAddress(gift), "Adresse")}
+                                                    className="p-1.5 rounded-md text-stone-500 hover:bg-stone-100 hover:text-stone-800"
+                                                    title="Adresse kopieren"
+                                                >
+                                                    <Copy className="h-3.5 w-3.5" />
+                                                </button>
+                                            </div>
+                                            <div className="text-xs text-stone-700">
+                                                <div className="font-semibold text-stone-900">Personalisierung</div>
+                                                <div>{gift.personalizationText || gift.engravingText || "—"}</div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-3">
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <label className="text-xs text-stone-600">
+                                                    Preis (€)
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        value={gift.taxInfo.sellingPrice ?? ""}
+                                                        onChange={(e) => handleUpdateTaxInfo(gift.id, "sellingPrice", e.target.value)}
+                                                        onBlur={() => handleSaveTaxInfo(gift)}
+                                                        className="mt-1 w-full p-2 rounded-md border border-stone-300 text-right"
+                                                    />
+                                                </label>
+                                                <label className="text-xs text-stone-600">
+                                                    Kosten (€)
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        value={gift.taxInfo.costs ?? ""}
+                                                        onChange={(e) => handleUpdateTaxInfo(gift.id, "costs", e.target.value)}
+                                                        onBlur={() => handleSaveTaxInfo(gift)}
+                                                        className="mt-1 w-full p-2 rounded-md border border-stone-300 text-right"
+                                                    />
+                                                </label>
+                                            </div>
+                                            <div className="text-xs text-stone-700 grid grid-cols-3 gap-2">
+                                                <div>
+                                                    <div className="font-semibold text-stone-900">Gebühr</div>
+                                                    <div>-{(gift.taxInfo.platformFee || 0).toFixed(2)}</div>
+                                                </div>
+                                                <div>
+                                                    <div className="font-semibold text-stone-900">Finanzamt</div>
+                                                    <div>-{(gift.taxInfo.finanzamt || 0).toFixed(2)}</div>
+                                                </div>
+                                                <div>
+                                                    <div className="font-semibold text-stone-900">Profit</div>
+                                                    <div>{(gift.taxInfo.profit || 0).toFixed(2)}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ))
+                        )}
+                    </div>
+
                     {/* Spreadsheet Table */}
-                    <div className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+                    <div className="hidden md:block bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse text-sm whitespace-nowrap">
                                 <thead className="bg-stone-100 border-b border-stone-200 text-xs font-bold uppercase text-stone-600 tracking-wider">
