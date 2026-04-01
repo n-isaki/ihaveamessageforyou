@@ -396,7 +396,7 @@ async function getOrCreateEtsyShopId(accessToken, userId) {
   // Fallback: resolve by known shop name
   if (!shopId && shopName) {
     const byNameRes = await fetch(
-      `https://api.etsy.com/v3/application/shops/${encodeURIComponent(shopName)}`,
+      `https://api.etsy.com/v3/application/shops?shop_name=${encodeURIComponent(shopName)}`,
       {
         headers: {
           "x-api-key": `${ETSY_CLIENT_ID.value()}:${ETSY_CLIENT_SECRET.value()}`,
@@ -406,7 +406,7 @@ async function getOrCreateEtsyShopId(accessToken, userId) {
     );
     if (byNameRes.ok) {
       const byName = await byNameRes.json();
-      shopId = byName?.shop_id || byName?.shopId || null;
+      shopId = byName?.results?.[0]?.shop_id || byName?.shop_id || byName?.shopId || null;
     }
   }
 
