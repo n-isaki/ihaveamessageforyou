@@ -1,4 +1,8 @@
-const { onCall, onRequest, HttpsError } = require("firebase-functions/v2/https");
+const {
+  onCall,
+  onRequest,
+  HttpsError,
+} = require("firebase-functions/v2/https");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const { defineSecret } = require("firebase-functions/params");
 const admin = require("firebase-admin");
@@ -25,7 +29,7 @@ exports.hashPin = onCall({ cors: true }, async (request) => {
 
     if (!pin || typeof pin !== "string" || pin.length < 4 || pin.length > 8) {
       throw new // Function error handling usually throws specific errors, but simple throw works for now
-        Error("Invalid PIN format");
+      Error("Invalid PIN format");
     }
 
     const saltRounds = 10;
@@ -111,7 +115,7 @@ exports.getGiftByContributionToken = onCall(async (request) => {
   if (data.allowContributions === false) {
     throw new HttpsError(
       "permission-denied",
-      "Diese Funktion ist für dieses Geschenk deaktiviert."
+      "Diese Funktion ist für dieses Geschenk deaktiviert.",
     );
   }
 
@@ -159,7 +163,18 @@ exports.verifyGiftPin = onCall({ cors: true }, async (request) => {
     const giftData = giftDoc.data();
     // Fakten-Log: Was steht in Firestore für dieses Geschenk?
     const messagesInDoc = giftData.messages;
-    console.log("[verifyGiftPin] giftId=" + giftId + " | messages in doc: isArray=" + Array.isArray(messagesInDoc) + " count=" + (Array.isArray(messagesInDoc) ? messagesInDoc.length : (messagesInDoc ? "n/a" : "undefined")));
+    console.log(
+      "[verifyGiftPin] giftId=" +
+        giftId +
+        " | messages in doc: isArray=" +
+        Array.isArray(messagesInDoc) +
+        " count=" +
+        (Array.isArray(messagesInDoc)
+          ? messagesInDoc.length
+          : messagesInDoc
+            ? "n/a"
+            : "undefined"),
+    );
 
     // ============================================
     // TIME CAPSULE CHECK
@@ -175,8 +190,8 @@ exports.verifyGiftPin = onCall({ cors: true }, async (request) => {
       if (now < unlockTime) {
         console.warn(
           `Gift ${giftId} is time-locked until ${new Date(
-            unlockTime
-          ).toISOString()}`
+            unlockTime,
+          ).toISOString()}`,
         );
         // Return specific time-locked status so client can show countdown (if they bypassed the lock screen check)
         return {
@@ -205,7 +220,11 @@ exports.verifyGiftPin = onCall({ cors: true }, async (request) => {
     if (match) {
       // Return full gift data: build plain object so callable response serializes reliably (messages, albumImages)
       const toMillis = (v) =>
-        v && typeof v.toMillis === "function" ? v.toMillis() : (v ? new Date(v).getTime() : undefined);
+        v && typeof v.toMillis === "function"
+          ? v.toMillis()
+          : v
+            ? new Date(v).getTime()
+            : undefined;
 
       const safeGiftData = {
         id: giftDoc.id,
@@ -213,20 +232,31 @@ exports.verifyGiftPin = onCall({ cors: true }, async (request) => {
         productType: giftData.productType,
         headline: giftData.headline,
         subheadline: giftData.subheadline,
-        messages: Array.isArray(giftData.messages) ? giftData.messages.map((m) => ({ ...m })) : [],
-        albumImages: Array.isArray(giftData.albumImages) ? [...giftData.albumImages] : [],
+        messages: Array.isArray(giftData.messages)
+          ? giftData.messages.map((m) => ({ ...m }))
+          : [],
+        albumImages: Array.isArray(giftData.albumImages)
+          ? [...giftData.albumImages]
+          : [],
         locked: giftData.locked,
         viewed: giftData.viewed,
         openingAnimation: giftData.openingAnimation,
-        unlockDate: giftData.unlockDate ? toMillis(giftData.unlockDate) : undefined,
+        unlockDate: giftData.unlockDate
+          ? toMillis(giftData.unlockDate)
+          : undefined,
         engravingText: giftData.engravingText,
         meaningText: giftData.meaningText,
       };
 
       // Social Gifting: contributions for viewer
       try {
-        const contribsRef = db.collection("gift_orders").doc(giftId).collection("contributions");
-        const contribsSnapshot = await contribsRef.orderBy("timestamp", "asc").get();
+        const contribsRef = db
+          .collection("gift_orders")
+          .doc(giftId)
+          .collection("contributions");
+        const contribsSnapshot = await contribsRef
+          .orderBy("timestamp", "asc")
+          .get();
         const contributions = contribsSnapshot.docs.map((doc) => {
           const d = doc.data();
           return {
@@ -234,7 +264,10 @@ exports.verifyGiftPin = onCall({ cors: true }, async (request) => {
             type: d.type,
             content: d.content,
             author: d.author,
-            timestamp: d.timestamp && typeof d.timestamp.toMillis === "function" ? d.timestamp.toMillis() : d.timestamp,
+            timestamp:
+              d.timestamp && typeof d.timestamp.toMillis === "function"
+                ? d.timestamp.toMillis()
+                : d.timestamp,
           };
         });
         safeGiftData.contributions = contributions;
@@ -243,7 +276,10 @@ exports.verifyGiftPin = onCall({ cors: true }, async (request) => {
         safeGiftData.contributions = [];
       }
 
-      console.log("[verifyGiftPin] returning giftData with messages count=" + (safeGiftData.messages ? safeGiftData.messages.length : 0));
+      console.log(
+        "[verifyGiftPin] returning giftData with messages count=" +
+          (safeGiftData.messages ? safeGiftData.messages.length : 0),
+      );
       return { match: true, giftData: safeGiftData };
     } else {
       // Invalid PIN
@@ -342,7 +378,9 @@ function base64Url(buffer) {
 
 function createPkcePair() {
   const verifier = base64Url(crypto.randomBytes(64));
-  const challenge = base64Url(crypto.createHash("sha256").update(verifier).digest());
+  const challenge = base64Url(
+    crypto.createHash("sha256").update(verifier).digest(),
+  );
   return { verifier, challenge };
 }
 
@@ -377,12 +415,15 @@ async function getOrCreateEtsyShopId(accessToken, userId) {
     (snap.exists ? snap.data()?.shopName : null) || DEFAULT_ETSY_SHOP_NAME;
 
   // Primary: resolve via authenticated user -> shops
-  const res = await fetch(`https://api.etsy.com/v3/application/users/${userId}/shops`, {
-    headers: {
-      "x-api-key": `${ETSY_CLIENT_ID.value()}:${ETSY_CLIENT_SECRET.value()}`,
-      Authorization: `Bearer ${accessToken}`,
+  const res = await fetch(
+    `https://api.etsy.com/v3/application/users/${userId}/shops`,
+    {
+      headers: {
+        "x-api-key": `${ETSY_CLIENT_ID.value()}:${ETSY_CLIENT_SECRET.value()}`,
+        Authorization: `Bearer ${accessToken}`,
+      },
     },
-  });
+  );
 
   if (!res.ok) {
     const txt = await res.text();
@@ -402,17 +443,21 @@ async function getOrCreateEtsyShopId(accessToken, userId) {
           "x-api-key": `${ETSY_CLIENT_ID.value()}:${ETSY_CLIENT_SECRET.value()}`,
           Authorization: `Bearer ${accessToken}`,
         },
-      }
+      },
     );
     if (byNameRes.ok) {
       const byName = await byNameRes.json();
-      shopId = byName?.results?.[0]?.shop_id || byName?.shop_id || byName?.shopId || null;
+      shopId =
+        byName?.results?.[0]?.shop_id ||
+        byName?.shop_id ||
+        byName?.shopId ||
+        null;
     }
   }
 
   if (!shopId) {
     throw new Error(
-      "No Etsy shop found for authenticated user. Please confirm shop owner account or set shopName/shopId in integrations/etsy."
+      "No Etsy shop found for authenticated user. Please confirm shop owner account or set shopName/shopId in integrations/etsy.",
     );
   }
 
@@ -422,33 +467,119 @@ async function getOrCreateEtsyShopId(accessToken, userId) {
       shopName,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     },
-    { merge: true }
+    { merge: true },
   );
 
   return shopId;
 }
 
-function readReceiptMoney(receipt) {
-  const candidate =
-    receipt?.grandtotal ||
-    receipt?.total_price ||
-    receipt?.total ||
-    receipt?.grand_total ||
-    null;
-
-  if (candidate == null) return 0;
-  if (typeof candidate === "number") return candidate;
-  if (typeof candidate === "string") return parseFloat(candidate) || 0;
-
-  if (typeof candidate === "object") {
-    if (typeof candidate.amount === "number" && typeof candidate.divisor === "number" && candidate.divisor > 0) {
-      return candidate.amount / candidate.divisor;
+function readMoney(val) {
+  if (val == null) return 0;
+  if (typeof val === "number") return val;
+  if (typeof val === "string") return parseFloat(val) || 0;
+  if (typeof val === "object") {
+    if (
+      typeof val.amount === "number" &&
+      typeof val.divisor === "number" &&
+      val.divisor > 0
+    ) {
+      return val.amount / val.divisor;
     }
-    if (typeof candidate.amount === "string") {
-      return parseFloat(candidate.amount) || 0;
-    }
+    if (val.amount != null) return parseFloat(val.amount) || 0;
   }
   return 0;
+}
+
+function toDateKey(ts) {
+  const d = ts ? new Date(ts * 1000) : new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return {
+    daily: `${yyyy}-${mm}-${dd}`,
+    monthly: `${yyyy}-${mm}`,
+    yearly: `${yyyy}`,
+  };
+}
+
+async function findOrCreateCustomer(buyerEmail, buyerName, address) {
+  const custCol = db.collection("etsy_customers");
+  const key = (buyerEmail || "").trim().toLowerCase();
+
+  if (key) {
+    const existing = await custCol.where("email", "==", key).limit(1).get();
+    if (!existing.empty) {
+      const custDoc = existing.docs[0];
+      const custData = custDoc.data();
+      const addresses = Array.isArray(custData.addresses)
+        ? custData.addresses
+        : [];
+      const addrStr = JSON.stringify(address);
+      const alreadyHas = addresses.some((a) => JSON.stringify(a) === addrStr);
+      await custDoc.ref.set(
+        {
+          name: buyerName || custData.name || "",
+          lastOrderAt: admin.firestore.FieldValue.serverTimestamp(),
+          totalOrders: admin.firestore.FieldValue.increment(0),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          ...(!alreadyHas && address?.firstLine
+            ? { addresses: [...addresses, address] }
+            : {}),
+        },
+        { merge: true },
+      );
+      return custDoc.id;
+    }
+  }
+
+  const newDoc = await custCol.add({
+    name: buyerName || "",
+    email: key || "",
+    addresses: address?.firstLine ? [address] : [],
+    platforms: { etsy: {} },
+    firstOrderAt: admin.firestore.FieldValue.serverTimestamp(),
+    lastOrderAt: admin.firestore.FieldValue.serverTimestamp(),
+    totalOrders: 0,
+    totalRevenue: 0,
+    tags: [],
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+  return newDoc.id;
+}
+
+async function updateSummaries(orderDate, amounts, delta = 1) {
+  const keys = toDateKey(orderDate);
+  const types = [
+    { key: keys.daily, type: "daily" },
+    { key: keys.monthly, type: "monthly" },
+    { key: keys.yearly, type: "yearly" },
+  ];
+
+  for (const { key, type } of types) {
+    const ref = db.collection("etsy_summaries").doc(key);
+    await ref.set(
+      {
+        type,
+        periodKey: key,
+        totalOrders: admin.firestore.FieldValue.increment(delta),
+        grossRevenue: admin.firestore.FieldValue.increment(amounts.gross || 0),
+        totalShipping: admin.firestore.FieldValue.increment(
+          amounts.shipping || 0,
+        ),
+        totalFees: admin.firestore.FieldValue.increment(amounts.totalFees || 0),
+        totalPlatformFees: admin.firestore.FieldValue.increment(
+          amounts.platformFee || 0,
+        ),
+        totalProcessingFees: admin.firestore.FieldValue.increment(
+          amounts.processingFee || 0,
+        ),
+        totalPayout: admin.firestore.FieldValue.increment(amounts.payout || 0),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
+  }
 }
 
 async function syncEtsyOrdersInternal() {
@@ -467,8 +598,10 @@ async function syncEtsyOrdersInternal() {
   const accessToken = refreshed.access_token;
   const refreshToken = refreshed.refresh_token || integration.refreshToken;
   const tokenPrefix = String(accessToken || "").split(".")[0];
-  const userId = tokenPrefix && /^\d+$/.test(tokenPrefix) ? Number(tokenPrefix) : integration.userId;
-
+  const userId =
+    tokenPrefix && /^\d+$/.test(tokenPrefix)
+      ? Number(tokenPrefix)
+      : integration.userId;
   const shopId = await getOrCreateEtsyShopId(accessToken, userId);
 
   const receiptsUrl = `https://api.etsy.com/v3/application/shops/${shopId}/receipts?limit=100&sort_on=created&sort_order=desc`;
@@ -485,18 +618,34 @@ async function syncEtsyOrdersInternal() {
   }
 
   const receiptsData = await receiptsRes.json();
-  const receipts = Array.isArray(receiptsData?.results) ? receiptsData.results : [];
-  console.log("Etsy sync: fetched receipts", { count: receipts.length, shopId });
+  const receipts = Array.isArray(receiptsData?.results)
+    ? receiptsData.results
+    : [];
+  console.log("Etsy sync: fetched receipts", {
+    count: receipts.length,
+    shopId,
+  });
   let upserted = 0;
+  let newOrders = 0;
 
   for (const r of receipts) {
-    const etsyOrderId = String(r?.receipt_id || r?.receiptId || "");
-    if (!etsyOrderId) continue;
+    const platformOrderId = String(r?.receipt_id || "");
+    if (!platformOrderId) continue;
 
-    const sellingPrice = readReceiptMoney(r);
+    const gross = readMoney(
+      r?.grandtotal || r?.total_price || r?.grand_total || r?.subtotal,
+    );
+    const shipping = readMoney(r?.total_shipping_cost || r?.shipping_cost);
+    const platformFee = readMoney(r?.total_seller_fees || r?.seller_fees);
+    const processingFee = readMoney(
+      r?.total_processing_fees || r?.processing_fees,
+    );
+    const totalFees = Number((platformFee + processingFee).toFixed(2));
+    const payout = Number((gross + shipping - totalFees).toFixed(2));
+
     const buyerName = r?.name || r?.buyer_name || "";
-    const buyerEmail = r?.buyer_email || r?.email || "";
-    const personalizationText =
+    const buyerEmail = (r?.buyer_email || r?.email || "").trim().toLowerCase();
+    const personalization =
       r?.message_from_buyer ||
       r?.gift_message ||
       r?.note_to_seller ||
@@ -511,57 +660,113 @@ async function syncEtsyOrdersInternal() {
       state: r?.state || "",
       countryIso: r?.country_iso || r?.country_code || "",
     };
+
     const isDelivered = r?.is_delivered === true;
     const isShipped = r?.was_shipped === true || !!r?.shipped_date;
-    const shippingStatus = isDelivered ? "delivered" : isShipped ? "shipped" : "processing";
+    const status = isDelivered
+      ? "delivered"
+      : isShipped
+        ? "shipped"
+        : "processing";
 
-    const q = await db
-      .collection("gift_orders")
-      .where("etsyOrderId", "==", etsyOrderId)
+    const items = Array.isArray(r?.transactions)
+      ? r.transactions.map((t) => ({
+          title: t?.title || "",
+          quantity: t?.quantity || 1,
+          price: readMoney(t?.price),
+          sku: t?.sku || "",
+        }))
+      : [];
+
+    const orderTimestamp = r?.create_timestamp || r?.created_timestamp || null;
+    const orderDate = orderTimestamp
+      ? admin.firestore.Timestamp.fromMillis(orderTimestamp * 1000)
+      : admin.firestore.FieldValue.serverTimestamp();
+
+    const amounts = {
+      gross: Number(gross.toFixed(2)),
+      net: Number((gross / 1.19).toFixed(2)),
+      shipping: Number(shipping.toFixed(2)),
+      platformFee: Number(platformFee.toFixed(2)),
+      processingFee: Number(processingFee.toFixed(2)),
+      totalFees,
+      payout,
+    };
+
+    const customerId = await findOrCreateCustomer(
+      buyerEmail,
+      buyerName,
+      shippingAddress,
+    );
+
+    const existing = await db
+      .collection("etsy_orders")
+      .where("platformOrderId", "==", platformOrderId)
       .limit(1)
       .get();
 
-    const basePayload = {
+    const orderPayload = {
       platform: "etsy",
-      etsyOrderId,
+      platformOrderId,
+      customerId,
       customerName: buyerName,
       customerEmail: buyerEmail,
-      personalizationText,
+      status,
+      items,
+      amounts,
+      costs: existing.empty ? 0 : undefined,
+      profit: 0,
+      businessType: existing.empty ? "mini" : undefined,
       shippingAddress,
-      shippingStatus,
-      taxInfo: {
-        sellingPrice: Number(sellingPrice.toFixed(2)),
-        costs: 0,
-        businessType: "mini",
-        platform: "etsy",
-        platformFee: 0,
-        finanzamt: 0,
-        profit: 0,
-      },
+      personalization,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
-    if (!q.empty) {
-      await q.docs[0].ref.set(basePayload, { merge: true });
-      upserted += 1;
-      continue;
-    }
+    Object.keys(orderPayload).forEach(
+      (k) => orderPayload[k] === undefined && delete orderPayload[k],
+    );
 
-    await db.collection("gift_orders").add({
-      ...basePayload,
-      status: "open",
-      locked: true,
-      viewed: false,
-      setupStarted: false,
-      project: "etsy",
-      productType: "etsy-order",
-      securityToken: crypto.randomUUID(),
-      contributionToken: crypto.randomUUID(),
-      allowContributions: false,
-      isPublic: false,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-    upserted += 1;
+    if (!existing.empty) {
+      const existingDoc = existing.docs[0];
+      const existingData = existingDoc.data();
+      const costs = existingData.costs || 0;
+      const bt = existingData.businessType || "mini";
+      const finanzamt =
+        bt === "standard"
+          ? Number((amounts.gross * 0.19 + amounts.gross * 0.2).toFixed(2))
+          : 0;
+      const profit = Number((amounts.payout - costs - finanzamt).toFixed(2));
+      orderPayload.profit = profit;
+      await existingDoc.ref.set(orderPayload, { merge: true });
+      upserted += 1;
+    } else {
+      const profit = Number(amounts.payout.toFixed(2));
+      await db.collection("etsy_orders").add({
+        ...orderPayload,
+        costs: 0,
+        profit,
+        businessType: "mini",
+        orderDate,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      upserted += 1;
+      newOrders += 1;
+
+      await db
+        .collection("etsy_customers")
+        .doc(customerId)
+        .set(
+          {
+            totalOrders: admin.firestore.FieldValue.increment(1),
+            totalRevenue: admin.firestore.FieldValue.increment(amounts.gross),
+            lastOrderAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true },
+        );
+
+      await updateSummaries(orderTimestamp, amounts, 1);
+    }
   }
 
   await integrationRef.set(
@@ -572,11 +777,17 @@ async function syncEtsyOrdersInternal() {
       lastSyncAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     },
-    { merge: true }
+    { merge: true },
   );
 
-  console.log("Etsy sync complete", { fetched: receipts.length, upserted, shopId, userId });
-  return { fetched: receipts.length, upserted };
+  console.log("Etsy sync complete", {
+    fetched: receipts.length,
+    upserted,
+    newOrders,
+    shopId,
+    userId,
+  });
+  return { fetched: receipts.length, upserted, newOrders };
 }
 
 /**
@@ -593,10 +804,15 @@ exports.etsyOAuthStart = onRequest(
       const state = base64Url(crypto.randomBytes(32));
       const { verifier, challenge } = createPkcePair();
 
-      await db.collection("integrations").doc("etsy_oauth_states").collection("pending").doc(state).set({
-        verifier,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
+      await db
+        .collection("integrations")
+        .doc("etsy_oauth_states")
+        .collection("pending")
+        .doc(state)
+        .set({
+          verifier,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
 
       const scope = encodeURIComponent("shops_r transactions_r");
       const oauthUrl =
@@ -613,7 +829,7 @@ exports.etsyOAuthStart = onRequest(
       console.error("etsyOAuthStart failed", error);
       res.status(500).send("Could not start Etsy OAuth.");
     }
-  }
+  },
 );
 
 /**
@@ -662,13 +878,16 @@ exports.etsyOAuthCallback = onRequest(
       params.set("code", String(code));
       params.set("code_verifier", verifier);
 
-      const tokenRes = await fetch("https://api.etsy.com/v3/public/oauth/token", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
+      const tokenRes = await fetch(
+        "https://api.etsy.com/v3/public/oauth/token",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: params.toString(),
         },
-        body: params.toString(),
-      });
+      );
 
       const tokenJson = await tokenRes.json();
       if (!tokenRes.ok) {
@@ -680,22 +899,26 @@ exports.etsyOAuthCallback = onRequest(
       const accessToken = tokenJson.access_token;
       const refreshToken = tokenJson.refresh_token;
       const tokenPrefix = String(accessToken || "").split(".")[0];
-      const userId = tokenPrefix && /^\d+$/.test(tokenPrefix) ? Number(tokenPrefix) : null;
+      const userId =
+        tokenPrefix && /^\d+$/.test(tokenPrefix) ? Number(tokenPrefix) : null;
 
-      await db.collection("integrations").doc("etsy").set(
-        {
-          provider: "etsy",
-          connected: true,
-          userId,
-          refreshToken,
-          tokenType: tokenJson.token_type || "Bearer",
-          accessTokenLast4: accessToken ? accessToken.slice(-4) : null,
-          scopes: ["shops_r", "transactions_r"],
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          connectedAt: admin.firestore.FieldValue.serverTimestamp(),
-        },
-        { merge: true }
-      );
+      await db
+        .collection("integrations")
+        .doc("etsy")
+        .set(
+          {
+            provider: "etsy",
+            connected: true,
+            userId,
+            refreshToken,
+            tokenType: tokenJson.token_type || "Bearer",
+            accessTokenLast4: accessToken ? accessToken.slice(-4) : null,
+            scopes: ["shops_r", "transactions_r"],
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            connectedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true },
+        );
 
       await pendingRef.delete();
       let firstSync = { fetched: 0, upserted: 0 };
@@ -707,14 +930,14 @@ exports.etsyOAuthCallback = onRequest(
       console.log("Etsy OAuth connected", { userId, firstSync });
       res.redirect(
         `https://admin.kamlimos.com/admin/taxes?etsy=connected&fetched=${encodeURIComponent(
-          String(firstSync.fetched || 0)
-        )}&upserted=${encodeURIComponent(String(firstSync.upserted || 0))}`
+          String(firstSync.fetched || 0),
+        )}&upserted=${encodeURIComponent(String(firstSync.upserted || 0))}`,
       );
     } catch (error) {
       console.error("etsyOAuthCallback failed", error);
       res.status(500).send("OAuth callback error.");
     }
-  }
+  },
 );
 
 /**
@@ -740,7 +963,7 @@ exports.etsySyncOrdersNow = onCall(
       }
       throw new HttpsError("internal", message);
     }
-  }
+  },
 );
 
 /**
@@ -755,15 +978,24 @@ exports.etsyDebugReceipts = onCall(
     }
 
     const limit = Math.min(Math.max(Number(request.data?.limit || 3), 1), 10);
-    const integrationSnap = await db.collection("integrations").doc("etsy").get();
+    const integrationSnap = await db
+      .collection("integrations")
+      .doc("etsy")
+      .get();
     if (!integrationSnap.exists || !integrationSnap.data()?.refreshToken) {
-      throw new HttpsError("failed-precondition", "Etsy not connected (missing refresh token).");
+      throw new HttpsError(
+        "failed-precondition",
+        "Etsy not connected (missing refresh token).",
+      );
     }
     const integration = integrationSnap.data();
     const refreshed = await refreshEtsyAccessToken(integration.refreshToken);
     const accessToken = refreshed.access_token;
     const tokenPrefix = String(accessToken || "").split(".")[0];
-    const userId = tokenPrefix && /^\d+$/.test(tokenPrefix) ? Number(tokenPrefix) : integration.userId;
+    const userId =
+      tokenPrefix && /^\d+$/.test(tokenPrefix)
+        ? Number(tokenPrefix)
+        : integration.userId;
     const shopId = await getOrCreateEtsyShopId(accessToken, userId);
 
     const receiptsUrl = `https://api.etsy.com/v3/application/shops/${shopId}/receipts?limit=${limit}&sort_on=created&sort_order=desc`;
@@ -775,18 +1007,34 @@ exports.etsyDebugReceipts = onCall(
     });
     if (!receiptsRes.ok) {
       const txt = await receiptsRes.text();
-      throw new HttpsError("internal", `Etsy receipts fetch failed: ${receiptsRes.status} ${txt}`);
+      throw new HttpsError(
+        "internal",
+        `Etsy receipts fetch failed: ${receiptsRes.status} ${txt}`,
+      );
     }
 
     const receiptsData = await receiptsRes.json();
-    const receipts = Array.isArray(receiptsData?.results) ? receiptsData.results : [];
+    const receipts = Array.isArray(receiptsData?.results)
+      ? receiptsData.results
+      : [];
 
     const diagnostics = receipts.map((r) => ({
       receipt_id: r?.receipt_id || null,
       keys: Object.keys(r || {}),
       has_email: !!(r?.buyer_email || r?.email),
-      has_personalization: !!(r?.message_from_buyer || r?.gift_message || r?.note_to_seller || r?.buyer_note),
-      has_address: !!(r?.first_line || r?.address1 || r?.city || r?.zip || r?.postal_code),
+      has_personalization: !!(
+        r?.message_from_buyer ||
+        r?.gift_message ||
+        r?.note_to_seller ||
+        r?.buyer_note
+      ),
+      has_address: !!(
+        r?.first_line ||
+        r?.address1 ||
+        r?.city ||
+        r?.zip ||
+        r?.postal_code
+      ),
       sample_values: {
         buyer_email: r?.buyer_email ?? null,
         email: r?.email ?? null,
@@ -806,7 +1054,7 @@ exports.etsyDebugReceipts = onCall(
       fetched: receipts.length,
       diagnostics,
     };
-  }
+  },
 );
 
 /**
@@ -826,5 +1074,5 @@ exports.etsySyncOrdersScheduled = onSchedule(
     } catch (error) {
       console.error("etsySyncOrdersScheduled failed", error);
     }
-  }
+  },
 );

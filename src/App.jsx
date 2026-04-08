@@ -1,5 +1,10 @@
 import React, { Suspense, lazy, useState, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import { auth } from "./firebase";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ToastContainer } from "./components/Toast";
@@ -9,7 +14,7 @@ import { Loader } from "lucide-react";
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
-const AdminTaxes = lazy(() => import("./pages/AdminTaxes"));
+const AdminFinance = lazy(() => import("./pages/AdminFinance"));
 const CustomerSetup = lazy(() => import("./pages/CustomerSetup.redesign"));
 const PrintGift = lazy(() => import("./pages/PrintGift"));
 const ShopifyThemeExplorer = lazy(() => import("./pages/ShopifyThemeExplorer"));
@@ -17,11 +22,11 @@ const ContributionPage = lazy(() => import("./pages/ContributionPage"));
 const SocialLandingPage = lazy(() => import("./pages/SocialLandingPage"));
 
 // Anima Modules - Lazy Loaded
-const GiftWizard = lazy(() =>
-  import("./modules/anima/experiences/multimedia-gift/pages/Wizard")
+const GiftWizard = lazy(
+  () => import("./modules/anima/experiences/multimedia-gift/pages/Wizard"),
 );
-const UniversalViewer = lazy(() =>
-  import("./modules/anima/core/UniversalViewer")
+const UniversalViewer = lazy(
+  () => import("./modules/anima/core/UniversalViewer"),
 );
 
 // Loading component
@@ -99,7 +104,10 @@ export default function App() {
             <Route path="/view/:id" element={<UniversalViewer />} />
             {/* Social Gifting: /join/:token wie main (Beitrags-Link); ContributionPage erwartet useParams().token */}
             <Route path="/join/:token" element={<ContributionPage />} />
-            <Route path="/contribute/:giftId/:token" element={<ContributionPage />} />
+            <Route
+              path="/contribute/:giftId/:token"
+              element={<ContributionPage />}
+            />
             <Route path="/admin/login" element={<AdminLogin />} />
 
             {/* Admin Routes */}
@@ -118,7 +126,7 @@ export default function App() {
               element={
                 <AdminDomainGuard>
                   <ProtectedRoute user={user} loading={loading}>
-                    <AdminTaxes />
+                    <AdminFinance />
                   </ProtectedRoute>
                 </AdminDomainGuard>
               }

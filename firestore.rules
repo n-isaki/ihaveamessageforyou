@@ -115,6 +115,25 @@ service cloud.firestore {
     }
     
     // ============================================
+    // FINANCE COCKPIT - Etsy Orders, Customers, Summaries
+    // ============================================
+
+    match /etsy_orders/{orderId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /etsy_customers/{customerId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /etsy_summaries/{summaryId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ============================================
     // KARAKEDIMARTIN - Separate Collections mit Prefix
     // ============================================
     

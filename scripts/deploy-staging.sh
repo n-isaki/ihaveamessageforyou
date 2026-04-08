@@ -35,6 +35,6 @@ firebase deploy --only hosting:staging
 
 echo ""
 echo "✅ Staging deployment complete!"
-echo "🔗 URL: https://gift-shop-app-staging.web.app"
+echo "🔗 URL: https://gift-shop-app-staging.web.app (Site muss vorher erstellt werden: firebase hosting:sites:create gift-shop-app-staging)"
 echo ""
 echo "💡 Test your changes, then merge to 'main' and deploy to production when ready."
