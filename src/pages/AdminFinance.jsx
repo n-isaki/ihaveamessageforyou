@@ -297,9 +297,8 @@ export default function AdminFinance() {
     const totalPayout = list.reduce((s, o) => s + (o.amounts?.payout || 0), 0);
 
     const useLedger = (period === "year" || period === "all") && ledger;
+    const totalEtsyOrderFees = list.reduce((s, o) => s + (o.amounts?.etsyOrderFees || 0), 0);
     const totalListingFees = useLedger ? (ledger.listingFees || 0) : list.reduce((s, o) => s + (o.amounts?.listingFee || 0), 0);
-    const totalTransactionFees = useLedger ? (ledger.transactionFees || 0) : list.reduce((s, o) => s + (o.amounts?.transactionFee || 0), 0);
-    const totalProcessingFees = useLedger ? (ledger.processingFees || 0) : list.reduce((s, o) => s + (o.amounts?.processingFee || 0), 0);
     const totalVatOnFees = useLedger ? (ledger.vatOnFees || 0) : list.reduce((s, o) => s + (o.amounts?.vatOnFee || 0), 0);
     const totalMarketing = useLedger ? (ledger.marketingFees || 0) : list.reduce((s, o) => s + (o.amounts?.marketingFee || 0), 0);
     const totalRefunds = useLedger ? (ledger.refunds || 0) : list.reduce((s, o) => s + (o.amounts?.refundShare || 0), 0);
@@ -307,7 +306,7 @@ export default function AdminFinance() {
 
     return {
       count: list.length, totalGross, totalShipping, totalCosts, totalProfit, totalPayout,
-      totalListingFees, totalTransactionFees, totalProcessingFees, totalVatOnFees,
+      totalEtsyOrderFees, totalListingFees, totalVatOnFees,
       totalMarketing, totalRefunds, totalFees,
     };
   }, [filteredOrders, ledger, period]);
@@ -521,9 +520,8 @@ export default function AdminFinance() {
                   </div>
                   <div className="space-y-1.5 text-sm">
                     {[
+                      { label: "Etsy-Gebühren (Transaktion+Bearbeitung)", value: stats.totalEtsyOrderFees },
                       { label: "Einstellgebühren", value: stats.totalListingFees },
-                      { label: "Transaktionsgebühren", value: stats.totalTransactionFees },
-                      { label: "Bearbeitungsgebühren", value: stats.totalProcessingFees },
                       { label: "USt. auf Verkäufergebühren", value: stats.totalVatOnFees },
                     ].filter(r => r.value > 0).map(r => (
                       <div key={r.label} className="flex justify-between">
@@ -1043,11 +1041,10 @@ export default function AdminFinance() {
                         label: "Versand",
                         value: selectedOrder.amounts?.shipping,
                       },
-                      { label: "Einstellgebühren", value: selectedOrder.amounts?.listingFee, negative: true },
-                      { label: "Transaktionsgebühren", value: selectedOrder.amounts?.transactionFee, negative: true },
-                      { label: "Bearbeitungsgebühren", value: selectedOrder.amounts?.processingFee, negative: true },
-                      { label: "USt. auf Gebühren", value: selectedOrder.amounts?.vatOnFee, negative: true },
-                      { label: "Marketing/Ads", value: selectedOrder.amounts?.marketingFee, negative: true },
+                      { label: "Etsy-Gebühren (Transaktion+Bearbeitung)", value: selectedOrder.amounts?.etsyOrderFees, negative: true },
+                      { label: "Einstellgebühren (anteilig)", value: selectedOrder.amounts?.listingFee, negative: true },
+                      { label: "USt. auf Gebühren (anteilig)", value: selectedOrder.amounts?.vatOnFee, negative: true },
+                      { label: "Marketing/Ads (anteilig)", value: selectedOrder.amounts?.marketingFee, negative: true },
                       { label: "Gebühren gesamt", value: selectedOrder.amounts?.totalFees, negative: true, bold: true },
                       {
                         label: "Auszahlung",
