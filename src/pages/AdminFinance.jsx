@@ -290,6 +290,7 @@ export default function AdminFinance() {
     const list = filteredOrders;
     const totalGross = list.reduce((s, o) => s + (o.amounts?.gross || 0), 0);
     const totalFees = list.reduce((s, o) => s + (o.amounts?.totalFees || 0), 0);
+    const totalMarketing = list.reduce((s, o) => s + (o.amounts?.marketingFee || 0), 0);
     const totalCosts = list.reduce((s, o) => s + (o.costs || 0), 0);
     const totalProfit = list.reduce((s, o) => s + (o.profit || 0), 0);
     const totalPayout = list.reduce((s, o) => s + (o.amounts?.payout || 0), 0);
@@ -301,6 +302,7 @@ export default function AdminFinance() {
       count: list.length,
       totalGross,
       totalFees,
+      totalMarketing,
       totalCosts,
       totalProfit,
       totalPayout,
@@ -461,6 +463,12 @@ export default function AdminFinance() {
                     value: formatEur(stats.totalFees) + " €",
                     icon: TrendingUp,
                     color: "text-red-500",
+                  },
+                  {
+                    label: "Marketing/Ads",
+                    value: formatEur(stats.totalMarketing) + " €",
+                    icon: TrendingUp,
+                    color: "text-purple-600",
                   },
                   {
                     label: "Versand",
@@ -1000,6 +1008,11 @@ export default function AdminFinance() {
                       {
                         label: "Zahlungsgebühren",
                         value: selectedOrder.amounts?.processingFee,
+                        negative: true,
+                      },
+                      {
+                        label: "Marketing/Ads",
+                        value: selectedOrder.amounts?.marketingFee,
                         negative: true,
                       },
                       {

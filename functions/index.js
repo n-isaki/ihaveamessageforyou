@@ -568,12 +568,9 @@ async function updateSummaries(orderDate, amounts, delta = 1) {
           amounts.shipping || 0,
         ),
         totalFees: admin.firestore.FieldValue.increment(amounts.totalFees || 0),
-        totalPlatformFees: admin.firestore.FieldValue.increment(
-          amounts.platformFee || 0,
-        ),
-        totalProcessingFees: admin.firestore.FieldValue.increment(
-          amounts.processingFee || 0,
-        ),
+        totalPlatformFees: admin.firestore.FieldValue.increment(amounts.platformFee || 0),
+        totalProcessingFees: admin.firestore.FieldValue.increment(amounts.processingFee || 0),
+        totalMarketingFees: admin.firestore.FieldValue.increment(amounts.marketingFee || 0),
         totalPayout: admin.firestore.FieldValue.increment(amounts.payout || 0),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       },
@@ -653,6 +650,32 @@ async function syncEtsyOrdersInternal() {
     paymentsByReceipt[rid].push(p);
   }
 
+  let allLedgerEntries = [];
+  try {
+    const now = Math.floor(Date.now() / 1000);
+    const threeMonthsAgo = now - (90 * 86400);
+    const ledgerUrl = `https://api.etsy.com/v3/application/shops/${shopId}/payment-account/ledger-entries?min_created=${threeMonthsAgo}&max_created=${now}&limit=100`;
+    const ledgerRes = await fetch(ledgerUrl, { headers: apiHeaders });
+    if (ledgerRes.ok) {
+      const ledgerData = await ledgerRes.json();
+      allLedgerEntries = Array.isArray(ledgerData?.results) ? ledgerData.results : [];
+      console.log("Etsy sync: fetched ledger entries", { count: allLedgerEntries.length });
+    } else {
+      console.warn("Etsy ledger fetch failed (non-critical):", ledgerRes.status);
+    }
+  } catch (ledgerErr) {
+    console.warn("Etsy ledger fetch error (non-critical):", ledgerErr.message);
+  }
+
+  let totalMarketingFees = 0;
+  for (const entry of allLedgerEntries) {
+    const lt = (entry?.ledger_type || entry?.description || "").toLowerCase();
+    if (lt.includes("marketing") || lt.includes("advertising") || lt.includes("offsite") || lt.includes("promoted") || lt.includes("ads")) {
+      totalMarketingFees += Math.abs(readMoney(entry?.amount) / 100);
+    }
+  }
+  console.log("Etsy sync: marketing fees from ledger", { totalMarketingFees, ledgerEntries: allLedgerEntries.length });
+
   let upserted = 0;
   let newOrders = 0;
 
@@ -712,14 +735,21 @@ async function syncEtsyOrdersInternal() {
       ? admin.firestore.Timestamp.fromMillis(orderTimestamp * 1000)
       : admin.firestore.FieldValue.serverTimestamp();
 
+    const marketingFee = receipts.length > 0
+      ? Number((totalMarketingFees / receipts.length).toFixed(2))
+      : 0;
+    const allFees = Number((platformFee + processingFee + marketingFee).toFixed(2));
+    const paidOut = Number((gross + shipping - allFees).toFixed(2));
+
     const amounts = {
       gross: Number(gross.toFixed(2)),
       net: Number((gross / 1.19).toFixed(2)),
       shipping: Number(shipping.toFixed(2)),
       platformFee: Number(platformFee.toFixed(2)),
       processingFee: Number(processingFee.toFixed(2)),
-      totalFees,
-      payout,
+      marketingFee,
+      totalFees: allFees,
+      payout: paidOut,
     };
 
     const customerId = await findOrCreateCustomer(
