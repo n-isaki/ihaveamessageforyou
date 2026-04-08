@@ -625,6 +625,34 @@ async function syncEtsyOrdersInternal() {
     count: receipts.length,
     shopId,
   });
+  const apiHeaders = {
+    "x-api-key": `${ETSY_CLIENT_ID.value()}:${ETSY_CLIENT_SECRET.value()}`,
+    Authorization: `Bearer ${accessToken}`,
+  };
+
+  let allPayments = [];
+  try {
+    const paymentsUrl = `https://api.etsy.com/v3/application/shops/${shopId}/payments?limit=100`;
+    const paymentsRes = await fetch(paymentsUrl, { headers: apiHeaders });
+    if (paymentsRes.ok) {
+      const paymentsData = await paymentsRes.json();
+      allPayments = Array.isArray(paymentsData?.results) ? paymentsData.results : [];
+      console.log("Etsy sync: fetched payments", { count: allPayments.length });
+    } else {
+      console.warn("Etsy payments fetch failed (non-critical):", paymentsRes.status);
+    }
+  } catch (payErr) {
+    console.warn("Etsy payments fetch error (non-critical):", payErr.message);
+  }
+
+  const paymentsByReceipt = {};
+  for (const p of allPayments) {
+    const rid = String(p?.receipt_id || "");
+    if (!rid) continue;
+    if (!paymentsByReceipt[rid]) paymentsByReceipt[rid] = [];
+    paymentsByReceipt[rid].push(p);
+  }
+
   let upserted = 0;
   let newOrders = 0;
 
@@ -632,25 +660,30 @@ async function syncEtsyOrdersInternal() {
     const platformOrderId = String(r?.receipt_id || "");
     if (!platformOrderId) continue;
 
-    const gross = readMoney(
-      r?.grandtotal || r?.total_price || r?.grand_total || r?.subtotal,
-    );
+    const gross = readMoney(r?.grandtotal || r?.total_price || r?.grand_total || r?.subtotal);
     const shipping = readMoney(r?.total_shipping_cost || r?.shipping_cost);
-    const platformFee = readMoney(r?.total_seller_fees || r?.seller_fees);
-    const processingFee = readMoney(
-      r?.total_processing_fees || r?.processing_fees,
-    );
+
+    let platformFee = 0;
+    let processingFee = 0;
+    const receiptPayments = paymentsByReceipt[platformOrderId] || [];
+    if (receiptPayments.length > 0) {
+      for (const pay of receiptPayments) {
+        platformFee += readMoney(pay?.amount_fees || pay?.seller_fees || pay?.fee);
+        processingFee += readMoney(pay?.processing_fees || pay?.payment_fee);
+      }
+    }
+
+    if (platformFee === 0 && processingFee === 0 && gross > 0) {
+      platformFee = Number((gross * 0.065 + 0.20).toFixed(2));
+      processingFee = Number((gross * 0.04 + 0.30).toFixed(2));
+    }
+
     const totalFees = Number((platformFee + processingFee).toFixed(2));
     const payout = Number((gross + shipping - totalFees).toFixed(2));
 
     const buyerName = r?.name || r?.buyer_name || "";
     const buyerEmail = (r?.buyer_email || r?.email || "").trim().toLowerCase();
-    const personalization =
-      r?.message_from_buyer ||
-      r?.gift_message ||
-      r?.note_to_seller ||
-      r?.buyer_note ||
-      "";
+    const personalization = r?.message_from_buyer || r?.gift_message || r?.note_to_seller || r?.buyer_note || "";
     const shippingAddress = {
       name: r?.name || "",
       firstLine: r?.first_line || r?.address1 || "",
@@ -663,11 +696,7 @@ async function syncEtsyOrdersInternal() {
 
     const isDelivered = r?.is_delivered === true;
     const isShipped = r?.was_shipped === true || !!r?.shipped_date;
-    const status = isDelivered
-      ? "delivered"
-      : isShipped
-        ? "shipped"
-        : "processing";
+    const status = isDelivered ? "delivered" : isShipped ? "shipped" : "processing";
 
     const items = Array.isArray(r?.transactions)
       ? r.transactions.map((t) => ({
@@ -1018,36 +1047,62 @@ exports.etsyDebugReceipts = onCall(
       ? receiptsData.results
       : [];
 
-    const diagnostics = receipts.map((r) => ({
-      receipt_id: r?.receipt_id || null,
-      keys: Object.keys(r || {}),
-      has_email: !!(r?.buyer_email || r?.email),
-      has_personalization: !!(
-        r?.message_from_buyer ||
-        r?.gift_message ||
-        r?.note_to_seller ||
-        r?.buyer_note
-      ),
-      has_address: !!(
-        r?.first_line ||
-        r?.address1 ||
-        r?.city ||
-        r?.zip ||
-        r?.postal_code
-      ),
-      sample_values: {
-        buyer_email: r?.buyer_email ?? null,
-        email: r?.email ?? null,
-        message_from_buyer: r?.message_from_buyer ?? null,
-        gift_message: r?.gift_message ?? null,
-        note_to_seller: r?.note_to_seller ?? null,
-        buyer_note: r?.buyer_note ?? null,
-        first_line: r?.first_line ?? r?.address1 ?? null,
-        second_line: r?.second_line ?? r?.address2 ?? null,
-        city: r?.city ?? r?.town ?? null,
-        zip: r?.zip ?? r?.postal_code ?? null,
-      },
-    }));
+    let debugPayments = [];
+    try {
+      const payUrl = `https://api.etsy.com/v3/application/shops/${shopId}/payments?limit=25`;
+      const payRes = await fetch(payUrl, {
+        headers: {
+          "x-api-key": `${ETSY_CLIENT_ID.value()}:${ETSY_CLIENT_SECRET.value()}`,
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      if (payRes.ok) {
+        const payData = await payRes.json();
+        debugPayments = Array.isArray(payData?.results) ? payData.results : [];
+      }
+    } catch (e) { /* non-critical */ }
+
+    const payByReceipt = {};
+    for (const p of debugPayments) {
+      const rid = String(p?.receipt_id || "");
+      if (rid) payByReceipt[rid] = p;
+    }
+
+    const diagnostics = receipts.map((r) => {
+      const rid = String(r?.receipt_id || "");
+      const pay = payByReceipt[rid] || null;
+      return {
+        receipt_id: rid,
+        receipt_keys: Object.keys(r || {}),
+        receipt_money: {
+          grandtotal: r?.grandtotal ?? null,
+          subtotal: r?.subtotal ?? null,
+          total_price: r?.total_price ?? null,
+          total_shipping_cost: r?.total_shipping_cost ?? null,
+          total_tax_cost: r?.total_tax_cost ?? null,
+          total_vat_cost: r?.total_vat_cost ?? null,
+          discount_amt: r?.discount_amt ?? null,
+        },
+        payment_found: !!pay,
+        payment_keys: pay ? Object.keys(pay) : [],
+        payment_fees: pay ? {
+          amount_gross: pay?.amount_gross ?? null,
+          amount_fees: pay?.amount_fees ?? null,
+          amount_net: pay?.amount_net ?? null,
+          seller_fees: pay?.seller_fees ?? null,
+          processing_fees: pay?.processing_fees ?? null,
+          payment_fee: pay?.payment_fee ?? null,
+          fee: pay?.fee ?? null,
+          posted_gross: pay?.posted_gross ?? null,
+          posted_fee: pay?.posted_fee ?? null,
+          posted_net: pay?.posted_net ?? null,
+          adjusted_gross: pay?.adjusted_gross ?? null,
+          adjusted_fees: pay?.adjusted_fees ?? null,
+          adjusted_net: pay?.adjusted_net ?? null,
+        } : null,
+        transactions_count: Array.isArray(r?.transactions) ? r.transactions.length : 0,
+      };
+    });
 
     return {
       shopId,
