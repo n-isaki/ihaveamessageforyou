@@ -72,6 +72,11 @@ export const getSummary = async (periodKey) => {
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
 };
 
+export const getLedgerSummary = async () => {
+  const snap = await getDoc(doc(db, SUMMARIES_COL, "ledger_current_year"));
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+};
+
 export const getAllSummaries = async (type = "monthly") => {
   const q = query(
     collection(db, SUMMARIES_COL),
@@ -116,10 +121,14 @@ export const buildCSVFromOrders = (orders) => {
     "E-Mail",
     "Brutto (EUR)",
     "Versand (EUR)",
-    "Etsy-Gebuehren (EUR)",
-    "Zahlungsgebuehren (EUR)",
+    "Einstellgebuehren (EUR)",
+    "Transaktionsgebuehren (EUR)",
+    "Bearbeitungsgebuehren (EUR)",
+    "USt. auf Gebuehren (EUR)",
     "Marketing/Ads (EUR)",
+    "Sonstige Gebuehren (EUR)",
     "Gebuehren Gesamt (EUR)",
+    "Rueckerstattung (EUR)",
     "Auszahlung (EUR)",
     "Kosten (EUR)",
     "Profit (EUR)",
@@ -142,10 +151,14 @@ export const buildCSVFromOrders = (orders) => {
       o.customerEmail || "",
       (a.gross ?? 0).toFixed(2),
       (a.shipping ?? 0).toFixed(2),
-      (a.platformFee ?? 0).toFixed(2),
+      (a.listingFee ?? 0).toFixed(2),
+      (a.transactionFee ?? 0).toFixed(2),
       (a.processingFee ?? 0).toFixed(2),
+      (a.vatOnFee ?? 0).toFixed(2),
       (a.marketingFee ?? 0).toFixed(2),
+      (a.otherFee ?? 0).toFixed(2),
       (a.totalFees ?? 0).toFixed(2),
+      (a.refundShare ?? 0).toFixed(2),
       (a.payout ?? 0).toFixed(2),
       (o.costs ?? 0).toFixed(2),
       (o.profit ?? 0).toFixed(2),

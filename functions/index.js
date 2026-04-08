@@ -568,8 +568,10 @@ async function updateSummaries(orderDate, amounts, delta = 1) {
           amounts.shipping || 0,
         ),
         totalFees: admin.firestore.FieldValue.increment(amounts.totalFees || 0),
-        totalPlatformFees: admin.firestore.FieldValue.increment(amounts.platformFee || 0),
+        totalListingFees: admin.firestore.FieldValue.increment(amounts.listingFee || 0),
+        totalTransactionFees: admin.firestore.FieldValue.increment(amounts.transactionFee || 0),
         totalProcessingFees: admin.firestore.FieldValue.increment(amounts.processingFee || 0),
+        totalVatOnFees: admin.firestore.FieldValue.increment(amounts.vatOnFee || 0),
         totalMarketingFees: admin.firestore.FieldValue.increment(amounts.marketingFee || 0),
         totalPayout: admin.firestore.FieldValue.increment(amounts.payout || 0),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -627,54 +629,98 @@ async function syncEtsyOrdersInternal() {
     Authorization: `Bearer ${accessToken}`,
   };
 
-  let allPayments = [];
-  try {
-    const paymentsUrl = `https://api.etsy.com/v3/application/shops/${shopId}/payments?limit=100`;
-    const paymentsRes = await fetch(paymentsUrl, { headers: apiHeaders });
-    if (paymentsRes.ok) {
-      const paymentsData = await paymentsRes.json();
-      allPayments = Array.isArray(paymentsData?.results) ? paymentsData.results : [];
-      console.log("Etsy sync: fetched payments", { count: allPayments.length });
-    } else {
-      console.warn("Etsy payments fetch failed (non-critical):", paymentsRes.status);
-    }
-  } catch (payErr) {
-    console.warn("Etsy payments fetch error (non-critical):", payErr.message);
-  }
-
-  const paymentsByReceipt = {};
-  for (const p of allPayments) {
-    const rid = String(p?.receipt_id || "");
-    if (!rid) continue;
-    if (!paymentsByReceipt[rid]) paymentsByReceipt[rid] = [];
-    paymentsByReceipt[rid].push(p);
-  }
-
+  // Fetch ALL ledger entries (paginated) – this is the single source of truth for fees
   let allLedgerEntries = [];
   try {
     const now = Math.floor(Date.now() / 1000);
-    const threeMonthsAgo = now - (90 * 86400);
-    const ledgerUrl = `https://api.etsy.com/v3/application/shops/${shopId}/payment-account/ledger-entries?min_created=${threeMonthsAgo}&max_created=${now}&limit=100`;
-    const ledgerRes = await fetch(ledgerUrl, { headers: apiHeaders });
-    if (ledgerRes.ok) {
+    const yearStart = Math.floor(new Date(new Date().getFullYear(), 0, 1).getTime() / 1000);
+    let offset = 0;
+    let hasMore = true;
+    while (hasMore) {
+      const ledgerUrl = `https://api.etsy.com/v3/application/shops/${shopId}/payment-account/ledger-entries?min_created=${yearStart}&max_created=${now}&limit=100&offset=${offset}`;
+      const ledgerRes = await fetch(ledgerUrl, { headers: apiHeaders });
+      if (!ledgerRes.ok) { console.warn("Ledger fetch failed at offset", offset, ledgerRes.status); break; }
       const ledgerData = await ledgerRes.json();
-      allLedgerEntries = Array.isArray(ledgerData?.results) ? ledgerData.results : [];
-      console.log("Etsy sync: fetched ledger entries", { count: allLedgerEntries.length });
-    } else {
-      console.warn("Etsy ledger fetch failed (non-critical):", ledgerRes.status);
+      const batch = Array.isArray(ledgerData?.results) ? ledgerData.results : [];
+      allLedgerEntries.push(...batch);
+      hasMore = batch.length === 100;
+      offset += 100;
     }
+    console.log("Etsy sync: fetched ledger entries total", { count: allLedgerEntries.length });
   } catch (ledgerErr) {
     console.warn("Etsy ledger fetch error (non-critical):", ledgerErr.message);
   }
 
-  let totalMarketingFees = 0;
+  // Categorize all ledger entries into fee buckets
+  const ledgerFees = {
+    listingFees: 0,       // Einstellgebühren
+    transactionFees: 0,   // Transaktionsgebühren
+    processingFees: 0,    // Bearbeitungsgebühren (Zahlungsabwicklung)
+    vatOnFees: 0,         // USt. auf Verkäufergebühren
+    marketingFees: 0,     // Etsy Ads + Offsite Ads
+    shippingLabelFees: 0, // Versandetiketten
+    otherFees: 0,         // Sonstige
+    refunds: 0,           // Rückerstattungen
+    sales: 0,             // Verkaufserlöse (positive Einträge)
+    ledgerTypes: {},       // Alle Typen für Debug
+  };
+
   for (const entry of allLedgerEntries) {
     const lt = (entry?.ledger_type || entry?.description || "").toLowerCase();
-    if (lt.includes("marketing") || lt.includes("advertising") || lt.includes("offsite") || lt.includes("promoted") || lt.includes("ads")) {
-      totalMarketingFees += Math.abs(readMoney(entry?.amount) / 100);
+    const rawAmount = entry?.amount ?? 0;
+    const amt = typeof rawAmount === "number" ? rawAmount / 100 : readMoney(rawAmount);
+
+    if (!ledgerFees.ledgerTypes[lt]) ledgerFees.ledgerTypes[lt] = { count: 0, total: 0 };
+    ledgerFees.ledgerTypes[lt].count += 1;
+    ledgerFees.ledgerTypes[lt].total += amt;
+
+    if (lt.includes("marketing") || lt.includes("advertising") || lt.includes("offsite") || lt.includes("promoted") || lt.includes("etsy_ads") || lt.includes("ads_fee")) {
+      ledgerFees.marketingFees += Math.abs(amt);
+    } else if (lt.includes("listing") || lt.includes("renew") || lt.includes("auto_renew")) {
+      ledgerFees.listingFees += Math.abs(amt);
+    } else if (lt.includes("transaction") && !lt.includes("processing") && !lt.includes("payment")) {
+      ledgerFees.transactionFees += Math.abs(amt);
+    } else if (lt.includes("processing") || lt.includes("payment")) {
+      ledgerFees.processingFees += Math.abs(amt);
+    } else if (lt.includes("vat") || lt.includes("tax") || lt.includes("ust")) {
+      ledgerFees.vatOnFees += Math.abs(amt);
+    } else if (lt.includes("shipping_label") || lt.includes("label")) {
+      ledgerFees.shippingLabelFees += Math.abs(amt);
+    } else if (lt.includes("refund") || lt.includes("reversal")) {
+      ledgerFees.refunds += Math.abs(amt);
+    } else if (amt > 0 && (lt.includes("sale") || lt.includes("payment") || lt === "")) {
+      ledgerFees.sales += amt;
+    } else if (amt < 0) {
+      ledgerFees.otherFees += Math.abs(amt);
     }
   }
-  console.log("Etsy sync: marketing fees from ledger", { totalMarketingFees, ledgerEntries: allLedgerEntries.length });
+
+  const totalFeesFromLedger = Number((ledgerFees.listingFees + ledgerFees.transactionFees + ledgerFees.processingFees + ledgerFees.vatOnFees + ledgerFees.marketingFees + ledgerFees.shippingLabelFees + ledgerFees.otherFees).toFixed(2));
+
+  console.log("Etsy sync: ledger fee breakdown", {
+    ...ledgerFees,
+    totalFeesFromLedger,
+    ledgerTypes: Object.keys(ledgerFees.ledgerTypes),
+  });
+
+  // Store ledger summary for dashboard
+  await db.collection("etsy_summaries").doc("ledger_current_year").set({
+    type: "ledger",
+    periodKey: "ledger_current_year",
+    year: new Date().getFullYear(),
+    listingFees: Number(ledgerFees.listingFees.toFixed(2)),
+    transactionFees: Number(ledgerFees.transactionFees.toFixed(2)),
+    processingFees: Number(ledgerFees.processingFees.toFixed(2)),
+    vatOnFees: Number(ledgerFees.vatOnFees.toFixed(2)),
+    marketingFees: Number(ledgerFees.marketingFees.toFixed(2)),
+    shippingLabelFees: Number(ledgerFees.shippingLabelFees.toFixed(2)),
+    otherFees: Number(ledgerFees.otherFees.toFixed(2)),
+    refunds: Number(ledgerFees.refunds.toFixed(2)),
+    totalFees: totalFeesFromLedger,
+    ledgerEntryCount: allLedgerEntries.length,
+    ledgerTypes: ledgerFees.ledgerTypes,
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  }, { merge: true });
 
   let upserted = 0;
   let newOrders = 0;
@@ -686,27 +732,14 @@ async function syncEtsyOrdersInternal() {
     const gross = readMoney(r?.grandtotal || r?.total_price || r?.grand_total || r?.subtotal);
     const shipping = readMoney(r?.total_shipping_cost || r?.shipping_cost);
 
-    let platformFee = 0;
-    let processingFee = 0;
-    const receiptPayments = paymentsByReceipt[platformOrderId] || [];
-    if (receiptPayments.length > 0) {
-      for (const pay of receiptPayments) {
-        platformFee += readMoney(pay?.amount_fees || pay?.seller_fees || pay?.fee);
-        processingFee += readMoney(pay?.processing_fees || pay?.payment_fee);
-      }
-    }
-
-    if (platformFee === 0 && processingFee === 0 && gross > 0) {
-      platformFee = Number((gross * 0.065 + 0.20).toFixed(2));
-      processingFee = Number((gross * 0.04 + 0.30).toFixed(2));
-    }
-
-    const totalFees = Number((platformFee + processingFee).toFixed(2));
-    const payout = Number((gross + shipping - totalFees).toFixed(2));
-
     const buyerName = r?.name || r?.buyer_name || "";
     const buyerEmail = (r?.buyer_email || r?.email || "").trim().toLowerCase();
-    const personalization = r?.message_from_buyer || r?.gift_message || r?.note_to_seller || r?.buyer_note || "";
+    const personalization =
+      r?.message_from_buyer ||
+      r?.gift_message ||
+      r?.note_to_seller ||
+      r?.buyer_note ||
+      "";
     const shippingAddress = {
       name: r?.name || "",
       firstLine: r?.first_line || r?.address1 || "",
@@ -719,7 +752,11 @@ async function syncEtsyOrdersInternal() {
 
     const isDelivered = r?.is_delivered === true;
     const isShipped = r?.was_shipped === true || !!r?.shipped_date;
-    const status = isDelivered ? "delivered" : isShipped ? "shipped" : "processing";
+    const status = isDelivered
+      ? "delivered"
+      : isShipped
+        ? "shipped"
+        : "processing";
 
     const items = Array.isArray(r?.transactions)
       ? r.transactions.map((t) => ({
@@ -735,21 +772,33 @@ async function syncEtsyOrdersInternal() {
       ? admin.firestore.Timestamp.fromMillis(orderTimestamp * 1000)
       : admin.firestore.FieldValue.serverTimestamp();
 
-    const marketingFee = receipts.length > 0
-      ? Number((totalMarketingFees / receipts.length).toFixed(2))
-      : 0;
-    const allFees = Number((platformFee + processingFee + marketingFee).toFixed(2));
-    const paidOut = Number((gross + shipping - allFees).toFixed(2));
+    // Distribute ledger fees proportionally by gross revenue share
+    const totalGrossAllReceipts = receipts.reduce((s, rc) => s + readMoney(rc?.grandtotal || rc?.total_price || rc?.grand_total || rc?.subtotal), 0);
+    const share = totalGrossAllReceipts > 0 ? gross / totalGrossAllReceipts : (1 / receipts.length);
+
+    const listingFee = Number((ledgerFees.listingFees * share).toFixed(2));
+    const transactionFee = Number((ledgerFees.transactionFees * share).toFixed(2));
+    const processingFee = Number((ledgerFees.processingFees * share).toFixed(2));
+    const vatOnFee = Number((ledgerFees.vatOnFees * share).toFixed(2));
+    const marketingFee = Number((ledgerFees.marketingFees * share).toFixed(2));
+    const otherFee = Number(((ledgerFees.shippingLabelFees + ledgerFees.otherFees) * share).toFixed(2));
+    const refundShare = Number((ledgerFees.refunds * share).toFixed(2));
+    const totalFeesOrder = Number((listingFee + transactionFee + processingFee + vatOnFee + marketingFee + otherFee).toFixed(2));
+    const payout = Number((gross + shipping - totalFeesOrder).toFixed(2));
 
     const amounts = {
       gross: Number(gross.toFixed(2)),
       net: Number((gross / 1.19).toFixed(2)),
       shipping: Number(shipping.toFixed(2)),
-      platformFee: Number(platformFee.toFixed(2)),
-      processingFee: Number(processingFee.toFixed(2)),
+      listingFee,
+      transactionFee,
+      processingFee,
+      vatOnFee,
       marketingFee,
-      totalFees: allFees,
-      payout: paidOut,
+      otherFee,
+      refundShare,
+      totalFees: totalFeesOrder,
+      payout,
     };
 
     const customerId = await findOrCreateCustomer(
@@ -1090,7 +1139,9 @@ exports.etsyDebugReceipts = onCall(
         const payData = await payRes.json();
         debugPayments = Array.isArray(payData?.results) ? payData.results : [];
       }
-    } catch (e) { /* non-critical */ }
+    } catch (e) {
+      /* non-critical */
+    }
 
     const payByReceipt = {};
     for (const p of debugPayments) {
@@ -1115,22 +1166,26 @@ exports.etsyDebugReceipts = onCall(
         },
         payment_found: !!pay,
         payment_keys: pay ? Object.keys(pay) : [],
-        payment_fees: pay ? {
-          amount_gross: pay?.amount_gross ?? null,
-          amount_fees: pay?.amount_fees ?? null,
-          amount_net: pay?.amount_net ?? null,
-          seller_fees: pay?.seller_fees ?? null,
-          processing_fees: pay?.processing_fees ?? null,
-          payment_fee: pay?.payment_fee ?? null,
-          fee: pay?.fee ?? null,
-          posted_gross: pay?.posted_gross ?? null,
-          posted_fee: pay?.posted_fee ?? null,
-          posted_net: pay?.posted_net ?? null,
-          adjusted_gross: pay?.adjusted_gross ?? null,
-          adjusted_fees: pay?.adjusted_fees ?? null,
-          adjusted_net: pay?.adjusted_net ?? null,
-        } : null,
-        transactions_count: Array.isArray(r?.transactions) ? r.transactions.length : 0,
+        payment_fees: pay
+          ? {
+              amount_gross: pay?.amount_gross ?? null,
+              amount_fees: pay?.amount_fees ?? null,
+              amount_net: pay?.amount_net ?? null,
+              seller_fees: pay?.seller_fees ?? null,
+              processing_fees: pay?.processing_fees ?? null,
+              payment_fee: pay?.payment_fee ?? null,
+              fee: pay?.fee ?? null,
+              posted_gross: pay?.posted_gross ?? null,
+              posted_fee: pay?.posted_fee ?? null,
+              posted_net: pay?.posted_net ?? null,
+              adjusted_gross: pay?.adjusted_gross ?? null,
+              adjusted_fees: pay?.adjusted_fees ?? null,
+              adjusted_net: pay?.adjusted_net ?? null,
+            }
+          : null,
+        transactions_count: Array.isArray(r?.transactions)
+          ? r.transactions.length
+          : 0,
       };
     });
 
