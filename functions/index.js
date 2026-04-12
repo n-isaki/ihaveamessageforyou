@@ -548,6 +548,74 @@ async function findOrCreateCustomer(buyerEmail, buyerName, address) {
   return newDoc.id;
 }
 
+/** Deterministic JSON for content hashing (Firestore raw payloads). */
+function stableStringify(value) {
+  if (value === null || typeof value !== "object") {
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map(stableStringify).join(",")}]`;
+  }
+  const keys = Object.keys(value).sort();
+  return `{${keys.map((k) => `${JSON.stringify(k)}:${stableStringify(value[k])}`).join(",")}}`;
+}
+
+function sha256Hex(str) {
+  return crypto.createHash("sha256").update(str, "utf8").digest("hex");
+}
+
+/**
+ * Phase 1 — Raw Etsy ledger window (30-day API slice) + chunked entry storage.
+ */
+async function persistEtsyLedgerWindow(
+  shopId,
+  minTs,
+  maxTs,
+  entries,
+  apiOk,
+  fetchError,
+) {
+  const winId = `${shopId}_${minTs}_${maxTs}`;
+  const parentRef = db.collection("etsy_ledger_windows").doc(winId);
+  const CHUNK = 80;
+  const chunkCount =
+    entries.length === 0 ? 0 : Math.ceil(entries.length / CHUNK);
+
+  await parentRef.set(
+    {
+      shopId: Number(shopId),
+      minCreated: minTs,
+      maxCreated: maxTs,
+      minCreatedAt: admin.firestore.Timestamp.fromMillis(minTs * 1000),
+      maxCreatedAt: admin.firestore.Timestamp.fromMillis(maxTs * 1000),
+      entryCount: entries.length,
+      chunkCount,
+      apiOk: apiOk === true,
+      fetchError: fetchError || null,
+      syncedAt: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
+
+  const chunksCol = parentRef.collection("chunks");
+  for (let i = 0; i < chunkCount; i += 1) {
+    const slice = entries.slice(i * CHUNK, i * CHUNK + CHUNK);
+    await chunksCol.doc(String(i)).set({
+      index: i,
+      entries: slice,
+      syncedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  }
+
+  const existingChunks = await chunksCol.get();
+  for (const d of existingChunks.docs) {
+    const idx = Number(d.id);
+    if (!Number.isNaN(idx) && idx >= chunkCount) {
+      await d.ref.delete();
+    }
+  }
+}
+
 async function updateSummaries(orderDate, amounts, delta = 1) {
   const keys = toDateKey(orderDate);
   const types = [
@@ -568,10 +636,18 @@ async function updateSummaries(orderDate, amounts, delta = 1) {
           amounts.shipping || 0,
         ),
         totalFees: admin.firestore.FieldValue.increment(amounts.totalFees || 0),
-        totalEtsyOrderFees: admin.firestore.FieldValue.increment(amounts.etsyOrderFees || 0),
-        totalListingFees: admin.firestore.FieldValue.increment(amounts.listingFee || 0),
-        totalVatOnFees: admin.firestore.FieldValue.increment(amounts.vatOnFee || 0),
-        totalMarketingFees: admin.firestore.FieldValue.increment(amounts.marketingFee || 0),
+        totalEtsyOrderFees: admin.firestore.FieldValue.increment(
+          amounts.etsyOrderFees || 0,
+        ),
+        totalListingFees: admin.firestore.FieldValue.increment(
+          amounts.listingFee || 0,
+        ),
+        totalVatOnFees: admin.firestore.FieldValue.increment(
+          amounts.vatOnFee || 0,
+        ),
+        totalMarketingFees: admin.firestore.FieldValue.increment(
+          amounts.marketingFee || 0,
+        ),
         totalPayout: admin.firestore.FieldValue.increment(amounts.payout || 0),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       },
@@ -628,30 +704,71 @@ async function syncEtsyOrdersInternal() {
     Authorization: `Bearer ${accessToken}`,
   };
 
-  // Fetch ALL ledger entries in 30-day windows (API max = 31 days)
-  let allLedgerEntries = [];
+  const syncRunRef = await db.collection("etsy_sync_runs").add({
+    shopId: Number(shopId),
+    startedAt: admin.firestore.FieldValue.serverTimestamp(),
+    status: "running",
+    source: "syncEtsyOrdersInternal",
+    receiptsFetched: receipts.length,
+  });
+
   try {
-    const now = Math.floor(Date.now() / 1000);
-    const yearStart = Math.floor(new Date(new Date().getFullYear(), 0, 1).getTime() / 1000);
+  // Fetch ALL ledger entries in 30-day windows (API max = 31 days); persist raw per window
+  let allLedgerEntries = [];
+  let ledgerWindowsWritten = 0;
+  try {
+    const nowTs = Math.floor(Date.now() / 1000);
+    const yearStart = Math.floor(
+      new Date(new Date().getFullYear(), 0, 1).getTime() / 1000,
+    );
     const WINDOW = 30 * 86400;
     let windowStart = yearStart;
-    while (windowStart < now) {
-      const windowEnd = Math.min(windowStart + WINDOW, now);
+    while (windowStart < nowTs) {
+      const windowEnd = Math.min(windowStart + WINDOW, nowTs);
+      const windowEntries = [];
       let offset = 0;
       let hasMore = true;
+      let windowFetchError = null;
+      let windowApiOk = true;
       while (hasMore) {
         const ledgerUrl = `https://api.etsy.com/v3/application/shops/${shopId}/payment-account/ledger-entries?min_created=${windowStart}&max_created=${windowEnd}&limit=100&offset=${offset}`;
         const ledgerRes = await fetch(ledgerUrl, { headers: apiHeaders });
-        if (!ledgerRes.ok) { console.warn("Ledger fetch failed", windowStart, offset, ledgerRes.status); hasMore = false; break; }
+        if (!ledgerRes.ok) {
+          windowFetchError = await ledgerRes.text();
+          windowApiOk = false;
+          console.warn(
+            "Ledger fetch failed",
+            windowStart,
+            offset,
+            ledgerRes.status,
+          );
+          hasMore = false;
+          break;
+        }
         const ledgerData = await ledgerRes.json();
-        const batch = Array.isArray(ledgerData?.results) ? ledgerData.results : [];
+        const batch = Array.isArray(ledgerData?.results)
+          ? ledgerData.results
+          : [];
+        windowEntries.push(...batch);
         allLedgerEntries.push(...batch);
         hasMore = batch.length === 100;
         offset += 100;
       }
+      await persistEtsyLedgerWindow(
+        shopId,
+        windowStart,
+        windowEnd,
+        windowEntries,
+        windowApiOk,
+        windowFetchError,
+      );
+      ledgerWindowsWritten += 1;
       windowStart = windowEnd;
     }
-    console.log("Etsy sync: fetched ledger entries total", { count: allLedgerEntries.length });
+    console.log("Etsy sync: fetched ledger entries total", {
+      count: allLedgerEntries.length,
+      windows: ledgerWindowsWritten,
+    });
   } catch (ledgerErr) {
     console.warn("Etsy ledger fetch error (non-critical):", ledgerErr.message);
   }
@@ -681,6 +798,17 @@ async function syncEtsyOrdersInternal() {
     ledgerFees.ledgerTypes[lt].count += 1;
     ledgerFees.ledgerTypes[lt].total += amt;
 
+    // Only negative amounts are fees/charges. Positive amounts are income (sales, deposits).
+    if (amt >= 0) {
+      if (lt.includes("refund") || lt.includes("reversal")) {
+        ledgerFees.refunds += amt;
+      } else {
+        ledgerFees.sales += amt;
+      }
+      continue;
+    }
+
+    const fee = Math.abs(amt);
     if (
       lt.includes("marketing") ||
       lt.includes("advertising") ||
@@ -689,34 +817,28 @@ async function syncEtsyOrdersInternal() {
       lt.includes("etsy_ads") ||
       lt.includes("ads_fee")
     ) {
-      ledgerFees.marketingFees += Math.abs(amt);
+      ledgerFees.marketingFees += fee;
     } else if (
       lt.includes("listing") ||
       lt.includes("renew") ||
       lt.includes("auto_renew")
     ) {
-      ledgerFees.listingFees += Math.abs(amt);
+      ledgerFees.listingFees += fee;
     } else if (
-      lt.includes("transaction") &&
-      !lt.includes("processing") &&
-      !lt.includes("payment")
+      lt.includes("transaction_fee") ||
+      (lt.includes("transaction") && !lt.includes("processing"))
     ) {
-      ledgerFees.transactionFees += Math.abs(amt);
-    } else if (lt.includes("processing") || lt.includes("payment")) {
-      ledgerFees.processingFees += Math.abs(amt);
+      ledgerFees.transactionFees += fee;
+    } else if (lt.includes("processing") || lt.includes("processing_fee")) {
+      ledgerFees.processingFees += fee;
     } else if (lt.includes("vat") || lt.includes("tax") || lt.includes("ust")) {
-      ledgerFees.vatOnFees += Math.abs(amt);
+      ledgerFees.vatOnFees += fee;
     } else if (lt.includes("shipping_label") || lt.includes("label")) {
-      ledgerFees.shippingLabelFees += Math.abs(amt);
+      ledgerFees.shippingLabelFees += fee;
     } else if (lt.includes("refund") || lt.includes("reversal")) {
-      ledgerFees.refunds += Math.abs(amt);
-    } else if (
-      amt > 0 &&
-      (lt.includes("sale") || lt.includes("payment") || lt === "")
-    ) {
-      ledgerFees.sales += amt;
-    } else if (amt < 0) {
-      ledgerFees.otherFees += Math.abs(amt);
+      ledgerFees.refunds += fee;
+    } else {
+      ledgerFees.otherFees += fee;
     }
   }
 
@@ -770,6 +892,31 @@ async function syncEtsyOrdersInternal() {
     const platformOrderId = String(r?.receipt_id || "");
     if (!platformOrderId) continue;
 
+    const rawDocId = `${shopId}_${platformOrderId}`;
+    try {
+      const payloadStr = stableStringify(r);
+      await db
+        .collection("etsy_receipt_snapshots")
+        .doc(rawDocId)
+        .set(
+          {
+            shopId: Number(shopId),
+            receiptId: platformOrderId,
+            payload: r,
+            contentSha256: sha256Hex(payloadStr),
+            syncRunId: syncRunRef.id,
+            syncedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true },
+        );
+    } catch (snapErr) {
+      console.warn(
+        "etsy_receipt_snapshots write failed",
+        platformOrderId,
+        snapErr.message,
+      );
+    }
+
     const gross = readMoney(
       r?.grandtotal || r?.total_price || r?.grand_total || r?.subtotal,
     );
@@ -815,38 +962,97 @@ async function syncEtsyOrdersInternal() {
       ? admin.firestore.Timestamp.fromMillis(orderTimestamp * 1000)
       : admin.firestore.FieldValue.serverTimestamp();
 
-    // Fetch per-receipt payment to get exact fees
+    // Fetch per-receipt payment to get exact fees + persist raw API response
     let receiptFees = 0;
     let receiptNet = 0;
+    const paymentPersist = {
+      httpOk: false,
+      httpStatus: null,
+      payments: [],
+      errorText: null,
+      fetchError: null,
+    };
     try {
       const rpUrl = `https://api.etsy.com/v3/application/shops/${shopId}/receipts/${platformOrderId}/payments`;
       const rpRes = await fetch(rpUrl, { headers: apiHeaders });
+      paymentPersist.httpOk = rpRes.ok;
+      paymentPersist.httpStatus = rpRes.status;
       if (rpRes.ok) {
         const rpData = await rpRes.json();
         const payments = Array.isArray(rpData?.results) ? rpData.results : [];
+        paymentPersist.payments = payments;
         for (const pay of payments) {
           receiptFees += readMoney(pay?.amount_fees);
           receiptNet += readMoney(pay?.amount_net);
         }
+      } else {
+        paymentPersist.errorText = (await rpRes.text()).substring(0, 800);
       }
-    } catch (e) { /* non-critical */ }
+    } catch (e) {
+      paymentPersist.fetchError = e.message;
+    }
+    try {
+      await db
+        .collection("etsy_receipt_payments")
+        .doc(rawDocId)
+        .set(
+          {
+            shopId: Number(shopId),
+            receiptId: platformOrderId,
+            payments: paymentPersist.payments,
+            paymentCount: paymentPersist.payments.length,
+            httpOk: paymentPersist.httpOk,
+            httpStatus: paymentPersist.httpStatus,
+            errorText: paymentPersist.errorText,
+            fetchError: paymentPersist.fetchError,
+            syncRunId: syncRunRef.id,
+            syncedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true },
+        );
+    } catch (payWriteErr) {
+      console.warn(
+        "etsy_receipt_payments write failed",
+        platformOrderId,
+        payWriteErr.message,
+      );
+    }
 
     // Distribute ledger-only fees (marketing, listing, VAT) proportionally
-    const totalGrossAllReceipts = receipts.reduce((s, rc) => s + readMoney(rc?.grandtotal || rc?.total_price || rc?.grand_total || rc?.subtotal), 0);
-    const share = totalGrossAllReceipts > 0 ? gross / totalGrossAllReceipts : 1 / receipts.length;
+    const totalGrossAllReceipts = receipts.reduce(
+      (s, rc) =>
+        s +
+        readMoney(
+          rc?.grandtotal || rc?.total_price || rc?.grand_total || rc?.subtotal,
+        ),
+      0,
+    );
+    const share =
+      totalGrossAllReceipts > 0
+        ? gross / totalGrossAllReceipts
+        : 1 / receipts.length;
 
     const marketingFee = Number((ledgerFees.marketingFees * share).toFixed(2));
     const listingFee = Number((ledgerFees.listingFees * share).toFixed(2));
     const vatOnFee = Number((ledgerFees.vatOnFees * share).toFixed(2));
-    const otherFee = Number(((ledgerFees.shippingLabelFees + ledgerFees.otherFees) * share).toFixed(2,
+    const otherFee = Number(
+      ((ledgerFees.shippingLabelFees + ledgerFees.otherFees) * share).toFixed(
+        2,
       ),
     );
     const refundShare = Number((ledgerFees.refunds * share).toFixed(2));
 
     // receiptFees from Payments API = Etsy's combined transaction + processing fees for this order
     const etsyOrderFees = Number(receiptFees.toFixed(2));
-    const totalFeesOrder = Number((etsyOrderFees + listingFee + vatOnFee + marketingFee + otherFee).toFixed(2));
-    const payout = receiptNet > 0 ? Number(receiptNet.toFixed(2)) : Number((gross + shipping - totalFeesOrder).toFixed(2));
+    const totalFeesOrder = Number(
+      (etsyOrderFees + listingFee + vatOnFee + marketingFee + otherFee).toFixed(
+        2,
+      ),
+    );
+    const payout =
+      receiptNet > 0
+        ? Number(receiptNet.toFixed(2))
+        : Number((gross + shipping - totalFeesOrder).toFixed(2));
 
     const amounts = {
       gross: Number(gross.toFixed(2)),
@@ -938,25 +1144,52 @@ async function syncEtsyOrdersInternal() {
     }
   }
 
-  await integrationRef.set(
-    {
-      refreshToken,
-      userId,
-      shopId,
-      lastSyncAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    },
-    { merge: true },
-  );
+    await integrationRef.set(
+      {
+        refreshToken,
+        userId,
+        shopId,
+        lastSyncAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
 
-  console.log("Etsy sync complete", {
-    fetched: receipts.length,
-    upserted,
-    newOrders,
-    shopId,
-    userId,
-  });
-  return { fetched: receipts.length, upserted, newOrders };
+    console.log("Etsy sync complete", {
+      fetched: receipts.length,
+      upserted,
+      newOrders,
+      shopId,
+      userId,
+      syncRunId: syncRunRef.id,
+    });
+
+    await syncRunRef.update({
+      status: "completed",
+      finishedAt: admin.firestore.FieldValue.serverTimestamp(),
+      upserted,
+      newOrders,
+      ledgerEntryCount: allLedgerEntries.length,
+      ledgerWindowsWritten,
+      receiptsProcessed: receipts.length,
+    });
+
+    return {
+      fetched: receipts.length,
+      upserted,
+      newOrders,
+      syncRunId: syncRunRef.id,
+    };
+  } catch (err) {
+    await syncRunRef
+      .update({
+        status: "failed",
+        finishedAt: admin.firestore.FieldValue.serverTimestamp(),
+        errorMessage: String(err?.message || err),
+      })
+      .catch(() => {});
+    throw err;
+  }
 }
 
 /**

@@ -133,6 +133,31 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    // Phase 1 — Etsy Rohdaten (Sync, KI/Export später)
+    match /etsy_receipt_snapshots/{docId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /etsy_receipt_payments/{docId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /etsy_sync_runs/{runId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /etsy_ledger_windows/{windowId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if isAdmin();
+      match /chunks/{chunkId} {
+        allow read: if isAdmin();
+        allow create, update, delete: if isAdmin();
+      }
+    }
+
     // ============================================
     // KARAKEDIMARTIN - Separate Collections mit Prefix
     // ============================================
