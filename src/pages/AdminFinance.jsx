@@ -303,23 +303,48 @@ export default function AdminFinance() {
   const stats = useMemo(() => {
     const list = filteredOrders;
     const totalGross = list.reduce((s, o) => s + (o.amounts?.gross || 0), 0);
-    const totalShipping = list.reduce((s, o) => s + (o.amounts?.shipping || 0), 0);
+    const totalShipping = list.reduce(
+      (s, o) => s + (o.amounts?.shipping || 0),
+      0,
+    );
     const totalCosts = list.reduce((s, o) => s + (o.costs || 0), 0);
     const totalProfit = list.reduce((s, o) => s + (o.profit || 0), 0);
     const totalPayout = list.reduce((s, o) => s + (o.amounts?.payout || 0), 0);
 
     const useLedger = (period === "year" || period === "all") && ledger;
-    const totalEtsyOrderFees = list.reduce((s, o) => s + (o.amounts?.etsyOrderFees || 0), 0);
-    const totalListingFees = useLedger ? (ledger.listingFees || 0) : list.reduce((s, o) => s + (o.amounts?.listingFee || 0), 0);
-    const totalVatOnFees = useLedger ? (ledger.vatOnFees || 0) : list.reduce((s, o) => s + (o.amounts?.vatOnFee || 0), 0);
-    const totalMarketing = useLedger ? (ledger.marketingFees || 0) : list.reduce((s, o) => s + (o.amounts?.marketingFee || 0), 0);
-    const totalRefunds = useLedger ? (ledger.refunds || 0) : list.reduce((s, o) => s + (o.amounts?.refundShare || 0), 0);
-    const totalFees = useLedger ? (ledger.totalFees || 0) : list.reduce((s, o) => s + (o.amounts?.totalFees || 0), 0);
+    const totalEtsyOrderFees = list.reduce(
+      (s, o) => s + (o.amounts?.etsyOrderFees || 0),
+      0,
+    );
+    const totalListingFees = useLedger
+      ? ledger.listingFees || 0
+      : list.reduce((s, o) => s + (o.amounts?.listingFee || 0), 0);
+    const totalVatOnFees = useLedger
+      ? ledger.vatOnFees || 0
+      : list.reduce((s, o) => s + (o.amounts?.vatOnFee || 0), 0);
+    const totalMarketing = useLedger
+      ? ledger.marketingFees || 0
+      : list.reduce((s, o) => s + (o.amounts?.marketingFee || 0), 0);
+    const totalRefunds = useLedger
+      ? ledger.refunds || 0
+      : list.reduce((s, o) => s + (o.amounts?.refundShare || 0), 0);
+    const totalFees = useLedger
+      ? ledger.totalFees || 0
+      : list.reduce((s, o) => s + (o.amounts?.totalFees || 0), 0);
 
     return {
-      count: list.length, totalGross, totalShipping, totalCosts, totalProfit, totalPayout,
-      totalEtsyOrderFees, totalListingFees, totalVatOnFees,
-      totalMarketing, totalRefunds, totalFees,
+      count: list.length,
+      totalGross,
+      totalShipping,
+      totalCosts,
+      totalProfit,
+      totalPayout,
+      totalEtsyOrderFees,
+      totalListingFees,
+      totalVatOnFees,
+      totalMarketing,
+      totalRefunds,
+      totalFees,
     };
   }, [filteredOrders, ledger, period]);
 
@@ -517,30 +542,63 @@ export default function AdminFinance() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-white rounded-xl border border-stone-200 p-5">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-bold text-stone-900">Verkäufe</h3>
-                    <span className="text-lg font-bold text-emerald-600">{formatEur(stats.totalGross)} €</span>
+                    <h3 className="text-sm font-bold text-stone-900">
+                      Verkäufe
+                    </h3>
+                    <span className="text-lg font-bold text-emerald-600">
+                      {formatEur(stats.totalGross)} €
+                    </span>
                   </div>
                   <div className="space-y-1.5 text-sm">
-                    <div className="flex justify-between"><span className="text-stone-600">Verkäufe insgesamt ({stats.count})</span><span>{formatEur(stats.totalGross)} €</span></div>
-                    {stats.totalRefunds > 0 && <div className="flex justify-between"><span className="text-stone-600">Rückerstattungen</span><span className="text-red-600">-{formatEur(stats.totalRefunds)} €</span></div>}
+                    <div className="flex justify-between">
+                      <span className="text-stone-600">
+                        Verkäufe insgesamt ({stats.count})
+                      </span>
+                      <span>{formatEur(stats.totalGross)} €</span>
+                    </div>
+                    {stats.totalRefunds > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-stone-600">Rückerstattungen</span>
+                        <span className="text-red-600">
+                          -{formatEur(stats.totalRefunds)} €
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="bg-white rounded-xl border border-stone-200 p-5">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-bold text-stone-900">Gebühren</h3>
-                    <span className="text-lg font-bold text-red-600">-{formatEur(stats.totalFees)} €</span>
+                    <h3 className="text-sm font-bold text-stone-900">
+                      Gebühren
+                    </h3>
+                    <span className="text-lg font-bold text-red-600">
+                      -{formatEur(stats.totalFees)} €
+                    </span>
                   </div>
                   <div className="space-y-1.5 text-sm">
                     {[
-                      { label: "Etsy-Gebühren (Transaktion+Bearbeitung)", value: stats.totalEtsyOrderFees },
-                      { label: "Einstellgebühren", value: stats.totalListingFees },
-                      { label: "USt. auf Verkäufergebühren", value: stats.totalVatOnFees },
-                    ].filter(r => r.value > 0).map(r => (
-                      <div key={r.label} className="flex justify-between">
-                        <span className="text-stone-600">{r.label}</span>
-                        <span className="text-red-600">-{formatEur(r.value)} €</span>
-                      </div>
-                    ))}
+                      {
+                        label: "Etsy-Gebühren (Transaktion+Bearbeitung)",
+                        value: stats.totalEtsyOrderFees,
+                      },
+                      {
+                        label: "Einstellgebühren",
+                        value: stats.totalListingFees,
+                      },
+                      {
+                        label: "USt. auf Verkäufergebühren",
+                        value: stats.totalVatOnFees,
+                      },
+                    ]
+                      .filter((r) => r.value > 0)
+                      .map((r) => (
+                        <div key={r.label} className="flex justify-between">
+                          <span className="text-stone-600">{r.label}</span>
+                          <span className="text-red-600">
+                            -{formatEur(r.value)} €
+                          </span>
+                        </div>
+                      ))}
                   </div>
                 </div>
               </div>
@@ -549,10 +607,16 @@ export default function AdminFinance() {
               {stats.totalMarketing > 0 && (
                 <div className="bg-white rounded-xl border border-purple-200 p-5">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-stone-900">Verkäuferdienste – Marketing</h3>
-                    <span className="text-lg font-bold text-purple-600">-{formatEur(stats.totalMarketing)} €</span>
+                    <h3 className="text-sm font-bold text-stone-900">
+                      Verkäuferdienste – Marketing
+                    </h3>
+                    <span className="text-lg font-bold text-purple-600">
+                      -{formatEur(stats.totalMarketing)} €
+                    </span>
                   </div>
-                  <div className="text-sm text-stone-600 mt-1">Etsy Ads + Offsite Ads</div>
+                  <div className="text-sm text-stone-600 mt-1">
+                    Etsy Ads + Offsite Ads
+                  </div>
                 </div>
               )}
 
@@ -564,10 +628,17 @@ export default function AdminFinance() {
                       Nettogewinn (nach allen Gebühren + Marketing)
                     </div>
                     <div className="text-3xl font-bold">
-                      {formatEur(stats.totalGross - stats.totalFees - stats.totalMarketing - stats.totalRefunds)} €
+                      {formatEur(
+                        stats.totalGross -
+                          stats.totalFees -
+                          stats.totalMarketing -
+                          stats.totalRefunds,
+                      )}{" "}
+                      €
                     </div>
                     <div className="text-xs text-stone-400 mt-1">
-                      Auszahlung (Bestellungen): {formatEur(stats.totalPayout)} €
+                      Auszahlung (Bestellungen): {formatEur(stats.totalPayout)}{" "}
+                      €
                     </div>
                   </div>
                   <button
@@ -1053,11 +1124,32 @@ export default function AdminFinance() {
                         label: "Versand",
                         value: selectedOrder.amounts?.shipping,
                       },
-                      { label: "Etsy-Gebühren (Transaktion+Bearbeitung)", value: selectedOrder.amounts?.etsyOrderFees, negative: true },
-                      { label: "Einstellgebühren (anteilig)", value: selectedOrder.amounts?.listingFee, negative: true },
-                      { label: "USt. auf Gebühren (anteilig)", value: selectedOrder.amounts?.vatOnFee, negative: true },
-                      { label: "Marketing/Ads (anteilig)", value: selectedOrder.amounts?.marketingFee, negative: true },
-                      { label: "Gebühren gesamt", value: selectedOrder.amounts?.totalFees, negative: true, bold: true },
+                      {
+                        label: "Etsy-Gebühren (Transaktion+Bearbeitung)",
+                        value: selectedOrder.amounts?.etsyOrderFees,
+                        negative: true,
+                      },
+                      {
+                        label: "Einstellgebühren (anteilig)",
+                        value: selectedOrder.amounts?.listingFee,
+                        negative: true,
+                      },
+                      {
+                        label: "USt. auf Gebühren (anteilig)",
+                        value: selectedOrder.amounts?.vatOnFee,
+                        negative: true,
+                      },
+                      {
+                        label: "Marketing/Ads (anteilig)",
+                        value: selectedOrder.amounts?.marketingFee,
+                        negative: true,
+                      },
+                      {
+                        label: "Gebühren gesamt",
+                        value: selectedOrder.amounts?.totalFees,
+                        negative: true,
+                        bold: true,
+                      },
                       {
                         label: "Auszahlung",
                         value: selectedOrder.amounts?.payout,
@@ -1088,20 +1180,21 @@ export default function AdminFinance() {
                     Rohdaten & Fakten
                   </h3>
                   <p className="text-xs text-stone-600 mb-2">
-                    Dieselbe Dokument-ID verknüpft Receipt-Snapshot, Payments-Rohdaten und
-                    abgeleitete Fakten.
+                    Dieselbe Dokument-ID verknüpft Receipt-Snapshot,
+                    Payments-Rohdaten und abgeleitete Fakten.
                   </p>
                   {(() => {
                     const rawId =
                       selectedOrder.rawFirestoreDocId ||
-                      (selectedOrder.shopId != null && selectedOrder.platformOrderId
+                      (selectedOrder.shopId != null &&
+                      selectedOrder.platformOrderId
                         ? `${selectedOrder.shopId}_${selectedOrder.platformOrderId}`
                         : null);
                     if (!rawId) {
                       return (
                         <p className="text-xs text-amber-700">
-                          Nach dem nächsten Sync steht hier die Firestore-Dokument-ID (Shop
-                          + Receipt).
+                          Nach dem nächsten Sync steht hier die
+                          Firestore-Dokument-ID (Shop + Receipt).
                         </p>
                       );
                     }
@@ -1128,8 +1221,8 @@ export default function AdminFinance() {
                     Collections:{" "}
                     <span className="font-mono">etsy_receipt_snapshots</span>,{" "}
                     <span className="font-mono">etsy_receipt_payments</span>,{" "}
-                    <span className="font-mono">etsy_order_facts</span> — jeweils
-                    Dokument-ID wie oben.
+                    <span className="font-mono">etsy_order_facts</span> —
+                    jeweils Dokument-ID wie oben.
                   </p>
                 </div>
 
@@ -1459,7 +1552,8 @@ export default function AdminFinance() {
                 </h3>
                 <p className="text-xs text-stone-500 mb-3">
                   Pro Lauf werden Rohdaten und{" "}
-                  <span className="font-mono">etsy_order_facts</span> aktualisiert.
+                  <span className="font-mono">etsy_order_facts</span>{" "}
+                  aktualisiert.
                 </p>
                 {syncRuns.length === 0 ? (
                   <p className="text-sm text-stone-600">
@@ -1533,24 +1627,25 @@ export default function AdminFinance() {
                 </h3>
                 <ul className="text-sm text-stone-600 space-y-1 list-disc list-inside mb-3">
                   <li>
-                    <span className="font-mono">etsy_receipt_snapshots</span> — API-Receipt
-                    pro Bestellung
+                    <span className="font-mono">etsy_receipt_snapshots</span> —
+                    API-Receipt pro Bestellung
                   </li>
                   <li>
-                    <span className="font-mono">etsy_receipt_payments</span> — Payments-API
-                    pro Receipt
+                    <span className="font-mono">etsy_receipt_payments</span> —
+                    Payments-API pro Receipt
                   </li>
                   <li>
-                    <span className="font-mono">etsy_ledger_windows</span> — Ledger in
-                    30-Tage-Fenstern (+ Unterkollektion{" "}
+                    <span className="font-mono">etsy_ledger_windows</span> —
+                    Ledger in 30-Tage-Fenstern (+ Unterkollektion{" "}
                     <span className="font-mono">chunks</span>)
                   </li>
                   <li>
-                    <span className="font-mono">etsy_order_facts</span> — abgeleitete
-                    Beträge + Verweise auf Rohdokumente
+                    <span className="font-mono">etsy_order_facts</span> —
+                    abgeleitete Beträge + Verweise auf Rohdokumente
                   </li>
                   <li>
-                    <span className="font-mono">etsy_sync_runs</span> — Protokoll je Sync
+                    <span className="font-mono">etsy_sync_runs</span> —
+                    Protokoll je Sync
                   </li>
                 </ul>
                 <a
