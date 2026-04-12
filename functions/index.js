@@ -1082,6 +1082,7 @@ async function syncEtsyOrdersInternal() {
 
     const orderPayload = {
       platform: "etsy",
+      shopId: Number(shopId),
       platformOrderId,
       customerId,
       customerName: buyerName,
@@ -1089,6 +1090,7 @@ async function syncEtsyOrdersInternal() {
       status,
       items,
       amounts,
+      rawFirestoreDocId: rawDocId,
       costs: existing.empty ? 0 : undefined,
       profit: 0,
       businessType: existing.empty ? "mini" : undefined,
@@ -1100,6 +1102,8 @@ async function syncEtsyOrdersInternal() {
     Object.keys(orderPayload).forEach(
       (k) => orderPayload[k] === undefined && delete orderPayload[k],
     );
+
+    let etsyOrderDocId = null;
 
     if (!existing.empty) {
       const existingDoc = existing.docs[0];
@@ -1113,10 +1117,11 @@ async function syncEtsyOrdersInternal() {
       const profit = Number((amounts.payout - costs - finanzamt).toFixed(2));
       orderPayload.profit = profit;
       await existingDoc.ref.set(orderPayload, { merge: true });
+      etsyOrderDocId = existingDoc.id;
       upserted += 1;
     } else {
       const profit = Number(amounts.payout.toFixed(2));
-      await db.collection("etsy_orders").add({
+      const newOrderRef = await db.collection("etsy_orders").add({
         ...orderPayload,
         costs: 0,
         profit,
@@ -1124,6 +1129,7 @@ async function syncEtsyOrdersInternal() {
         orderDate,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       });
+      etsyOrderDocId = newOrderRef.id;
       upserted += 1;
       newOrders += 1;
 
@@ -1141,6 +1147,39 @@ async function syncEtsyOrdersInternal() {
         );
 
       await updateSummaries(orderTimestamp, amounts, 1);
+    }
+
+    try {
+      await db
+        .collection("etsy_order_facts")
+        .doc(rawDocId)
+        .set(
+          {
+            factVersion: 1,
+            platform: "etsy",
+            shopId: Number(shopId),
+            receiptId: platformOrderId,
+            etsyOrderDocId,
+            amounts,
+            sources: {
+              receiptSnapshot: `etsy_receipt_snapshots/${rawDocId}`,
+              receiptPayments: `etsy_receipt_payments/${rawDocId}`,
+              paymentsApiOk: paymentPersist.httpOk,
+              paymentsHttpStatus: paymentPersist.httpStatus,
+              ledgerFeesProRataToOrders: true,
+            },
+            syncRunId: syncRunRef.id,
+            orderDate,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true },
+        );
+    } catch (factErr) {
+      console.warn(
+        "etsy_order_facts write failed",
+        rawDocId,
+        factErr.message,
+      );
     }
   }
 

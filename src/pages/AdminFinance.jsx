@@ -4,6 +4,7 @@ import {
   getOrders,
   getCustomers,
   getLedgerSummary,
+  getRecentSyncRuns,
   updateOrder,
   syncEtsyOrdersNow,
   debugEtsyReceipts,
@@ -11,6 +12,7 @@ import {
   downloadCSV,
   getOrdersByCustomerId,
 } from "../services/finance";
+import { firebaseProjectId } from "../firebase";
 import {
   Loader,
   Menu,
@@ -125,6 +127,7 @@ export default function AdminFinance() {
   const [savingId, setSavingId] = useState(null);
   const [debugData, setDebugData] = useState(null);
   const [ledger, setLedger] = useState(null);
+  const [syncRuns, setSyncRuns] = useState([]);
   const [sortField, setSortField] = useState("orderDate");
   const [sortDir, setSortDir] = useState("desc");
 
@@ -143,6 +146,12 @@ export default function AdminFinance() {
       setOrders(ordersData);
       setCustomers(customersData);
       setLedger(ledgerData);
+      try {
+        setSyncRuns(await getRecentSyncRuns(15));
+      } catch (runErr) {
+        console.warn("Sync-Läufe konnten nicht geladen werden", runErr);
+        setSyncRuns([]);
+      }
     } catch (err) {
       console.error("Finance load failed", err);
       toast.error("Daten konnten nicht geladen werden.");
@@ -156,8 +165,11 @@ export default function AdminFinance() {
     try {
       const result = await syncEtsyOrdersNow();
       await loadData(false);
+      const runHint = result?.syncRunId
+        ? ` · Run-ID: ${String(result.syncRunId).slice(0, 8)}…`
+        : "";
       toast.success(
-        `Sync fertig: ${result?.upserted ?? 0} aktualisiert, ${result?.newOrders ?? 0} neu`,
+        `Sync fertig: ${result?.upserted ?? 0} aktualisiert, ${result?.newOrders ?? 0} neu${runHint}`,
       );
     } catch (err) {
       console.error("Sync failed", err);
@@ -1070,6 +1082,57 @@ export default function AdminFinance() {
                   </div>
                 </div>
 
+                {/* Rohdaten / Facts (Phase 2) */}
+                <div className="mb-6 rounded-lg border border-stone-200 bg-white p-4">
+                  <h3 className="text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">
+                    Rohdaten & Fakten
+                  </h3>
+                  <p className="text-xs text-stone-600 mb-2">
+                    Dieselbe Dokument-ID verknüpft Receipt-Snapshot, Payments-Rohdaten und
+                    abgeleitete Fakten.
+                  </p>
+                  {(() => {
+                    const rawId =
+                      selectedOrder.rawFirestoreDocId ||
+                      (selectedOrder.shopId != null && selectedOrder.platformOrderId
+                        ? `${selectedOrder.shopId}_${selectedOrder.platformOrderId}`
+                        : null);
+                    if (!rawId) {
+                      return (
+                        <p className="text-xs text-amber-700">
+                          Nach dem nächsten Sync steht hier die Firestore-Dokument-ID (Shop
+                          + Receipt).
+                        </p>
+                      );
+                    }
+                    return (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <code className="text-[11px] bg-stone-100 px-2 py-1 rounded font-mono break-all">
+                          {rawId}
+                        </code>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(rawId);
+                            toast.success("Dokument-ID kopiert");
+                          }}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold border border-stone-300 hover:bg-stone-50"
+                        >
+                          <Copy className="h-3 w-3" />
+                          Kopieren
+                        </button>
+                      </div>
+                    );
+                  })()}
+                  <p className="text-[11px] text-stone-500 mt-2">
+                    Collections:{" "}
+                    <span className="font-mono">etsy_receipt_snapshots</span>,{" "}
+                    <span className="font-mono">etsy_receipt_payments</span>,{" "}
+                    <span className="font-mono">etsy_order_facts</span> — jeweils
+                    Dokument-ID wie oben.
+                  </p>
+                </div>
+
                 {/* Editable: Costs + Business Type */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
                   <div>
@@ -1387,6 +1450,117 @@ export default function AdminFinance() {
                       : "Jetzt synchronisieren"}
                   </button>
                 </div>
+              </div>
+
+              {/* Sync-Läufe */}
+              <div className="bg-white rounded-xl border border-stone-200 p-5">
+                <h3 className="text-sm font-bold text-stone-900 mb-1">
+                  Letzte Etsy-Syncs
+                </h3>
+                <p className="text-xs text-stone-500 mb-3">
+                  Pro Lauf werden Rohdaten und{" "}
+                  <span className="font-mono">etsy_order_facts</span> aktualisiert.
+                </p>
+                {syncRuns.length === 0 ? (
+                  <p className="text-sm text-stone-600">
+                    Noch keine Einträge — einmal synchronisieren.
+                  </p>
+                ) : (
+                  <div className="space-y-2 max-h-[280px] overflow-y-auto">
+                    {syncRuns.map((run) => (
+                      <div
+                        key={run.id}
+                        className="flex flex-wrap items-start justify-between gap-2 rounded-lg border border-stone-100 bg-stone-50 p-3 text-xs"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span
+                              className={`font-bold uppercase tracking-wide ${
+                                run.status === "completed"
+                                  ? "text-emerald-700"
+                                  : run.status === "failed"
+                                    ? "text-red-600"
+                                    : "text-amber-700"
+                              }`}
+                            >
+                              {run.status || "—"}
+                            </span>
+                            <span className="text-stone-500">
+                              {formatDateFull(run.startedAt)}
+                            </span>
+                          </div>
+                          <div className="text-stone-600 font-mono truncate">
+                            {run.id}
+                          </div>
+                          {(run.receiptsProcessed != null ||
+                            run.upserted != null) && (
+                            <div className="text-stone-600 mt-1">
+                              Receipts: {run.receiptsProcessed ?? "—"} ·
+                              aktualisiert: {run.upserted ?? "—"} · neu:{" "}
+                              {run.newOrders ?? "—"}
+                              {run.ledgerEntryCount != null
+                                ? ` · Ledger: ${run.ledgerEntryCount}`
+                                : ""}
+                            </div>
+                          )}
+                          {run.errorMessage && (
+                            <div className="text-red-600 mt-1 break-words">
+                              {run.errorMessage}
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(run.id);
+                            toast.success("Run-ID kopiert");
+                          }}
+                          className="shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-md border border-stone-300 bg-white text-stone-700 hover:bg-stone-100"
+                        >
+                          <Copy className="h-3 w-3" />
+                          ID
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Rohdaten-Hinweis */}
+              <div className="bg-white rounded-xl border border-stone-200 p-5">
+                <h3 className="text-sm font-bold text-stone-900 mb-2">
+                  Rohdaten in Firestore
+                </h3>
+                <ul className="text-sm text-stone-600 space-y-1 list-disc list-inside mb-3">
+                  <li>
+                    <span className="font-mono">etsy_receipt_snapshots</span> — API-Receipt
+                    pro Bestellung
+                  </li>
+                  <li>
+                    <span className="font-mono">etsy_receipt_payments</span> — Payments-API
+                    pro Receipt
+                  </li>
+                  <li>
+                    <span className="font-mono">etsy_ledger_windows</span> — Ledger in
+                    30-Tage-Fenstern (+ Unterkollektion{" "}
+                    <span className="font-mono">chunks</span>)
+                  </li>
+                  <li>
+                    <span className="font-mono">etsy_order_facts</span> — abgeleitete
+                    Beträge + Verweise auf Rohdokumente
+                  </li>
+                  <li>
+                    <span className="font-mono">etsy_sync_runs</span> — Protokoll je Sync
+                  </li>
+                </ul>
+                <a
+                  href={`https://console.firebase.google.com/project/${firebaseProjectId}/firestore`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-semibold text-blue-600 hover:underline"
+                >
+                  Firebase Console → Firestore öffnen
+                </a>
               </div>
 
               {/* Debug */}

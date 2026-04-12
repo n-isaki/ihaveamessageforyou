@@ -22,6 +22,7 @@ import { getFunctions } from "firebase/functions";
 
 // Prevent multiple Firebase initializations (important when karakedimartin is also running)
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+export const firebaseProjectId = firebaseConfig.projectId;
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 export const analytics = getAnalytics(app);

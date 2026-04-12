@@ -18,6 +18,7 @@ import { db } from "../firebase";
 const ORDERS_COL = "etsy_orders";
 const CUSTOMERS_COL = "etsy_customers";
 const SUMMARIES_COL = "etsy_summaries";
+const SYNC_RUNS_COL = "etsy_sync_runs";
 
 // ─── Orders ───────────────────────────────────────────────
 
@@ -75,6 +76,16 @@ export const getSummary = async (periodKey) => {
 export const getLedgerSummary = async () => {
   const snap = await getDoc(doc(db, SUMMARIES_COL, "ledger_current_year"));
   return snap.exists() ? { id: snap.id, ...snap.data() } : null;
+};
+
+export const getRecentSyncRuns = async (max = 15) => {
+  const q = query(
+    collection(db, SYNC_RUNS_COL),
+    orderBy("startedAt", "desc"),
+    limit(max),
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 };
 
 export const getAllSummaries = async (type = "monthly") => {
