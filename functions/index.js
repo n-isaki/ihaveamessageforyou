@@ -564,6 +564,37 @@ function sha256Hex(str) {
   return crypto.createHash("sha256").update(str, "utf8").digest("hex");
 }
 
+/** Same ledger row can appear twice if adjacent API time windows share a boundary second. */
+function dedupeLedgerEntriesById(entries) {
+  const map = new Map();
+  for (const e of entries) {
+    const id = e?.entry_id;
+    if (id != null && id !== "") map.set(String(id), e);
+    else map.set(`_noid_${map.size}`, e);
+  }
+  return [...map.values()];
+}
+
+/**
+ * Etsy Ads / Promoted spend uses ledger_type like "prolist" (not "marketing" / "offsite" only).
+ * @param {string} lt lowercased ledger_type or description
+ */
+function isEtsyMarketingLedgerType(lt) {
+  return (
+    lt.includes("prolist") ||
+    lt.includes("offsite_ads") ||
+    lt.includes("offsite") ||
+    lt.includes("etsy_ads") ||
+    lt.includes("ads_fee") ||
+    lt.includes("marketing") ||
+    lt.includes("advertising") ||
+    lt.includes("promoted_listing") ||
+    lt.includes("search_ads") ||
+    lt.includes("cpc_ad") ||
+    (lt.includes("promoted") && lt.includes("fee"))
+  );
+}
+
 /**
  * Phase 1 — Raw Etsy ledger window (30-day API slice) + chunked entry storage.
  */
@@ -763,7 +794,7 @@ async function syncEtsyOrdersInternal() {
           windowFetchError,
         );
         ledgerWindowsWritten += 1;
-        windowStart = windowEnd;
+        windowStart = windowEnd + 1;
       }
       console.log("Etsy sync: fetched ledger entries total", {
         count: allLedgerEntries.length,
@@ -775,6 +806,8 @@ async function syncEtsyOrdersInternal() {
         ledgerErr.message,
       );
     }
+
+    allLedgerEntries = dedupeLedgerEntriesById(allLedgerEntries);
 
     // Categorize all ledger entries into fee buckets
     const ledgerFees = {
@@ -812,14 +845,7 @@ async function syncEtsyOrdersInternal() {
       }
 
       const fee = Math.abs(amt);
-      if (
-        lt.includes("marketing") ||
-        lt.includes("advertising") ||
-        lt.includes("offsite") ||
-        lt.includes("promoted") ||
-        lt.includes("etsy_ads") ||
-        lt.includes("ads_fee")
-      ) {
+      if (isEtsyMarketingLedgerType(lt)) {
         ledgerFees.marketingFees += fee;
       } else if (
         lt.includes("listing") ||
@@ -849,20 +875,23 @@ async function syncEtsyOrdersInternal() {
       }
     }
 
-    const totalFeesFromLedger = Number(
+    const feesExcludingMarketing = Number(
       (
         ledgerFees.listingFees +
         ledgerFees.transactionFees +
         ledgerFees.processingFees +
         ledgerFees.vatOnFees +
-        ledgerFees.marketingFees +
         ledgerFees.shippingLabelFees +
         ledgerFees.otherFees
       ).toFixed(2),
     );
+    const totalFeesFromLedger = Number(
+      (feesExcludingMarketing + ledgerFees.marketingFees).toFixed(2),
+    );
 
     console.log("Etsy sync: ledger fee breakdown", {
       ...ledgerFees,
+      feesExcludingMarketing,
       totalFeesFromLedger,
       ledgerTypes: Object.keys(ledgerFees.ledgerTypes),
     });
@@ -884,6 +913,7 @@ async function syncEtsyOrdersInternal() {
           shippingLabelFees: Number(ledgerFees.shippingLabelFees.toFixed(2)),
           otherFees: Number(ledgerFees.otherFees.toFixed(2)),
           refunds: Number(ledgerFees.refunds.toFixed(2)),
+          feesExcludingMarketing,
           totalFees: totalFeesFromLedger,
           ledgerEntryCount: allLedgerEntries.length,
           ledgerTypes: ledgerFees.ledgerTypes,

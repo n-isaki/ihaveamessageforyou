@@ -328,9 +328,59 @@ export default function AdminFinance() {
     const totalRefunds = useLedger
       ? ledger.refunds || 0
       : list.reduce((s, o) => s + (o.amounts?.refundShare || 0), 0);
-    const totalFees = useLedger
-      ? ledger.totalFees || 0
-      : list.reduce((s, o) => s + (o.amounts?.totalFees || 0), 0);
+    /** Wie Etsy „Gebühren“-Block: ohne Marketing/Ads */
+    const sellerFeesExcludingMarketing = useLedger
+      ? Number(
+          (
+            ledger.feesExcludingMarketing ??
+            (ledger.totalFees || 0) - (ledger.marketingFees || 0)
+          ).toFixed(2),
+        )
+      : list.reduce((s, o) => {
+          const a = o.amounts || {};
+          return (
+            s + (a.totalFees || 0) - (a.marketingFee || 0)
+          );
+        }, 0);
+    /** Transaktion + Bearbeitung: aus Ledger (Jahr/Gesamt), sonst Summe Receipt-Payments */
+    const transactionAndProcessingFees = useLedger
+      ? Number(
+          (
+            (ledger.transactionFees || 0) + (ledger.processingFees || 0)
+          ).toFixed(2),
+        )
+      : totalEtsyOrderFees;
+    const shippingLabelFeesLedger = useLedger
+      ? ledger.shippingLabelFees || 0
+      : 0;
+    const otherFeesLedger = useLedger ? ledger.otherFees || 0 : 0;
+    const shopNetApprox =
+      useLedger && sellerFeesExcludingMarketing >= 0
+        ? Number(
+            (
+              totalGross -
+              sellerFeesExcludingMarketing -
+              totalMarketing -
+              totalRefunds
+            ).toFixed(2),
+          )
+        : null;
+    const netAfterFeesMarketing =
+      shopNetApprox != null
+        ? shopNetApprox
+        : Number(
+            (
+              totalGross -
+              sellerFeesExcludingMarketing -
+              totalMarketing -
+              totalRefunds
+            ).toFixed(2),
+          );
+    const sumOrderTotalFees = list.reduce(
+      (s, o) => s + (o.amounts?.totalFees || 0),
+      0,
+    );
+    const sumOrderProfit = list.reduce((s, o) => s + (o.profit || 0), 0);
 
     return {
       count: list.length,
@@ -344,7 +394,14 @@ export default function AdminFinance() {
       totalVatOnFees,
       totalMarketing,
       totalRefunds,
-      totalFees,
+      sellerFeesExcludingMarketing,
+      transactionAndProcessingFees,
+      shippingLabelFeesLedger,
+      otherFeesLedger,
+      shopNetApprox,
+      netAfterFeesMarketing,
+      sumOrderTotalFees,
+      sumOrderProfit,
     };
   }, [filteredOrders, ledger, period]);
 
@@ -497,8 +554,8 @@ export default function AdminFinance() {
                     color: "text-emerald-600",
                   },
                   {
-                    label: "Gebühren gesamt",
-                    value: formatEur(stats.totalFees) + " €",
+                    label: "Gebühren (ohne Ads)",
+                    value: formatEur(stats.sellerFeesExcludingMarketing) + " €",
                     icon: TrendingUp,
                     color: "text-red-500",
                   },
@@ -515,8 +572,8 @@ export default function AdminFinance() {
                     color: "text-amber-600",
                   },
                   {
-                    label: "Profit",
-                    value: formatEur(stats.totalProfit) + " €",
+                    label: "Netto (Shop)",
+                    value: formatEur(stats.netAfterFeesMarketing) + " €",
                     icon: TrendingUp,
                     color: "text-emerald-700",
                   },
@@ -572,14 +629,14 @@ export default function AdminFinance() {
                       Gebühren
                     </h3>
                     <span className="text-lg font-bold text-red-600">
-                      -{formatEur(stats.totalFees)} €
+                      -{formatEur(stats.sellerFeesExcludingMarketing)} €
                     </span>
                   </div>
                   <div className="space-y-1.5 text-sm">
                     {[
                       {
-                        label: "Etsy-Gebühren (Transaktion+Bearbeitung)",
-                        value: stats.totalEtsyOrderFees,
+                        label: "Transaktions- + Bearbeitungsgebühren",
+                        value: stats.transactionAndProcessingFees,
                       },
                       {
                         label: "Einstellgebühren",
@@ -588,6 +645,14 @@ export default function AdminFinance() {
                       {
                         label: "USt. auf Verkäufergebühren",
                         value: stats.totalVatOnFees,
+                      },
+                      {
+                        label: "Versandetiketten",
+                        value: stats.shippingLabelFeesLedger,
+                      },
+                      {
+                        label: "Sonstige Gebühren",
+                        value: stats.otherFeesLedger,
                       },
                     ]
                       .filter((r) => r.value > 0)
@@ -628,17 +693,11 @@ export default function AdminFinance() {
                       Nettogewinn (nach allen Gebühren + Marketing)
                     </div>
                     <div className="text-3xl font-bold">
-                      {formatEur(
-                        stats.totalGross -
-                          stats.totalFees -
-                          stats.totalMarketing -
-                          stats.totalRefunds,
-                      )}{" "}
-                      €
+                      {formatEur(stats.netAfterFeesMarketing)} €
                     </div>
                     <div className="text-xs text-stone-400 mt-1">
-                      Auszahlung (Bestellungen): {formatEur(stats.totalPayout)}{" "}
-                      €
+                      Summe Auszahlungen (Bestellungen):{" "}
+                      {formatEur(stats.totalPayout)} € · Kosten nicht abgezogen
                     </div>
                   </div>
                   <button
@@ -967,7 +1026,7 @@ export default function AdminFinance() {
                             {formatEur(stats.totalGross)} €
                           </td>
                           <td className="p-3 text-right text-red-600">
-                            -{formatEur(stats.totalFees)} €
+                            -{formatEur(stats.sumOrderTotalFees)} €
                           </td>
                           <td className="p-3 text-right">
                             {formatEur(stats.totalPayout)} €
@@ -976,9 +1035,9 @@ export default function AdminFinance() {
                             {formatEur(stats.totalCosts)} €
                           </td>
                           <td
-                            className={`p-3 text-right ${stats.totalProfit >= 0 ? "text-emerald-700" : "text-red-600"}`}
+                            className={`p-3 text-right ${stats.sumOrderProfit >= 0 ? "text-emerald-700" : "text-red-600"}`}
                           >
-                            {formatEur(stats.totalProfit)} €
+                            {formatEur(stats.sumOrderProfit)} €
                           </td>
                         </tr>
                       </tfoot>
