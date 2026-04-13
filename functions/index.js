@@ -576,22 +576,31 @@ function dedupeLedgerEntriesById(entries) {
 }
 
 /**
- * Etsy Ads / Promoted spend uses ledger_type like "prolist" (not "marketing" / "offsite" only).
- * @param {string} lt lowercased ledger_type or description
+ * Etsy Ads / Promoted / Offsite — prüft ledger_type + reference_type (API variiert).
+ * @param {string} hay lowercased Konkatenation aus Typ-Feldern
  */
-function isEtsyMarketingLedgerType(lt) {
+function isEtsyMarketingLedgerType(hay) {
+  if (!hay) return false;
   return (
-    lt.includes("prolist") ||
-    lt.includes("offsite_ads") ||
-    lt.includes("offsite") ||
-    lt.includes("etsy_ads") ||
-    lt.includes("ads_fee") ||
-    lt.includes("marketing") ||
-    lt.includes("advertising") ||
-    lt.includes("promoted_listing") ||
-    lt.includes("search_ads") ||
-    lt.includes("cpc_ad") ||
-    (lt.includes("promoted") && lt.includes("fee"))
+    hay.includes("prolist") ||
+    hay.includes("promotedlisting") ||
+    hay.includes("promoted_listing") ||
+    hay.includes("listing_promo") ||
+    hay.includes("offsite_ads") ||
+    hay.includes("offsiteads") ||
+    hay.includes("offsite ad") ||
+    hay.includes("etsyads") ||
+    hay.includes("etsy_ads") ||
+    hay.includes("etsy ad") ||
+    hay.includes("ads_fee") ||
+    hay.includes("ad_fee") ||
+    hay.includes("marketing") ||
+    hay.includes("advertising") ||
+    hay.includes("search_ads") ||
+    hay.includes("cpc_ad") ||
+    hay.includes("cpc fee") ||
+    (hay.includes("promoted") && hay.includes("fee")) ||
+    /(^|[^a-z])ads([^a-z]|$)/.test(hay)
   );
 }
 
@@ -825,6 +834,8 @@ async function syncEtsyOrdersInternal() {
 
     for (const entry of allLedgerEntries) {
       const lt = (entry?.ledger_type || entry?.description || "").toLowerCase();
+      const refT = (entry?.reference_type || "").toLowerCase();
+      const haystack = `${lt} ${refT}`.trim();
       const rawAmount = entry?.amount ?? 0;
       const amt =
         typeof rawAmount === "number" ? rawAmount / 100 : readMoney(rawAmount);
@@ -836,7 +847,7 @@ async function syncEtsyOrdersInternal() {
 
       // Only negative amounts are fees/charges. Positive amounts are income (sales, deposits).
       if (amt >= 0) {
-        if (lt.includes("refund") || lt.includes("reversal")) {
+        if (haystack.includes("refund") || haystack.includes("reversal")) {
           ledgerFees.refunds += amt;
         } else {
           ledgerFees.sales += amt;
@@ -845,7 +856,7 @@ async function syncEtsyOrdersInternal() {
       }
 
       const fee = Math.abs(amt);
-      if (isEtsyMarketingLedgerType(lt)) {
+      if (isEtsyMarketingLedgerType(haystack)) {
         ledgerFees.marketingFees += fee;
       } else if (
         lt.includes("listing") ||

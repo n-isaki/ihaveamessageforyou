@@ -88,6 +88,22 @@ export const getRecentSyncRuns = async (max = 15) => {
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 };
 
+/** Summe Shop-Gebühren wie Etsy „Gebühren“-Block — nur Einzelposten, nie totalFees (enthält sonst Doppeltes). */
+export function sumLedgerFeesExcludingMarketing(ledger) {
+  if (!ledger) return 0;
+  const n = (v) => Number(v) || 0;
+  return Number(
+    (
+      n(ledger.listingFees) +
+      n(ledger.transactionFees) +
+      n(ledger.processingFees) +
+      n(ledger.vatOnFees) +
+      n(ledger.shippingLabelFees) +
+      n(ledger.otherFees)
+    ).toFixed(2),
+  );
+}
+
 export const getAllSummaries = async (type = "monthly") => {
   const q = query(
     collection(db, SUMMARIES_COL),

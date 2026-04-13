@@ -5,6 +5,7 @@ import {
   getCustomers,
   getLedgerSummary,
   getRecentSyncRuns,
+  sumLedgerFeesExcludingMarketing,
   updateOrder,
   syncEtsyOrdersNow,
   debugEtsyReceipts,
@@ -328,19 +329,12 @@ export default function AdminFinance() {
     const totalRefunds = useLedger
       ? ledger.refunds || 0
       : list.reduce((s, o) => s + (o.amounts?.refundShare || 0), 0);
-    /** Wie Etsy „Gebühren“-Block: ohne Marketing/Ads */
+    /** Wie Etsy „Gebühren“-Block: nur Listing+Transaktion+Bearbeitung+USt+Etikett+Sonst — ohne Marketing */
     const sellerFeesExcludingMarketing = useLedger
-      ? Number(
-          (
-            ledger.feesExcludingMarketing ??
-            (ledger.totalFees || 0) - (ledger.marketingFees || 0)
-          ).toFixed(2),
-        )
+      ? sumLedgerFeesExcludingMarketing(ledger)
       : list.reduce((s, o) => {
           const a = o.amounts || {};
-          return (
-            s + (a.totalFees || 0) - (a.marketingFee || 0)
-          );
+          return s + (a.totalFees || 0) - (a.marketingFee || 0);
         }, 0);
     /** Transaktion + Bearbeitung: aus Ledger (Jahr/Gesamt), sonst Summe Receipt-Payments */
     const transactionAndProcessingFees = useLedger
@@ -632,6 +626,10 @@ export default function AdminFinance() {
                       -{formatEur(stats.sellerFeesExcludingMarketing)} €
                     </span>
                   </div>
+                  <p className="text-[11px] text-stone-500 mb-2">
+                    Entspricht der Summe der Zeilen unten (ohne Marketing/Ads). Marketing
+                    ist separat.
+                  </p>
                   <div className="space-y-1.5 text-sm">
                     {[
                       {
