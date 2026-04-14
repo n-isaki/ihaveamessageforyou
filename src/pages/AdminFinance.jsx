@@ -627,8 +627,8 @@ export default function AdminFinance() {
                     </span>
                   </div>
                   <p className="text-[11px] text-stone-500 mb-2">
-                    Entspricht der Summe der Zeilen unten (ohne Marketing/Ads). Marketing
-                    ist separat.
+                    Entspricht der Summe der Zeilen unten (ohne Marketing/Ads).
+                    Marketing ist separat.
                   </p>
                   <div className="space-y-1.5 text-sm">
                     {[
