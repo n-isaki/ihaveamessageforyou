@@ -3,9 +3,7 @@ import {
   doc,
   getDoc,
   getDocs,
-  setDoc,
   updateDoc,
-  addDoc,
   query,
   where,
   orderBy,
@@ -142,7 +140,7 @@ export const exportOrdersCSV = async (from, to) => {
 
 export const buildCSVFromOrders = (orders) => {
   const headers = [
-    "Datum",
+    "Datum und Uhrzeit (Ortszeit)",
     "Etsy Receipt-ID",
     "Kunde",
     "E-Mail",
@@ -168,7 +166,15 @@ export const buildCSVFromOrders = (orders) => {
       : o.orderDate?._seconds
         ? new Date(o.orderDate._seconds * 1000)
         : null;
-    const dateStr = d ? d.toLocaleDateString("de-DE") : "";
+    const dateStr = d
+      ? d.toLocaleString("de-DE", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "";
     const a = o.amounts || {};
     return [
       dateStr,

@@ -201,7 +201,7 @@ export default function AdminFinance() {
       if (selectedOrder?.id === order.id)
         setSelectedOrder((p) => ({ ...p, costs, businessType: bt, profit }));
       toast.success("Gespeichert");
-    } catch (err) {
+    } catch {
       toast.error("Speichern fehlgeschlagen");
     } finally {
       setSavingId(null);
@@ -730,7 +730,7 @@ export default function AdminFinance() {
                           {o.customerName || "Unbekannt"}
                         </div>
                         <div className="text-xs text-stone-500">
-                          {formatDate(o.orderDate)} · #{o.platformOrderId}
+                          {formatDateFull(o.orderDate)} · #{o.platformOrderId}
                         </div>
                       </div>
                       <div className="text-right shrink-0 ml-4">
@@ -866,7 +866,7 @@ export default function AdminFinance() {
               <div className="flex items-center gap-3 text-[11px] font-medium text-stone-500 px-1">
                 <span>Sortierung:</span>
                 {[
-                  { field: "orderDate", label: "Datum" },
+                  { field: "orderDate", label: "Datum & Uhrzeit" },
                   { field: "gross", label: "Umsatz" },
                   { field: "profit", label: "Profit" },
                   { field: "name", label: "Name" },
@@ -907,7 +907,7 @@ export default function AdminFinance() {
                         {o.customerName || "Unbekannt"}
                       </div>
                       <div className="text-xs text-stone-500 mt-0.5">
-                        {formatDate(o.orderDate)}
+                        {formatDateFull(o.orderDate)}
                       </div>
                       <div className="flex items-center justify-between mt-3 pt-3 border-t border-stone-100">
                         <div>
@@ -948,8 +948,8 @@ export default function AdminFinance() {
                   <table className="w-full text-left text-sm">
                     <thead className="bg-stone-50 border-b border-stone-200">
                       <tr>
-                        <th className="p-3 text-xs font-bold text-stone-500 uppercase">
-                          Datum
+                        <th className="p-3 text-xs font-bold text-stone-500 uppercase whitespace-nowrap">
+                          {"Datum & Uhrzeit"}
                         </th>
                         <th className="p-3 text-xs font-bold text-stone-500 uppercase">
                           Receipt-ID
@@ -985,7 +985,7 @@ export default function AdminFinance() {
                           className="hover:bg-stone-50 cursor-pointer transition-colors"
                         >
                           <td className="p-3 text-stone-600 whitespace-nowrap">
-                            {formatDate(o.orderDate)}
+                            {formatDateFull(o.orderDate)}
                           </td>
                           <td className="p-3 font-mono text-xs text-stone-500">
                             {o.platformOrderId}
@@ -1551,7 +1551,7 @@ export default function AdminFinance() {
                           #{o.platformOrderId}
                         </div>
                         <div className="text-xs text-stone-500">
-                          {formatDate(o.orderDate)}
+                          {formatDateFull(o.orderDate)}
                         </div>
                       </div>
                       <div className="text-right">
@@ -1724,7 +1724,7 @@ export default function AdminFinance() {
                       const data = await debugEtsyReceipts(3);
                       setDebugData(data);
                       toast.success("Debug-Daten geladen");
-                    } catch (err) {
+                    } catch {
                       toast.error("Debug fehlgeschlagen");
                     }
                   }}
