@@ -1,4 +1,5 @@
 import {
+  Timestamp,
   collection,
   doc,
   getDoc,
@@ -138,20 +139,42 @@ export const exportOrdersCSV = async (from, to) => {
 
 // ─── CSV Client-Side Export Fallback ──────────────────────
 
+/** z. B. "14.3.2025" oder "14.03.2025 15:30" (deutsches Datum) */
+function parseGermanDateString(str) {
+  const m = String(str)
+    .trim()
+    .match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$/);
+  if (!m) return null;
+  const d = new Date(
+    Number(m[3]),
+    Number(m[2]) - 1,
+    Number(m[1]),
+    m[4] != null ? Number(m[4]) : 0,
+    m[5] != null ? Number(m[5]) : 0,
+    m[6] != null ? Number(m[6]) : 0,
+  );
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 /** Firestore Timestamp, Plain {seconds}, ISO-String oder ms/s-Zahl → Date */
 function timestampLikeToDate(value) {
   if (value == null) return null;
+  if (value instanceof Timestamp) return value.toDate();
   if (typeof value.toDate === "function") {
     const d = value.toDate();
     return d instanceof Date && !Number.isNaN(d.getTime()) ? d : null;
   }
-  const sec = value.seconds ?? value._seconds;
-  if (sec != null) {
-    const nano = value.nanoseconds ?? value._nanoseconds ?? 0;
-    return new Date(sec * 1000 + nano / 1e6);
+  if (typeof value === "object") {
+    const sec = Number(value.seconds ?? value._seconds);
+    if (Number.isFinite(sec) && sec > 0) {
+      const nano = Number(value.nanoseconds ?? value._nanoseconds ?? 0) || 0;
+      return new Date(sec * 1000 + nano / 1e6);
+    }
   }
   if (typeof value === "string" && value.trim()) {
-    const t = Date.parse(value);
+    const g = parseGermanDateString(value.trim());
+    if (g) return g;
+    const t = Date.parse(value.trim());
     return Number.isNaN(t) ? null : new Date(t);
   }
   if (typeof value === "number" && Number.isFinite(value)) {
@@ -168,16 +191,24 @@ function orderDateTimeAsDate(order) {
   );
 }
 
-/** Festes Format mit Leerzeichen (nicht Komma) — Excel zeigt sonst oft nur das Datum. */
-function formatDateTimeForCsvDe(d) {
-  if (!d || Number.isNaN(d.getTime())) return "";
+/** Getrenntes Datum/Uhrzeit + ISO — Excel erkennt so die Uhrzeit-Spalte zuverlässig. */
+function splitDateTimePartsForCsv(d) {
+  if (!d || Number.isNaN(d.getTime())) {
+    return { date: "", time: "", isoUtc: "" };
+  }
   const p = (n) => String(n).padStart(2, "0");
-  return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  return {
+    date: `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()}`,
+    time: `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`,
+    isoUtc: d.toISOString(),
+  };
 }
 
 export const buildCSVFromOrders = (orders) => {
   const headers = [
-    "Datum und Uhrzeit (Ortszeit)",
+    "Bestelldatum (TT.MM.JJJJ Ortszeit)",
+    "Bestelluhrzeit (HH:mm:ss Ortszeit)",
+    "Bestellzeitpunkt (ISO_UTC)",
     "Etsy Receipt-ID",
     "Kunde",
     "E-Mail",
@@ -199,10 +230,12 @@ export const buildCSVFromOrders = (orders) => {
 
   const rows = orders.map((o) => {
     const d = orderDateTimeAsDate(o);
-    const dateStr = formatDateTimeForCsvDe(d);
+    const { date: dateStr, time: timeStr, isoUtc } = splitDateTimePartsForCsv(d);
     const a = o.amounts || {};
     return [
       dateStr,
+      timeStr,
+      isoUtc,
       o.platformOrderId || "",
       o.customerName || "",
       o.customerEmail || "",
@@ -233,7 +266,11 @@ export const buildCSVFromOrders = (orders) => {
 
 export const downloadCSV = (csv, filename = "kamlimos-export.csv") => {
   const BOM = "\uFEFF";
-  const blob = new Blob([BOM + csv], { type: "text/csv;charset=utf-8;" });
+  // Excel (DE): Trennzeichen + UTF-8 — verhindert falsches Spaltenrouting / Datum-only
+  const excelHint = "sep=;\r\n";
+  const blob = new Blob([BOM + excelHint + csv], {
+    type: "text/csv;charset=utf-8;",
+  });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
