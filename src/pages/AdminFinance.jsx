@@ -1,4 +1,9 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, {
+  useEffect,
+  useState,
+  useMemo,
+  useDeferredValue,
+} from "react";
 import { Link } from "react-router-dom";
 import {
   getOrders,
@@ -81,6 +86,21 @@ function formatDateFull(ts) {
   });
 }
 
+const ORDERS_LIST_PAGE_SIZE = 150;
+
+function formatAddr(addr) {
+  if (!addr) return "";
+  return [
+    addr.name,
+    [addr.firstLine, addr.secondLine].filter(Boolean).join(" "),
+    [addr.zip, addr.city].filter(Boolean).join(" "),
+    addr.state,
+    addr.countryIso,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
 function statusBadge(status) {
   const map = {
     delivered: {
@@ -131,10 +151,17 @@ export default function AdminFinance() {
   const [syncRuns, setSyncRuns] = useState([]);
   const [sortField, setSortField] = useState("orderDate");
   const [sortDir, setSortDir] = useState("desc");
+  const [ordersListLimit, setOrdersListLimit] = useState(ORDERS_LIST_PAGE_SIZE);
+
+  const deferredSearchQuery = useDeferredValue(searchQuery);
 
   useEffect(() => {
     loadData(true);
   }, []);
+
+  useEffect(() => {
+    setOrdersListLimit(ORDERS_LIST_PAGE_SIZE);
+  }, [period, statusFilter, sortField, sortDir, searchQuery]);
 
   const loadData = async (showLoader = false) => {
     if (showLoader) setLoading(true);
@@ -269,8 +296,8 @@ export default function AdminFinance() {
     if (statusFilter !== "all")
       list = list.filter((o) => o.status === statusFilter);
 
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
+    if (deferredSearchQuery.trim()) {
+      const q = deferredSearchQuery.toLowerCase();
       list = list.filter(
         (o) =>
           (o.customerName || "").toLowerCase().includes(q) ||
@@ -299,7 +326,57 @@ export default function AdminFinance() {
     });
 
     return list;
-  }, [orders, period, statusFilter, searchQuery, sortField, sortDir]);
+  }, [
+    orders,
+    period,
+    statusFilter,
+    deferredSearchQuery,
+    sortField,
+    sortDir,
+  ]);
+
+  const ordersForListUi = useMemo(
+    () => filteredOrders.slice(0, ordersListLimit),
+    [filteredOrders, ordersListLimit],
+  );
+
+  const orderStatusCounts = useMemo(() => {
+    let processing = 0;
+    let shipped = 0;
+    let delivered = 0;
+    for (const o of orders) {
+      if (o.status === "processing") processing += 1;
+      else if (o.status === "shipped") shipped += 1;
+      else if (o.status === "delivered") delivered += 1;
+    }
+    return {
+      all: orders.length,
+      processing,
+      shipped,
+      delivered,
+    };
+  }, [orders]);
+
+  const topCustomersByRevenue = useMemo(() => {
+    return [...customers]
+      .sort((a, b) => (b.totalRevenue || 0) - (a.totalRevenue || 0))
+      .slice(0, 5);
+  }, [customers]);
+
+  const customersFilteredSorted = useMemo(() => {
+    let list = customers;
+    if (deferredSearchQuery.trim()) {
+      const q = deferredSearchQuery.toLowerCase();
+      list = customers.filter(
+        (c) =>
+          (c.name || "").toLowerCase().includes(q) ||
+          (c.email || "").toLowerCase().includes(q),
+      );
+    }
+    return [...list].sort(
+      (a, b) => (b.totalOrders || 0) - (a.totalOrders || 0),
+    );
+  }, [customers, deferredSearchQuery]);
 
   const stats = useMemo(() => {
     const list = filteredOrders;
@@ -431,19 +508,6 @@ export default function AdminFinance() {
       </div>
     );
   }
-
-  const formatAddr = (addr) => {
-    if (!addr) return "";
-    return [
-      addr.name,
-      [addr.firstLine, addr.secondLine].filter(Boolean).join(" "),
-      [addr.zip, addr.city].filter(Boolean).join(" "),
-      addr.state,
-      addr.countryIso,
-    ]
-      .filter(Boolean)
-      .join("\n");
-  };
 
   return (
     <div className="min-h-screen bg-stone-50 flex">
@@ -758,12 +822,7 @@ export default function AdminFinance() {
                     </h3>
                   </div>
                   <div className="divide-y divide-stone-100">
-                    {[...customers]
-                      .sort(
-                        (a, b) => (b.totalRevenue || 0) - (a.totalRevenue || 0),
-                      )
-                      .slice(0, 5)
-                      .map((c) => (
+                    {topCustomersByRevenue.map((c) => (
                         <button
                           key={c.id}
                           onClick={() => openCustomerProfile(c)}
@@ -836,10 +895,7 @@ export default function AdminFinance() {
                     shipped: "Versendet",
                     delivered: "Geliefert",
                   };
-                  const count =
-                    s === "all"
-                      ? orders.length
-                      : orders.filter((o) => o.status === s).length;
+                  const count = orderStatusCounts[s] ?? 0;
                   return (
                     <button
                       key={s}
@@ -891,7 +947,7 @@ export default function AdminFinance() {
                     Keine Bestellungen gefunden.
                   </div>
                 ) : (
-                  filteredOrders.map((o) => (
+                  ordersForListUi.map((o) => (
                     <button
                       key={o.id}
                       onClick={() => setSelectedOrder(o)}
@@ -978,7 +1034,7 @@ export default function AdminFinance() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-stone-100">
-                      {filteredOrders.map((o) => (
+                      {ordersForListUi.map((o) => (
                         <tr
                           key={o.id}
                           onClick={() => setSelectedOrder(o)}
@@ -1369,17 +1425,14 @@ export default function AdminFinance() {
               </div>
 
               <div className="space-y-2">
-                {customers
-                  .filter((c) => {
-                    if (!searchQuery.trim()) return true;
-                    const q = searchQuery.toLowerCase();
-                    return (
-                      (c.name || "").toLowerCase().includes(q) ||
-                      (c.email || "").toLowerCase().includes(q)
-                    );
-                  })
-                  .sort((a, b) => (b.totalOrders || 0) - (a.totalOrders || 0))
-                  .map((c) => (
+                {customersFilteredSorted.length === 0 ? (
+                  <div className="p-8 text-center text-stone-500 text-sm bg-white rounded-xl border border-stone-200">
+                    {customers.length === 0
+                      ? "Noch keine Kunden. Starte einen Etsy Sync."
+                      : "Keine Treffer für die Suche."}
+                  </div>
+                ) : (
+                  customersFilteredSorted.map((c) => (
                     <button
                       key={c.id}
                       onClick={() => openCustomerProfile(c)}
@@ -1411,11 +1464,7 @@ export default function AdminFinance() {
                         </div>
                       </div>
                     </button>
-                  ))}
-                {customers.length === 0 && (
-                  <div className="p-8 text-center text-stone-500 text-sm bg-white rounded-xl border border-stone-200">
-                    Noch keine Kunden. Starte einen Etsy Sync.
-                  </div>
+                  ))
                 )}
               </div>
             </div>

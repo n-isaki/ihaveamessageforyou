@@ -138,6 +138,43 @@ export const exportOrdersCSV = async (from, to) => {
 
 // ─── CSV Client-Side Export Fallback ──────────────────────
 
+/** Firestore Timestamp, Plain {seconds}, ISO-String oder ms/s-Zahl → Date */
+function timestampLikeToDate(value) {
+  if (value == null) return null;
+  if (typeof value.toDate === "function") {
+    const d = value.toDate();
+    return d instanceof Date && !Number.isNaN(d.getTime()) ? d : null;
+  }
+  const sec = value.seconds ?? value._seconds;
+  if (sec != null) {
+    const nano = value.nanoseconds ?? value._nanoseconds ?? 0;
+    return new Date(sec * 1000 + nano / 1e6);
+  }
+  if (typeof value === "string" && value.trim()) {
+    const t = Date.parse(value);
+    return Number.isNaN(t) ? null : new Date(t);
+  }
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return new Date(value < 1e12 ? value * 1000 : value);
+  }
+  return null;
+}
+
+function orderDateTimeAsDate(order) {
+  return (
+    timestampLikeToDate(order?.orderDate) ||
+    timestampLikeToDate(order?.createdAt) ||
+    null
+  );
+}
+
+/** Festes Format mit Leerzeichen (nicht Komma) — Excel zeigt sonst oft nur das Datum. */
+function formatDateTimeForCsvDe(d) {
+  if (!d || Number.isNaN(d.getTime())) return "";
+  const p = (n) => String(n).padStart(2, "0");
+  return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+
 export const buildCSVFromOrders = (orders) => {
   const headers = [
     "Datum und Uhrzeit (Ortszeit)",
@@ -161,20 +198,8 @@ export const buildCSVFromOrders = (orders) => {
   ];
 
   const rows = orders.map((o) => {
-    const d = o.orderDate?.seconds
-      ? new Date(o.orderDate.seconds * 1000)
-      : o.orderDate?._seconds
-        ? new Date(o.orderDate._seconds * 1000)
-        : null;
-    const dateStr = d
-      ? d.toLocaleString("de-DE", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        })
-      : "";
+    const d = orderDateTimeAsDate(o);
+    const dateStr = formatDateTimeForCsvDe(d);
     const a = o.amounts || {};
     return [
       dateStr,
